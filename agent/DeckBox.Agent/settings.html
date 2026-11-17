@@ -94,16 +94,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 #pageEditor.live .layout-hint { display: none; }
 .preview { position: relative; aspect-ratio: 780 / 360; overflow: hidden; border-radius: 10px; background: #000; }
 .preview iframe { position: absolute; left: 0; top: 0; width: 780px; height: 360px; border: 0; transform-origin: 0 0; }
-.phone { width: 100%; max-width: 860px; padding: 14px 18px; border-radius: 28px; background: #06080b; border: 1px solid #22262e; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.phone { width: 100%; max-width: 860px; padding: 14px 18px; border-radius: 28px; background: #09090b; border: 1px solid #3a3326; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
 .canvas { position: relative; aspect-ratio: 752 / 333; display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(6, 1fr); gap: 6px; touch-action: none; }
 .canvas .cell { border-radius: 6px; background: rgba(255,255,255,.035); }
-.wb { position: relative; z-index: 1; border-radius: 10px; background: #1a2230; border: 1.5px solid #2c3647; color: #e8ecf1; cursor: grab; overflow: hidden; display: flex; container-type: size; }
+.wb { position: relative; z-index: 1; border-radius: 10px; background: linear-gradient(180deg, #1d1c1f, #151417); border: 1.5px solid #34302a; color: #f1ece1; cursor: grab; overflow: hidden; display: flex; container-type: size; }
 .wb:active { cursor: grabbing; }
 .wb.sel { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); z-index: 2; }
 .wb-in { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px; gap: 1px; pointer-events: none; }
 .wb-ico { font-size: clamp(14px, 30cqmin, 34px); line-height: 1.1; }
 .wb b { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.wb small { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.wb small { font-size: 11px; color: #a39b89; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @container (max-height: 52px) { .wb small { display: none; } }
 @container (max-height: 36px) { .wb b { display: none; } }
 .rz { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, var(--accent) 50%); border-bottom-right-radius: 8px; opacity: .7; }

@@ -2,6 +2,7 @@
 // Start the demo first (python tools/demo-server.py), then from tools/ui-tests:
 //
 //   node media.js shots nightstand planner overview   # docs/screenshots/<page>.png (780 x 360 at 2x; "overview" = all pages)
+//   node media.js --ru shots home settings-editor      # the Russian demo; settings-editor = the layout editor
 //   node media.js tour                                 # docs/tour-<v>.mp4 and .gif (needs ffmpeg)
 //   node media.js hero                                 # docs/hero-<v>.png (1920 x 810; waits ~1.5 min so the charts fill)
 //
@@ -18,26 +19,51 @@ const BASE = opt('base', 'http://127.0.0.1:8790/');
 const NAME = opt('name', 'new');
 const DOCS = path.resolve(__dirname, '..', '..', 'docs');
 const OUT = opt('out', DOCS);
+// --ru: the Russian demo (interface and data), as visitors of the site see it
+const RU = args.includes('--ru');
+if (RU) args.splice(args.indexOf('--ru'), 1);
 const [what, ...ids] = args;
+const context = async (browser, options) => {
+  const ctx = await browser.newContext({ ...options, ...(RU ? { locale: 'ru-RU' } : {}) });
+  if (RU) await ctx.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+  return ctx;
+};
+// file name → demo page id, where they differ
+const PAGE_OF = { deepwork: 'focuswork', 'procs-sheet': 'procs' };
 const PANEL = new URL('panel/', BASE).href;
 const ORDER = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'pages', 'demo.js'), 'utf8').match(/const PAGES = (\[[^\]]*\])/)[1].replace(/'/g, '"'));
 const next = (frame, n) => frame.evaluate((n) => { for (let i = 0; i < n; i++) window.onAndroidKey('next'); }, n);
 const indexOf = (id) => { const i = ORDER.indexOf(id); if (i < 0) throw new Error(`unknown page "${id}" (pages: ${ORDER.join(', ')})`); return i; };
 
 async function shots(browser) {
-  const ctx = await browser.newContext({ viewport: { width: 780, height: 360 }, deviceScaleFactor: 2 });
+  const ctx = await context(browser, { viewport: { width: 780, height: 360 }, deviceScaleFactor: 2 });
   for (const id of ids) {
+    if (id === 'settings-editor') { await settingsShot(browser); continue; }
     const page = await ctx.newPage();
     await page.goto(PANEL);
     await page.waitForTimeout(3000);
     if (id === 'overview') await page.evaluate(() => window.openOverview());
-    else await next(page, indexOf(id));
+    else await next(page, indexOf(PAGE_OF[id] || id));
     await page.waitForTimeout(3500);
     const file = path.join(OUT, 'screenshots', id + '.png');
     await page.screenshot({ path: file });
     await page.close();
     console.log(file);
   }
+}
+
+// the layout editor (Settings › Pages) with the first widget selected
+async function settingsShot(browser) {
+  const ctx = await context(browser, { viewport: { width: 1440, height: 980 }, deviceScaleFactor: 2 });
+  const page = await ctx.newPage();
+  await page.goto(new URL('settings/#pages', BASE).href);
+  await page.waitForTimeout(4000);
+  await page.locator('.wb').first().click().catch(() => {});
+  await page.waitForTimeout(1500);
+  const file = path.join(OUT, 'screenshots', 'settings-editor.png');
+  await page.screenshot({ path: file });
+  await ctx.close();
+  console.log(file);
 }
 
 async function tour(browser) {

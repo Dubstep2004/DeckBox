@@ -179,15 +179,80 @@
     "From other machines on your network or Tailscale, with the webhook key (HTTPS with this PC's self-signed certificate, so curl needs -k). The key can also go in ?token= for senders that cannot set headers. It only opens the webhook endpoints, never the phone API; replace it if it leaks.": 'С других компьютеров в вашей сети или в Tailscale — с ключом вебхука (HTTPS с самоподписанным сертификатом этого ПК, поэтому curl нужен -k). Ключ можно передать и в ?token= для отправителей, которые не умеют задавать заголовки. Он открывает только адреса вебхуков, но не API телефона; если ключ утёк, замените его.',
     'Profile action IDs': 'ID действий профиля',
     'Mo': 'Пн', 'Tu': 'Вт', 'We': 'Ср', 'Th': 'Чт', 'Fr': 'Пт', 'Sa': 'Сб', 'Su': 'Вс', 'active now': 'действует сейчас',
+
+    // ---- phone panel: widget titles and labels written in English
+    'Processor': 'Процессор', 'Graphics': 'Видеокарта', 'Network': 'Сеть', 'RAM': 'ОЗУ', 'CPU': 'ЦП', 'PHONE': 'ТЕЛЕФОН',
+    '7-day forecast': 'Прогноз на 7 дней', 'Next hours': 'Ближайшие часы', 'Volume': 'Громкость', 'Sun & moon': 'Солнце и луна',
+    'Air quality': 'Качество воздуха', 'Time': 'Время', 'Day': 'День', 'Week': 'Неделя', 'Month': 'Месяц', 'Year': 'Год',
+    'Timer': 'Таймер', 'Counter': 'Счётчик', 'Reset': 'Сброс', 'Stopwatch': 'Секундомер', 'Crypto': 'Криптовалюты',
+    'Room': 'Комната', 'Deploy': 'Деплой', 'Progress': 'Прогресс', 'Notifications': 'Уведомления', 'Clear': 'Очистить',
+    '⏸ Pause': '⏸ Пауза', '▶ Resume': '▶ Продолжить', 'ON AIR': 'В ЭФИРЕ', 'Temperature': 'Температура', 'Batteries': 'Батареи',
+    'This phone': 'Этот телефон', 'Next up': 'Следующее', 'all day': 'весь день', 'Today': 'Сегодня', 'Tomorrow': 'Завтра',
+    "it's just after": 'сейчас чуть больше', "it's nearly": 'сейчас почти', "it's": 'сейчас', 'Moon': 'Луна',
+    'New moon': 'Новолуние', 'Waxing crescent': 'Растущий серп', 'First quarter': 'Первая четверть', 'Waxing gibbous': 'Растущая луна',
+    'Full moon': 'Полнолуние', 'Waning gibbous': 'Убывающая луна', 'Last quarter': 'Последняя четверть', 'Waning crescent': 'Убывающий серп',
+    'Battery care': 'Бережная зарядка', 'Docker containers': 'Контейнеры Docker', 'Free disk space': 'Свободно на дисках',
+    'Application mixer': 'Микшер приложений', 'Microphone': 'Микрофон', 'Media remote': 'Медиапульт', 'OBS scenes': 'Сцены OBS',
+    'OBS mixer': 'Микшер OBS', 'OBS recording and stream': 'Запись и трансляция OBS', 'Start recording': 'Начать запись',
+    'Stop recording': 'Остановить запись', 'Start stream': 'Начать трансляцию', 'Stop stream': 'Остановить трансляцию',
+    'Pause recording': 'Пауза записи', 'Resume recording': 'Продолжить запись', 'Meeting Controls': 'Управление встречей',
+    'Ready': 'Готово', 'Meeting timer': 'Таймер встречи', 'Task Runner': 'Задачи', 'Dev Servers': 'Серверы разработки',
+    'Stop': 'Стоп', 'Start': 'Старт', 'Restart': 'Перезапуск', 'Spotify queue': 'Очередь Spotify', 'Soundboard': 'Саундборд',
+    'App Dock': 'Док приложений', 'Display brightness': 'Яркость дисплея', 'Audio profiles': 'Звуковые профили',
+    'Latest local session': 'Последняя локальная сессия', 'Session tokens': 'Токены сессии', 'Review requests': 'Запросы на ревью',
+    'My pull requests': 'Мои pull request', 'approved': 'одобрено', 'changes': 'нужны правки', 'Previous': 'Назад',
+    'Play/Pause': 'Пуск / пауза', 'Next': 'Вперёд', 'Previous track': 'Предыдущий трек', 'Play or pause': 'Пуск или пауза',
+    'Next track': 'Следующий трек', 'Up next': 'Дальше', 'Now playing': 'Сейчас играет', 'Playing': 'Играет', 'Paused': 'Пауза',
   };
   const norm = (s) => s.replace(/\s+/g, ' ').trim();
+  // phrases with numbers in them (the panel builds these from data)
+  const RULES = [
+    [/^(\d+)% left$/, 'осталось $1%'],
+    [/^Week (\d+)$/, 'Неделя $1'],
+    [/^until (\d{1,2}:\d{2})$/, 'до $1'],
+    [/^Ping (\d+) ms · loss ([\d.]+)%$/, 'Пинг $1 мс · потери $2%'],
+    [/^Fan (\d+)% · (\d+) MHz$/, 'Вентилятор $1% · $2 МГц'],
+    [/^Top CPU \((\d+)%\)$/, 'Топ ЦП ($1%)'],
+    [/^Top RAM \((\d+)%\)$/, 'Топ ОЗУ ($1%)'],
+    [/^Recording (\d[\d:]*)$/, 'Запись $1'],
+    [/^Stream (\d[\d:]*)$/, 'Эфир $1'],
+    [/^(\d+)% lit$/, 'освещено $1%'],
+    [/^Full moon in (\d+) days?$/, 'Полнолуние через $1 дн.'],
+    [/^New moon in (\d+) days?$/, 'Новолуние через $1 дн.'],
+    [/^(\d+) working · (\d+) waiting · (\d+) idle$/, 'работают: $1 · ждут: $2 · простаивают: $3'],
+    [/^▲ (\d+) · (\d+) comments · (.+)$/, '▲ $1 · комментариев: $2 · $3'],
+    [/^⚡ Charging · (.+)$/, '⚡ Заряжается · $1'],
+    [/^Charging · (.+)$/, 'Заряжается · $1'],
+    [/^Charges up to (\d+)% · power off soon$/, 'Заряд до $1% · скоро отключение питания'],
+    [/^Up (\d+) d (\d+) h$/, 'Работает $1 д $2 ч'],
+    [/^Up (\d+) h (\d+) m$/, 'Работает $1 ч $2 мин'],
+    [/^([A-Z]{3}) · 24 h · 7 d$/, '$1 · 24 ч · 7 д'],
+    [/^ECB · (.+)$/, 'ЕЦБ · $1'],
+    [/^In (\S+) · Out (\S+) · Cached (\S+) · Reasoning (\S+)$/, 'Вход $1 · выход $2 · кэш $3 · рассуждения $4'],
+    [/^Last input (\S+) \/ (\S+) context window$/, 'Последний ввод $1 / окно контекста $2'],
+    [/^GPU · (.+)$/, 'ГП · $1'],
+    [/^VRAM · (.+)$/, 'Видеопамять · $1'],
+    [/^(.+) ago$/, '$1 назад'],
+    [/^default \((.+)\)$/, 'по умолчанию ($1)'],
+    [/^Mute (.+)$/, 'Выключить звук: $1'],
+    [/^(.+) volume$/, 'Громкость: $1'],
+    [/^(\d+(?:\.\d+)?) \/ (\d+) GB$/, '$1 / $2 ГБ'],
+  ];
+  const UNITS = [[/OBS live/g, 'OBS в эфире'], [/OBS recording/g, 'OBS пишет'], [/(\d) GB\b/g, '$1 ГБ'], [/(\d) MB\b/g, '$1 МБ'], [/(\d) MHz\b/g, '$1 МГц'], [/(\d) ms\b/g, '$1 мс']];
+  function rule(text) {
+    for (const [re, to] of RULES) if (re.test(text)) return text.replace(re, to);
+    let out = text;
+    for (const [re, to] of UNITS) out = out.replace(re, to);
+    return out === text ? undefined : out;
+  }
+
   const ATTRS = ['title', 'placeholder', 'aria-label'];
   const active = () => window.DeckBoxI18n?.getLang?.() === 'ru';
 
   function textNode(n) {
     const raw = n.nodeValue;
     if (!raw || !/[A-Za-z]/.test(raw)) return;
-    const hit = RU[norm(raw)];
+    const hit = RU[norm(raw)] ?? rule(norm(raw));
     if (hit === undefined) return;
     const lead = raw.match(/^\s*/)[0], tail = raw.match(/\s*$/)[0];
     const next = lead + hit + tail;

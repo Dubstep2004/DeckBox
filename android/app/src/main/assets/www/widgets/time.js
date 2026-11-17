@@ -193,11 +193,32 @@ export const QUOTES = [
   ['A journey of a thousand miles begins with a single step.', 'Laozi'],
 ];
 
+// DeckBox: built-in quotes for the Russian interface
+const QUOTES_RU = [
+  ['Не тратьте больше времени на споры о том, каким должен быть хороший человек. Будьте им.', 'Марк Аврелий'],
+  ['Препятствие на пути становится путём.', 'Марк Аврелий'],
+  ['Мы чаще страдаем в воображении, чем в действительности.', 'Сенека'],
+  ['Удача — это когда подготовка встречается с возможностью.', 'Сенека'],
+  ['Делай что можешь, с тем что имеешь, там где ты есть.', 'Теодор Рузвельт'],
+  ['В жизни нечего бояться, есть только то, что нужно понять.', 'Мария Кюри'],
+  ['Воображение важнее знания.', 'Альберт Эйнштейн'],
+  ['Знание — сила.', 'Фрэнсис Бэкон'],
+  ['Путь в тысячу ли начинается с первого шага.', 'Лао-цзы'],
+  ['Семь раз отмерь, один раз отрежь.', 'Пословица'],
+  ['Москва не сразу строилась.', 'Пословица'],
+  ['Капля камень точит.', 'Пословица'],
+  ['Терпение и труд всё перетрут.', 'Пословица'],
+  ['Тише едешь — дальше будешь.', 'Пословица'],
+  ['Делу время, потехе час.', 'Пословица'],
+  ['Удалённый код — отлаженный код.', 'Джефф Сикел'],
+];
+const ruUi = () => window.DeckBoxI18n?.getLang?.() === 'ru';
+
 W.quote = {
   needs: ['tick'],
   create(box, { o }) {
     const custom = lines(o.quotes, []).map((l) => { const i = l.lastIndexOf(' — '); return i > 0 ? [l.slice(0, i), l.slice(i + 3)] : [l, '']; });
-    const list = custom.length ? custom : QUOTES;
+    const list = custom.length ? custom : (ruUi() ? QUOTES_RU : QUOTES);
     const mins = Math.max(1, Number(o.minutes) || 30);
     const q = h('div', 'qt-q'), a = h('div', 'qt-a');
     box.append(h('div', 'qt-mark', '“'), q, a);
@@ -218,7 +239,7 @@ W.quote = {
 W.checklist = {
   needs: ['tick'],
   create(box, { o, page, w }) {
-    const items = lines(o.items, ['Water the plants', 'Stretch', 'Inbox zero']);
+    const items = lines(o.items, ruUi() ? ['Полить цветы', 'Размяться', 'Разобрать почту'] : ['Water the plants', 'Stretch', 'Inbox zero']);
     const key = `cl:${page.id}/${w.id}`;
     const day = () => new Date().toDateString();
     let st = store.get(key, null) || { day: day(), done: [] };
@@ -265,6 +286,27 @@ export function timeInWords(d) {
   else main = [minutes[60 - m], 'to', hourName(hr + 1)];
   return { lead: exact ? "it's" : over ? "it's just after" : "it's almost", main };
 }
+
+// The same in Russian: «четверть одиннадцатого», «половина первого», «без двадцати одиннадцать».
+const RU_HOUR = ['двенадцать', 'час', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять', 'десять', 'одиннадцать'];
+const RU_HOUR_OF = ['двенадцатого', 'первого', 'второго', 'третьего', 'четвёртого', 'пятого', 'шестого', 'седьмого', 'восьмого', 'девятого', 'десятого', 'одиннадцатого'];
+export function timeInWordsRu(d) {
+  const total = d.getHours() * 60 + d.getMinutes();
+  const r = Math.round(total / 5) * 5;
+  const exact = r === total, over = total > r;
+  const m = r % 60, hr = Math.floor(r / 60) % 24, h12 = hr % 12, next = (hr + 1) % 12;
+  const past = { 5: ['пять', 'минут'], 10: ['десять', 'минут'], 15: ['четверть'], 20: ['двадцать', 'минут'], 25: ['двадцать', 'пять', 'минут'], 30: ['половина'] };
+  const to = { 5: 'пяти', 10: 'десяти', 15: 'четверти', 20: 'двадцати', 25: 'двадцати пяти' };
+  let main;
+  if (m === 0) {
+    if (hr === 0) main = ['полночь'];
+    else if (hr === 12) main = ['полдень'];
+    else if (h12 === 1) main = ['час'];
+    else main = [RU_HOUR[h12], h12 >= 2 && h12 <= 4 ? 'часа' : 'часов'];
+  } else if (m <= 30) main = [...past[m], RU_HOUR_OF[next]];
+  else main = ['без', ...to[60 - m].split(' '), RU_HOUR[next]];
+  return { lead: exact ? 'сейчас' : over ? 'сейчас чуть больше' : 'сейчас почти', main };
+}
 W.wordclock = {
   bare: true, needs: ['tick'],
   create(box) {
@@ -274,7 +316,7 @@ W.wordclock = {
     return {
       update() {
         const now = new Date();
-        const t = timeInWords(now);
+        const t = ruUi() ? timeInWordsRu(now) : timeInWords(now);
         const k = t.lead + t.main.join(' ');
         if (k === shown) return;
         shown = k;
