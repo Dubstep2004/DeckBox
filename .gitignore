@@ -52,3 +52,4 @@ tools/ui-tests/test-results/
 *.txt
 # Installer output
 installer/*.exe
+installer/*.apk

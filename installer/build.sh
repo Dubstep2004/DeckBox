@@ -35,4 +35,6 @@ cp "$root/agent/PhoneBox.Agent/phonebox.ico" "$stage/deckbox.ico"
 } | sed 's/$/\r/' > "$stage/LICENSE.txt"
 sed 's/$/\r/' "$root/installer/install-phone.cmd" > "$stage/install-phone.cmd"
 (cd "$root/installer" && makensis -V2 -DSTAGE="$stage" -DVERSION="$version" deckbox.nsi)
+cp "$stage/DeckBox.apk" "$root/installer/DeckBox-$version.apk"
 echo "==> $root/installer/DeckBox-Setup-$version.exe"
+echo "==> $root/installer/DeckBox-$version.apk"
