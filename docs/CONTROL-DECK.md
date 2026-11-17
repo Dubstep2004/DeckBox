@@ -1,116 +1,98 @@
-# Control Deck implementation and verification
+# Пульт управления (Control Deck)
 
-The requested scope includes every item in the proposed control catalog. Existing widgets remain available.
-This document tracks implementation and evidence; a catalog entry or demo is not proof of a native integration.
+Пульт управления — набор сенсорных элементов для звука, медиа, окон, дисплеев, OBS, встреч и задач разработки.
+Остальные виджеты DeckBox работают как прежде. Этот документ описывает, что реализовано и как это проверено;
+запись в каталоге или демо сами по себе не доказывают, что интеграция работает на настоящем компьютере.
 
-## Requirements
+## Что умеет пульт
 
-| Group | Required capabilities | Implementation / evidence |
+| Группа | Возможности | Реализация и проверка |
 |---|---|---|
-| Audio mixer | Per-application mixer, pinned application fader, device volume, stereo balance, meters, emergency mute | Native Windows implementation; isolated silent-session write/readback passed without changing other sessions or device levels |
-| Microphone / devices | Microphone volume/mute, input/output selection, push-to-talk, audio scenes, ducking | Implemented; lease expiry/overlap/restoration tests pass; physical microphone/default-device mutations deliberately not exercised during active work |
-| Music | Player selection, transport, seek, shuffle/repeat, playlists, queue/favorites, soundboard, sleep timer | Implemented; Spotify PKCE, disconnect, rate-limit and URI tests pass; actual Spotify account connection remains user setup |
-| Application controls | Running application dock, keys, macros, window layouts, desktops, projects/folders, snippets, presentations | Implemented with computer-configured bindings; foreground/window/presentation actions need the corresponding running application |
-| Display / system | Brightness, display profiles, power plans, work/focus profiles, lock/display off, sleep/restart | Implemented; destructive power actions require opt-in and a single-use hold nonce; power and display mutations not executed during active work |
-| OBS | Input mixer, scenes, source visibility, recording/streaming, replay buffer, transitions, virtual camera | Implemented; WebSocket fixture verifies native protocol requests and resource validation; browser mute interaction passes |
-| Meetings | Meeting shortcuts, Discord shortcuts, microphone/camera indicators, meeting profiles/timers | Implemented; timer persistence browser test passes; app shortcuts require user-specific bindings |
-| Development / automation | Build/test tasks, dev servers, services, Docker, GitHub workflows, scripts, Home Assistant scenes | Implemented, reusing existing Docker/HA widgets; owned-process stop test preserves unrelated processes; workflow dispatch and service mutations require configured targets |
-| Advanced audio / protocols | Application routing, external mixer, MIDI, OSC, PC-audio listening on the phone | Implemented with explicit dependencies/opt-ins; MIDI/OSC encoding tested; external hardware, Voicemeeter and listening playback require separate live validation |
-| Product integration | Widget catalog/options, setup editor, templates, phone/LAN proxy, demo, documentation | 113 widgets and 30 templates; private settings/token routes excluded from LAN; 40 browser tests pass, including settings persistence and portrait/landscape layout |
-| Validation | Unit/API tests, browser interactions, native Windows checks, Android lint/build, release/installed proof | 245 .NET tests and 40 browser tests at 0.8.0, Android lintDebug/assembleDebug, both .NET target builds and installer regression checks pass; release/installation require the published-artifact checks below |
+| Микшер звука | Микшер по приложениям, закреплённый фейдер приложения, громкость устройства, баланс каналов, индикаторы уровня, экстренное отключение звука | Нативная реализация для Windows; изолированная тихая сессия записывалась и читалась обратно без изменения других сессий и уровней устройств |
+| Микрофон и устройства | Громкость и выключение микрофона, выбор входа и выхода, «нажми и говори», звуковые профили, приглушение | Реализовано; тесты истечения, наложения и восстановления удержаний проходят; изменения физического микрофона и устройств по умолчанию не выполнялись во время активной работы |
+| Музыка | Выбор плеера, управление воспроизведением, перемотка, случайный порядок и повтор, плейлисты, очередь и избранное, саундборд, таймер сна | Реализовано; тесты PKCE, отключения, ограничений и URI Spotify проходят; подключение аккаунта Spotify — настройка пользователя |
+| Управление приложениями | Док запущенных приложений, клавиши, макросы, раскладки окон, рабочие столы, проекты и папки, фрагменты текста, презентации | Реализовано с привязками, заданными на компьютере; действия с активным окном и презентациями требуют запущенного приложения |
+| Дисплей и система | Яркость, профили дисплеев, схемы питания, профили работы и фокуса, блокировка и выключение дисплея, сон и перезагрузка | Реализовано; опасные действия с питанием требуют явного разрешения и одноразового подтверждения удержанием |
+| OBS | Микшер источников, сцены, видимость источников, запись и трансляция, буфер повтора, переходы, виртуальная камера | Реализовано; тестовый сервер WebSocket проверяет запросы протокола и проверку ресурсов |
+| Встречи | Сочетания клавиш для встреч и Discord, индикаторы микрофона и камеры, профили и таймеры встреч | Реализовано; таймер встречи сохраняется между перезапусками; сочетания клавиш задаёт пользователь |
+| Разработка и автоматизация | Задачи сборки и тестов, серверы разработки, службы, Docker, workflow GitHub, скрипты, сцены Home Assistant | Реализовано с использованием существующих виджетов Docker и Home Assistant; остановка затрагивает только процессы, запущенные самой кнопкой |
+| Продвинутый звук и протоколы | Маршрутизация по приложениям, внешний микшер, MIDI, OSC, прослушивание звука ПК на телефоне | Реализовано с явными зависимостями и разрешениями; кодирование MIDI и OSC покрыто тестами; внешнее оборудование, Voicemeeter и прослушивание требуют отдельной проверки на месте |
 
-## Local verification (2026-11-10)
+## Настройка
 
-- Both .NET targets compile with zero warnings and zero errors; the full .NET suite passed 245 tests at 0.8.0. An earlier
-  concurrent build run hit the existing PowerShell child-startup timeout test; its isolated rerun and the final full
-  suite passed. The test was not skipped or weakened. OBS tests also cover the explicit loading response during slow discovery and wait for the measured controls before asserting their contents.
-- HTTP fixtures serialize port allocation/start and use distinct ports; a sixteen-listener contention test covers parallel startup. Fixtures close their listener once: calling Stop followed by Close can rebind an already removed endpoint in the Unix HttpListener implementation. Owned-process fixture cleanup waits for bounded Windows descendant handle teardown.
-- All 40 Playwright tests pass, including application fader isolation, output selection, PTT release, disabled
-  unsupported controls, OBS mute, Spotify queue, persistent meeting timers, private settings/public-config separation,
-  catalog construction and 780px/360px layouts. Screenshots were inspected for both orientations.
-- Android `lintDebug assembleDebug` succeeds. The installer regression verifies signature/error failures preserve
-  the installed application and successful upgrades work.
-- A separate Windows agent using an isolated config discovered nine devices and twenty-four sessions. A silent WAV
-  generated one owned test session; setting it to 35%, reading back and restoring succeeded. All device levels and
-  unrelated application session levels remained unchanged. Its loopback endpoint supplied 48 kHz stereo 32-bit float
-  audio; no captured audio was saved. First state response was approximately 1.1 seconds during hardware discovery.
-- Spotify authentication/account playback, external MIDI hardware/OSC receiver, Voicemeeter, routing migration and
-  physical-phone audio playback are not established by these local checks. Power, service, foreground-window and
-  display mutations were not run against the user's active work.
+1. Откройте настройки на компьютере и создайте нужные ярлыки (программы, папки, текст или макросы) во вкладке **Ярлыки**.
+2. Откройте **Общие → Пульт управления**, добавьте элементы, выберите тип и укажите цель, как подсказано рядом.
+   Элемент определяется своим ID; пути к программам, аргументы и учётные данные на телефон не отправляются.
+3. Нажмите **Показать ID устройств, мониторов и MIDI**, чтобы узнать настоящие устройства. Поиск некоторых дисплеев
+   DDC/CI занимает несколько секунд; обновите список после его окончания. Неподдерживаемая яркость монитора
+   показывается как недоступная.
+4. Добавьте шаблон или отдельные виджеты во вкладке **Страницы**, включите нужные разрешения и нажмите
+   **Сохранить**. Шаблон не устанавливает внешние программы и не создаёт исполняемые привязки сам.
 
-For publication, follow [RELEASING.md](RELEASING.md): exact-commit CI, native builds/smokes, signed APK, release tag,
-checksums/provenance, downloaded Windows-binary smoke and physical-device version/preservation checks. Unit tests,
-preview data and catalog entries do not replace those checks.
+Звуковые профили сохраняют громкость и отключение устройств, громкость и отключение приложений и все роли устройств по
+умолчанию в Windows. Уровни приложений сопоставляются по именам активных приложений, а не по временным ID сессий;
+закрытые приложения пропускаются. Приложения с несколькими сессиями получают сохранённый уровень приложения. Явно
+заданные вход и выход применяются после сохранённых ролей. Сохранённые уровни и порядок действий можно править в
+настройках. Профиль-сценарий может содержать только ID действий. Если явно заданного устройства нет, профиль
+отклоняется до изменения уровней; более поздние ошибки системы могут оставить профиль применённым частично, и об этом
+сообщается.
 
-## Setup
+«Нажми и говори» временно включает выбранный микрофон. Отпускание кнопки, скрытие страницы, потеря фокуса окна или
+истечение удержания возвращают прежнее состояние. Удержание продлевается и истекает через три секунды без связи,
+непрерывно — не дольше шестидесяти секунд. Перекрывающиеся удержания разделяют исходное состояние. Приглушение
+делает тише другие звуковые сессии, пока на включённом микрофоне есть сигнал, и при восстановлении сохраняет ручные
+изменения громкости. Это не шумодав и не распознавание речи.
 
-1. Open desktop settings and create any executable, folder, text or macro shortcuts in **Deck**.
-2. Open **General → Control Deck**, add bindings, choose a kind and enter the target described by the inline hint.
-   A binding ID identifies the control; executable paths, arguments and credentials are not sent to the phone.
-3. Use **List device, monitor and MIDI IDs** to identify actual hardware. Discovery of some DDC/CI displays can take
-   several seconds; refresh the list after discovery finishes. Unsupported monitor brightness displays as unavailable.
-4. Add a template or individual widgets under **Pages**, enable needed control permissions, then Save. Template
-   creation does not install external applications or create executable bindings automatically.
+Таймер сна для музыки плавно приглушает подходящие сессии приложения в последние тридцать секунд, ставит плеер на
+паузу и возвращает громкость. Ручное изменение громкости отменяет приглушение. Плееры без подходящей звуковой сессии
+можно поставить на паузу, но не приглушить. Звуки саундборда и радиопотоки играют на компьютере: в Windows — самой
+системой, в Linux и macOS — через `ffplay`, `mpv` или `vlc` (что установлено; выбор устройства вывода работает
+только в Windows). Радио — это прямые HTTP(S)-аудиопотоки или манифесты HLS (`.m3u8`) в Windows, а не веб-страницы
+с плейлистами.
 
-Audio profiles capture endpoint volumes/mutes, per-application volumes/mutes and all Windows default-device roles.
-Application levels match active application names rather than temporary session IDs; closed applications are skipped.
-Applications with several sessions receive the captured application level. Explicit input/output overrides apply after
-captured roles. Captured levels and ordered action IDs can be edited in settings. A routine-only profile can contain
-just action IDs. Missing explicit devices are rejected before audio levels are changed; subsequent native failures can
-still leave a partially applied profile and are reported as failures.
+## Дополнительные интеграции
 
-Push-to-talk temporarily unmutes the selected microphone. Release, page hiding, window blur, lost capture or lease
-expiry restores its original mute state. Renewals expire after three seconds without contact, with a maximum continuous
-hold of sixty seconds. Overlapping holds share the original state. Ducking lowers other audio sessions while an unmuted
-microphone has a signal, and preserves manual volume changes when restoring. It is not a noise gate or speech recognizer.
-
-The music sleep timer fades matching application sessions over its final thirty seconds, pauses the selected player,
-then restores volume. A manual volume adjustment takes ownership away from the fade. Players without a matching
-application audio session can still be paused; their volume cannot be faded. Soundboard files and radio streams play
-on the computer: Windows plays them itself, Linux and macOS through `ffplay`, `mpv` or `vlc` (whichever is installed;
-the output device setting applies on Windows only). Radio targets are direct HTTP(S) audio streams, or HLS (`.m3u8`)
-manifests on Windows, not playlist webpages.
-
-## Optional integrations
-
-| Integration | Computer setup | Feedback and limits |
+| Интеграция | Настройка на компьютере | Что показывается и ограничения |
 |---|---|---|
-| Spotify | Create an app in the Spotify Developer dashboard, save Client ID, click Connect, register the exact loopback redirect address, then follow the sign-in link | PKCE; credentials stored next to config in a private token file. No automatic browser login during polling. Playback depends on Spotify account/API permissions and an active player. No account has been connected during development. |
-| OBS | Enable obs-websocket, configure its URL/password in existing OBS settings and enable control on an OBS widget | Inputs, sources and transitions are discovered; unsupported features remain disabled. OBS control permission applies across OBS widgets. |
-| Application routing | Install [SoundVolumeView](https://www.nirsoft.net/utils/sound_volume_view.html), set its executable path and configure process/output ID bindings | Successful helper exit is shown as **Routing requested**; it is not independent proof that a running application migrated its stream. The helper is not bundled. |
-| Virtual mixer | Install/start Voicemeeter and set the path to its matching 64-bit Remote DLL | Measured Strip/Bus gain and toggle values; missing engine/DLL displays unavailable. Third-party binaries are not bundled. |
-| MIDI | Choose an actual output port ID | Wire-order channel message bytes, e.g. `B0 07 {value}`. Values 0–127. Note pads send note-off after 120 ms. SysEx is excluded. |
-| OSC | Configure host:port and address such as `/volume` | Sends the binding's whole-number value as one float argument using network byte order. UDP delivery is not an acknowledgment from the receiving device. |
-| GitHub workflows | Install/sign in to `gh`; configure owner/repo, workflow filename and optional ref | Dispatch success means accepted by GitHub CLI, not a completed workflow. |
-| Services | Configure the actual Windows service name and start/stop/restart | Reads real service state; restart waits for stop/start state transitions. Permission failures are reported. |
-| Docker / Home Assistant | Configure their existing integrations and widget control permissions | Existing container and entity/scene controls remain available; no duplicate daemon or account is introduced. |
+| Spotify | Создайте приложение в Spotify Developer, сохраните Client ID, нажмите «Подключить», зарегистрируйте точный локальный адрес перенаправления и пройдите по ссылке входа | PKCE; данные входа хранятся рядом с настройками в закрытом файле. Браузер не открывается автоматически при опросе. Воспроизведение зависит от прав аккаунта Spotify и активного плеера |
+| OBS | Включите obs-websocket, укажите адрес и пароль в настройках OBS и включите управление у виджета OBS | Источники и переходы находятся автоматически; неподдерживаемое остаётся отключённым. Разрешение на управление OBS действует для всех виджетов OBS |
+| Маршрутизация приложений | Установите [SoundVolumeView](https://www.nirsoft.net/utils/sound_volume_view.html), укажите путь к нему и настройте привязки процессов к ID выходов | Успешный выход помощника показывается как **Маршрутизация запрошена**; это не отдельное доказательство, что приложение действительно переключило поток. Помощник не входит в комплект |
+| Виртуальный микшер | Установите и запустите Voicemeeter и укажите путь к его 64-битной Remote DLL | Показываются измеренные уровни Strip/Bus и переключатели; без движка или DLL — недоступно. Сторонние программы не входят в комплект |
+| MIDI | Выберите ID настоящего выходного порта | Байты сообщений канала в порядке передачи, например `B0 07 {value}`. Значения 0–127. Пэды нот отправляют note-off через 120 мс. SysEx не поддерживается |
+| OSC | Укажите host:port и адрес, например `/volume` | Отправляет целое значение кнопки как один аргумент float в сетевом порядке байтов. Доставка по UDP не подтверждает, что устройство его получило |
+| Workflow GitHub | Установите `gh` и войдите; укажите owner/repo, файл workflow и необязательную ветку | Успешный запуск значит, что GitHub CLI принял запрос, а не что workflow завершился |
+| Службы | Укажите настоящее имя службы Windows и действие запуска, остановки или перезапуска | Читает реальное состояние службы; перезапуск ждёт остановки и запуска. Ошибки прав сообщаются |
+| Docker / Home Assistant | Настройте их обычные интеграции и разрешения виджетов | Управление контейнерами, сущностями и сценами остаётся прежним; второй демон или аккаунт не нужен |
 
-Tasks and development servers use executable shortcut IDs. Only processes launched by that binding are stopped;
-output is bounded to the latest 64 KiB and readable only from desktop settings. Task timeout is thirty minutes;
-development-server timeout is twenty-four hours. Foreground shortcuts type/send keys to the current application;
-configure application/global shortcuts appropriately. Presentation bindings target PowerPoint or LibreOffice.
+Задачи и серверы разработки используют ID исполняемых ярлыков. Останавливаются только процессы, запущенные этой
+привязкой; вывод ограничен последними 64 КиБ и доступен только в настройках на компьютере. Таймаут задачи — тридцать
+минут, сервера разработки — двадцать четыре часа. Сочетания клавиш для активного окна отправляются в текущее
+приложение. Привязки презентаций работают с PowerPoint и LibreOffice.
 
-## Platforms and connection behavior
+## Платформы и подключение
 
-The full native audio/session/device, DDC/CI, Windows service/window/display/power, MIDI and loopback
-implementation targets Windows. On Linux/macOS, master volume/media controls remain available, and soundboard/radio
-actions use installed `ffplay`, `mpv`, `cvlc`/`vlc` (plus macOS `afplay` for local soundboard files) when found on
-`PATH`. Configured executable tasks, OSC and account integrations are portable when their corresponding programs and
-APIs are available. Do not interpret cross-platform compilation as native feature parity.
+Полная нативная поддержка звука, сессий, устройств, DDC/CI, служб, окон, дисплеев, питания, MIDI и захвата звука
+сделана для Windows. В Linux и macOS доступны общая громкость и управление медиа, а саундборд и радио используют
+установленные `ffplay`, `mpv`, `cvlc`/`vlc` (и `afplay` в macOS для локальных файлов), если они есть в `PATH`.
+Исполняемые задачи, OSC и интеграции с аккаунтами работают везде, где доступны нужные программы и API. Сборка под
+все платформы не означает одинаковых возможностей.
 
-Listening is an explicit desktop opt-in and a user-started phone action. It streams default-output loopback PCM to the
-phone, stops when its widget leaves view, and allows at most two listeners. Enabling it does not reroute other apps.
-Listening and all control requests retain existing USB/LAN authentication boundaries. Spotify sign-in and private task
-output are not exposed over LAN. Long control POSTs have a thirty-second phone timeout; after a submitted command
-loses its response, the app reports an unknown result rather than retrying a possibly non-idempotent action over Wi-Fi.
+Прослушивание звука ПК включается явно в настройках компьютера и запускается с телефона. Звук устройства вывода
+по умолчанию передаётся на телефон, пока виджет на экране, одновременно не более двух слушателей. Включение не
+перенаправляет звук других приложений. Прослушивание и все запросы управления используют обычную защиту USB и Wi-Fi.
+Вход в Spotify и закрытый вывод задач по Wi-Fi недоступны. У долгих запросов управления таймаут на телефоне тридцать
+секунд; если ответ на отправленную команду потерян, приложение сообщает о неизвестном результате, а не повторяет по
+Wi-Fi действие, которое может сработать дважды.
 
-## Boundaries
+## Границы
 
-- Phone requests identify configured actions and resources. Executable commands, local file paths and credentials
-  stay on the computer.
-- Optional integrations expose their setup and capability state. Missing devices/accounts are not represented by
-  fabricated values or successful no-op actions.
-- Native Windows functionality and Linux/macOS functionality are reported separately.
-- Destructive power actions require an explicit hold/confirmation interaction. Device controls use the actual
-  selected device identity. Push-to-talk must restore the previous microphone state after release, disconnect or timeout.
-- Live validation must preserve the user's active work and restore temporary audio changes.
+- Запросы телефона указывают только на настроенные действия и ресурсы. Команды, локальные пути и учётные данные
+  остаются на компьютере.
+- Дополнительные интеграции показывают своё состояние настройки и возможности. Отсутствующие устройства и аккаунты не
+  подменяются выдуманными значениями или «успешными» пустыми действиями.
+- Возможности Windows и Linux/macOS описываются раздельно.
+- Опасные действия с питанием требуют явного удержания или подтверждения. Управление устройствами использует
+  настоящий выбранный ID устройства. «Нажми и говори» обязано вернуть прежнее состояние микрофона после отпускания,
+  отключения или таймаута.
+- Проверка на живом компьютере не должна мешать текущей работе пользователя и должна возвращать временные
+  изменения звука.

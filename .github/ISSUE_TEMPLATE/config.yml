@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Security issue
+  - name: Проблема безопасности
     url: https://github.com/Dubstep2004/DeckBox/security/advisories/new
-    about: Please report vulnerabilities privately (see SECURITY.md).
-  - name: Try the live demo
+    about: Сообщайте об уязвимостях закрыто (см. SECURITY.md).
+  - name: Живое демо
     url: https://dubstep2004.github.io/DeckBox/
-    about: The real panel and layout editor in your browser, with made-up data.
+    about: Настоящая панель и редактор страниц в браузере на придуманных данных.

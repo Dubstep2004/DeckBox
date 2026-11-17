@@ -1,22 +1,29 @@
-<p align="center"><img src="agent/DeckBox.Agent/deckbox.ico" width="72" alt="Значок DeckBox"></p>
+<p align="center"><img src="docs/brand/deckbox-icon-1024.png" width="96" alt="Значок DeckBox PRO"></p>
 
-<h1 align="center">DeckBox</h1>
+<h1 align="center">DeckBox PRO</h1>
 
 <p align="center"><b>Превратите старый Android-телефон в настольную панель для компьютера.</b><br>
 Статистика ПК, музыка, ярлыки, ИИ-сессии и сенсорное управление по USB или Wi-Fi.<br>
 Windows, Linux и macOS. Без root, аккаунтов и облака.</p>
 
-<p align="center"><img src="docs/hero-0.6.png" width="900" alt="DeckBox на трёх телефонах"><br>
-<sub>Примеры раскладок с демо-данными.</sub></p>
+<p align="center">
+  <a href="https://dubstep2004.github.io/DeckBox/"><b>Живое демо</b></a> ·
+  <a href="https://github.com/Dubstep2004/DeckBox/releases/latest"><b>Скачать</b></a> ·
+  <a href="#установка"><b>Установка</b></a>
+</p>
+
+<p align="center"><img src="docs/hero-pro.png" width="900" alt="Главная страница DeckBox PRO"><br>
+<sub>Главная страница в оформлении PRO, демо-данные.</sub></p>
 
 DeckBox состоит из двух частей: **приложения для Android**, которое работает на весь экран, и небольшого **агента на компьютере**, который передаёт на телефон данные. Панель настраивается в визуальном редакторе в браузере: 123 виджета, 30 шаблонов, несколько страниц и живой предпросмотр.
 
 DeckBox основан на проекте [PhoneBox](https://github.com/ersinkoc/phonebox) (автор — ersinkoc, лицензия MIT). Отличия от оригинала:
 
-- полный русский перевод интерфейса и каталога виджетов;
+- собственный дизайн **PRO** (графит и золото) на телефоне, в настройках и на сайте и новый значок;
+- всё на русском: интерфейс, каталог виджетов, единицы измерения, сайт и документация;
 - своё название везде: программа `DeckBoxAgent.exe`, приложение на телефоне, папки настроек;
 - установщик для Windows на русском;
-- автообновление с репозитория PhoneBox выключено, чтобы оно не заменило DeckBox.
+- обновления приходят из релизов DeckBox, а не PhoneBox.
 
 ## Возможности
 

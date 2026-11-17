@@ -1,275 +1,285 @@
-# User guide
+# Руководство пользователя
 
-[Back to DeckBox](../README.md) · [Installation and connections](SETUP.md) · [Development](DEVELOPMENT.md)
+[К описанию DeckBox](../README.md) · [Установка и подключения](SETUP.md) · [Разработка](DEVELOPMENT.md)
 
-[Appearance](#appearance) · [Control Deck](#control-deck) · [Pages & templates](#pages--templates) · [Widgets](#widgets) · [Layout editor & settings](#layout-editor--settings) · [Claude Code permission prompts](#claude-code-permission-prompts) · [Webhooks](#webhooks) · [Rules](#rules) · [Security & privacy](#security--privacy)
+[Внешний вид](#внешний-вид) · [Пульт управления](#пульт-управления) · [Страницы и шаблоны](#страницы-и-шаблоны) · [Виджеты](#виджеты) · [Редактор и настройки](#редактор-и-настройки) · [Запросы разрешений Claude Code](#запросы-разрешений-claude-code) · [Вебхуки](#вебхуки) · [Правила](#правила) · [Безопасность и конфиденциальность](#безопасность-и-конфиденциальность)
 
-## Appearance
+## Внешний вид
 
-Set corner radius, widget spacing, inner padding, page padding, borders and shadows in **Settings → General →
-Appearance**. Choose Original, Rounded cards, Flat, Content only or Seamless panel, then customize individual values.
-Pages and individual widgets can override global defaults. Live preview shows unsaved changes before Save.
-Existing layouts keep their original appearance. See the [appearance guide](APPEARANCE.md).
+У DeckBox одно оформление — **PRO**: графитовый фон, карточки с золотой кромкой, золотой акцент. Цвет акцента можно
+сменить в **Настройки → Общие → Дисплей**.
 
-**Unreleased:** OLED burn-in protection is available in the current source tree; see the
-[unreleased changes](../CHANGELOG.md#unreleased) for release status. Under **Settings → General → OLED burn-in protection**:
+Скругление углов, расстояние между виджетами, внутренние отступы, отступ от края страницы, рамки и тени настраиваются
+в **Настройки → Общие → Внешний вид**. Выберите исходный вид, скруглённые карточки, плоские поверхности, только
+содержимое или сплошную панель, затем подстройте отдельные значения. Страницы и отдельные виджеты могут
+переопределять общие значения. Предпросмотр показывает несохранённые изменения. Подробнее — в
+[руководстве по внешнему виду](APPEARANCE.md).
 
-- move the panel by a few pixels every 2 minutes (and the night clock around the screen);
-- dim the panel after a set time without a touch. The touch that brightens it again does not press anything.
+**Защита OLED от выгорания** (**Настройки → Общие → Защита OLED от выгорания**):
 
-The AMOLED black theme and the night screen help too.
+- панель сдвигается на несколько пикселей каждые 2 минуты (а ночные часы — по всему экрану);
+- панель приглушается после заданного времени без касаний. Касание, которое снова делает её ярче, ничего не нажимает.
 
-## Control Deck
+Ночной экран тоже помогает.
 
-Turn a phone into a touch control deck with application audio faders, microphone controls, device selection,
-push-to-talk, audio profiles, media controls, soundboard, window and system controls, OBS, meeting shortcuts,
-development tasks, MIDI and OSC. Six new templates provide starting layouts; existing layouts are retained.
+## Пульт управления
 
-Open **Settings → General → Control Deck** to define computer-side bindings and capture audio profiles. Add the
-matching widgets in Pages. Executable shortcuts and macros are configured in Shortcuts first; phone requests contain
-only configured IDs. PC audio listening and hold-to-confirm power buttons require separate desktop opt-ins.
+Превратите телефон в сенсорный пульт: фейдеры звука приложений, управление микрофоном, выбор устройств, «нажми и
+говори», звуковые профили, медиа, саундборд, окна и система, OBS, сочетания клавиш для встреч, задачи разработки,
+MIDI и OSC. Шесть шаблонов дают готовые раскладки; существующие страницы не меняются.
 
-Spotify queue, library and playlist controls need a Spotify Developer Client ID and a connection through the
-settings screen. OBS needs obs-websocket and widget control permission. Application routing uses an installed
-SoundVolumeView executable; virtual-mixer controls use the installed Voicemeeter Remote DLL. MIDI requires an
-output port. Missing integrations display their setup state. See the [setup and platform guide](CONTROL-DECK.md).
+Откройте **Настройки → Общие → Пульт управления**, чтобы задать привязки на компьютере и сохранить звуковые профили.
+Добавьте подходящие виджеты во вкладке «Страницы». Исполняемые ярлыки и макросы сначала создаются во вкладке
+«Ярлыки»; запросы телефона содержат только их ID. Прослушивание звука ПК и кнопки питания с подтверждением
+удержанием нужно отдельно разрешить в настройках компьютера.
 
-## Pages & templates
+Очередь, медиатека и плейлисты Spotify требуют Client ID из Spotify Developer и подключения на странице настроек.
+OBS нужен obs-websocket и разрешение на управление в виджете. Маршрутизация приложений использует установленный
+SoundVolumeView, виртуальный микшер — установленную Voicemeeter Remote DLL. Для MIDI нужен выходной порт.
+Ненастроенные интеграции показывают своё состояние настройки. Подробнее — в [руководстве по пульту](CONTROL-DECK.md).
 
-Every page is a 12 × 6 grid. Start a page from one of the 30 templates (or from scratch) and change anything.
+## Страницы и шаблоны
+
+Каждая страница — сетка 12 × 6. Начните страницу с одного из 30 шаблонов (или с нуля) и меняйте что угодно.
 
 | | |
 |---|---|
-| **Home** — clock, weather, now playing, CPU / GPU / RAM / network tiles | **Dashboard** — gauges, clock, media and a few shortcut keys |
-| <img src="screenshots/home.png" alt="Home"> | <img src="screenshots/dashboard.png" alt="Dashboard"> |
-| **AI quotas** — Claude and Codex limits, reset times, "at this pace: full in 1 d 5 h" | **Sessions** — Claude Code / Codex sessions and GitHub |
-| <img src="screenshots/ai.png" alt="AI quotas"> | <img src="screenshots/work.png" alt="Sessions"> |
-| **System** — CPU, GPU, memory, disks, network and ping charts | **Processes** — heaviest apps; tap one to end an instance or all of them |
-| <img src="screenshots/system.png" alt="System"> | <img src="screenshots/procs-sheet.png" alt="Processes"> |
-| **Status** — quota rings, phone battery, top CPU, volume, sessions | **Ambient** — analog clock, sun & moon, air quality, quote, forecast |
-| <img src="screenshots/status.png" alt="Status"> | <img src="screenshots/ambient.png" alt="Ambient"> |
-| **Markets** — exchange rates, crypto, Hacker News | **Feeds** — values and notifications pushed by webhooks |
-| <img src="screenshots/markets.png" alt="Markets"> | <img src="screenshots/feeds.png" alt="Feeds"> |
-| **Daily** — checklist, time progress, timer, counter, stopwatch | **World** — world clocks, hourly forecast, calendar |
-| <img src="screenshots/daily.png" alt="Daily"> | <img src="screenshots/world.png" alt="World"> |
-| **Music** — a big now-playing card | **Shortcuts** — Stream Deck–style keys |
-| <img src="screenshots/music.png" alt="Music"> | <img src="screenshots/deck.png" alt="Shortcuts"> |
-| **Planner** — next up, month, agenda, checklist | **Automation** — rules, on air, pushed values, device batteries, notifications |
-| <img src="screenshots/planner.png" alt="Planner"> | <img src="screenshots/automation.png" alt="Automation"> |
-| **Nightstand** — word clock, moon, battery care, next hours | **Deep work** — pomodoro, next up, sessions, quota ring, rules |
-| <img src="screenshots/nightstand.png" alt="Nightstand"> | <img src="screenshots/deepwork.png" alt="Deep work"> |
+| **Главная** — часы, погода, текущий трек, плитки ЦП / ГП / ОЗУ / сети | **Приборная панель** — шкалы, часы, медиа и несколько кнопок |
+| <img src="screenshots/home.png" alt="Главная"> | <img src="screenshots/dashboard.png" alt="Приборная панель"> |
+| **Квоты ИИ** — лимиты Claude и Codex, время сброса, «при таком темпе закончится через 1 д 5 ч» | **Сессии** — сессии Claude Code / Codex и GitHub |
+| <img src="screenshots/ai.png" alt="Квоты ИИ"> | <img src="screenshots/work.png" alt="Сессии"> |
+| **Система** — графики ЦП, ГП, памяти, дисков, сети и пинга | **Процессы** — самые тяжёлые приложения; коснитесь, чтобы завершить один экземпляр или все |
+| <img src="screenshots/system.png" alt="Система"> | <img src="screenshots/procs-sheet.png" alt="Процессы"> |
+| **Статус** — кольца квот, батарея телефона, топ ЦП, громкость, сессии | **Атмосфера** — аналоговые часы, солнце и луна, качество воздуха, цитата, прогноз |
+| <img src="screenshots/status.png" alt="Статус"> | <img src="screenshots/ambient.png" alt="Атмосфера"> |
+| **Рынки** — курсы валют, криптовалюты, Hacker News | **Ленты** — значения и уведомления из вебхуков |
+| <img src="screenshots/markets.png" alt="Рынки"> | <img src="screenshots/feeds.png" alt="Ленты"> |
+| **На каждый день** — чек-лист, ход времени, таймер, счётчик, секундомер | **Мир** — мировое время, почасовой прогноз, календарь |
+| <img src="screenshots/daily.png" alt="На каждый день"> | <img src="screenshots/world.png" alt="Мир"> |
+| **Музыка** — большая карточка текущего трека | **Ярлыки** — кнопки в стиле Stream Deck |
+| <img src="screenshots/music.png" alt="Музыка"> | <img src="screenshots/deck.png" alt="Ярлыки"> |
+| **Планировщик** — следующее событие, месяц, повестка, чек-лист | **Автоматизация** — правила, «В эфире», переданные значения, батареи устройств, уведомления |
+| <img src="screenshots/planner.png" alt="Планировщик"> | <img src="screenshots/automation.png" alt="Автоматизация"> |
+| **Прикроватные часы** — часы словами, луна, бережная зарядка, ближайшие часы | **Глубокая работа** — помидоро, следующее событие, сессии, кольцо квоты, правила |
+| <img src="screenshots/nightstand.png" alt="Прикроватные часы"> | <img src="screenshots/deepwork.png" alt="Глубокая работа"> |
 
-More templates: **Clock**, **Focus** (pomodoro + note), **Calm** (breathing), **DevOps** (command widgets) and
-**Weekend** (forecast, music, moon, analog clock, quote).
+Ещё шаблоны: **Часы**, **Фокус** (помидоро и заметка), **Спокойствие** (дыхание), **DevOps** (виджеты команд) и
+**Выходные** (прогноз, музыка, луна, аналоговые часы, цитата).
 
-**Getting around.** Swipe; press the phone's **volume keys** to flip pages; tap the page dots (or long-press an empty
-spot) for an overview of all pages and jump straight to one. Webhooks and rules can switch pages too; they count down
-first (*"switching to AI in 3…"*, with Stay and Go now) and never pull a page away while you are using the panel. The
-panel returns to the home page when idle (each page can stay longer, or for good), can dim to a clock at night and
-keeps the screen on.
+*Снимки экрана в этом руководстве сделаны со старым оформлением; актуальный вид — в [живом демо](https://dubstep2004.github.io/DeckBox/).*
 
-<p align="center"><img src="screenshots/overview.png" width="600" alt="Page overview"></p>
+**Навигация.** Листайте свайпом; кнопки **громкости** телефона перелистывают страницы; нажмите на точки страниц (или
+долго нажмите на пустое место), чтобы увидеть все страницы и сразу перейти к нужной. Вебхуки и правила тоже могут
+переключать страницы; перед этим идёт обратный отсчёт (*«переход к ИИ через 3…»*, с кнопками «Остаться» и «Перейти
+сейчас»), и они никогда не уводят страницу, пока вы пользуетесь панелью. После простоя панель возвращается на главную
+страницу (любую страницу можно оставить дольше или навсегда), ночью может превращаться в часы и держит экран включённым.
 
-## Widgets
+<p align="center"><img src="screenshots/overview.png" width="600" alt="Обзор страниц"></p>
 
-| Category | Widgets |
+## Виджеты
+
+| Категория | Виджеты |
 |---|---|
-| **Time** | Clock (with status line and weather) · Analog clock (any time zone) · **Word clock** · World clocks · Calendar · **Next up** · Time progress (day / week / month / year) · Countdown · Pomodoro · Quick timer · Stopwatch |
-| **Weather & sky** | Weather · Forecast (hourly / 7 days) · Sun & moon (daylight left, UV, moon phase) · **Moon** · Air quality (European AQI, PM2.5, PM10, O₃, NO₂) |
-| **Computer** | **Rules** (which hold, pause) · **Battery care** · On air (microphone / camera / OBS) · OBS Studio (live, recording, scenes) · **Dictation** (speak on the phone, typed on the PC; the app asks for the microphone on first use) · **App console** (Windows: keys and a dial for the app in front, set per app in Settings › General; use the focused app's process name from Task Manager's Details tab; packaged Store apps can all show up as `ApplicationFrameHost` and terminal tabs as `WindowsTerminal`, so a profile for those names covers all of them) · Device batteries (headphones, mice, keyboards) · Docker / Podman (containers, start / stop) · Metric tile · Gauge · Chart · GPU details · Memory & disks · Top processes · Processes · Now playing · Radio · Volume · **Spectrum bars** (Windows: a live spectrum of what the PC is playing, like the classic LED bar visualizers) · Shortcut grid · Big button · **Command** (PowerShell / bash / zsh output, refreshed every N seconds) |
-| **AI & code** | AI quotas · Quota ring · AI sessions · GitHub |
-| **Personal** | **Agenda** (Google / Outlook / iCloud calendars) · Note · Checklist (resets daily) · Counter · Breathe · Quote · Title · Phone battery · **Computers** (switch between paired computers) · **Photo frame** (a slideshow from a photo folder on the PC) |
-| **Web & data** | **Custom HTML** (your own widget, sandboxed) · **Home Assistant** (entities, tap to switch) · **Pushed value** · **Notifications** (both fed by [webhooks](#webhooks)) · **News feeds** (your RSS and Atom feeds; with its "Open articles on the PC" option, a tap opens the article on the PC) · Hacker News · Exchange rates (ECB) · Crypto prices · Image / webcam · **Camera** (a live picture from an IP camera over RTSP, pulled by ffmpeg on the PC) |
+| **Время** | Часы (со строкой состояния и погодой) · Аналоговые часы (любой часовой пояс) · **Часы словами** · Мировое время · Календарь · **Следующее** · Ход времени (день / неделя / месяц / год) · Обратный отсчёт · Помидоро · Быстрый таймер · Секундомер |
+| **Погода и небо** | Погода · Прогноз (по часам / на 7 дней) · Солнце и луна (остаток светового дня, УФ, фаза луны) · **Луна** · Качество воздуха (европейский индекс, PM2.5, PM10, O₃, NO₂) |
+| **Компьютер** | **Правила** (какие действуют, пауза) · **Бережная зарядка** · «В эфире» (микрофон / камера / OBS) · OBS Studio (эфир, запись, сцены) · **Диктовка** (говорите в телефон — текст печатается на ПК; микрофон запрашивается при первом использовании) · **Консоль приложения** (Windows: кнопки и регулятор для активного приложения, задаются в «Настройки › Общие»; используйте имя процесса активного приложения со вкладки «Подробности» Диспетчера задач; приложения из Store могут все отображаться как `ApplicationFrameHost`, а вкладки терминала — как `WindowsTerminal`) · Батареи устройств (наушники, мыши, клавиатуры) · Docker / Podman (контейнеры, запуск / остановка) · Плитка показателя · Шкала · График · Видеокарта подробно · Память и диски · Топ процессов · Процессы · Сейчас играет · Радио · Громкость · **Спектр** (Windows: живой спектр того, что играет на ПК, как у классических LED-визуализаторов) · Сетка ярлыков · Большая кнопка · **Команда** (вывод PowerShell / bash / zsh, обновляется каждые N секунд) |
+| **ИИ и код** | Квоты ИИ · Кольцо квоты · Сессии ИИ · GitHub |
+| **Личное** | **Повестка** (календари Google / Outlook / iCloud) · Заметка · Чек-лист (сбрасывается каждый день) · Счётчик · Дыхание · Цитата · Заголовок · Батарея телефона · **Компьютеры** (переключение между сопряжёнными компьютерами) · **Фоторамка** (слайд-шоу из папки с фото на ПК) |
+| **Веб и данные** | **Свой HTML** (ваш собственный виджет в песочнице) · **Home Assistant** (сущности, нажатие переключает) · **Переданное значение** · **Уведомления** (оба получают данные из [вебхуков](#вебхуки)) · **Новостные ленты** (ваши RSS и Atom; с параметром «Открывать статьи на ПК» нажатие открывает статью на компьютере) · Hacker News · Курсы валют (ЕЦБ) · Криптовалюты · Изображение / веб-камера · **Камера** (живое изображение с IP-камеры по RTSP, поток получает ffmpeg на ПК) |
 
-Widgets scale to the size you give them. Weather, air quality, rates, crypto and Hacker News come straight from free
-public APIs ([Open-Meteo](https://open-meteo.com), [Frankfurter](https://frankfurter.dev), [CoinGecko](https://www.coingecko.com),
-[HN](https://github.com/HackerNews/API)) on the phone, without API keys, and keep their last data when offline.
-If the phone has no internet, these five supported HTTPS feeds can fall back through the agent over USB.
-The feed proxy is not available over Wi-Fi. See [PRIVACY.md](../PRIVACY.md) for the services contacted.
+Виджеты подстраиваются под заданный размер. Погода, качество воздуха, курсы, криптовалюты и Hacker News приходят на
+телефон напрямую из бесплатных открытых API ([Open-Meteo](https://open-meteo.com), [Frankfurter](https://frankfurter.dev),
+[CoinGecko](https://www.coingecko.com), [HN](https://github.com/HackerNews/API)) без ключей и сохраняют последние
+данные без сети. Если у телефона нет интернета, эти пять HTTPS-источников могут идти через агент по USB. По Wi-Fi
+такой обход недоступен. Список сервисов — в [PRIVACY.md](../PRIVACY.md).
 
-**Camera** shows an IP camera that streams over RTSP. Add it in **Settings › General › Cameras** with a name and its
-RTSP address (`rtsp://user:password@192.168.1.20:554/…`; the camera's manual or app has the exact path), then pick it
-in the widget. The agent pulls the stream with [ffmpeg](https://ffmpeg.org), which you install: `winget install
-Gyan.FFmpeg` on Windows, `brew install ffmpeg` on macOS, your distribution's `ffmpeg` package on Linux. Restart
-DeckBox afterwards so it finds ffmpeg in PATH, or enter ffmpeg's full path in the same card. A camera runs only while
-a Camera widget for it is on the phone's screen, at 5 frames a second by default; pick 1 to 10 next to the camera (smoother costs more CPU on the PC and more data to the phone), and expect a short delay. Choose
-**UDP** for a camera that doesn't stream over TCP. At most 4 cameras play at the same time.
+**Камера** показывает IP-камеру с потоком RTSP. Добавьте её в **Настройки › Общие › Камеры**: имя и адрес RTSP
+(`rtsp://user:password@192.168.1.20:554/…`; точный путь есть в инструкции или приложении камеры), затем выберите её
+в виджете. Агент получает поток через [ffmpeg](https://ffmpeg.org), который нужно установить: `winget install
+Gyan.FFmpeg` в Windows, `brew install ffmpeg` в macOS, пакет `ffmpeg` вашего дистрибутива в Linux. После этого
+перезапустите DeckBox, чтобы он нашёл ffmpeg в PATH, или укажите полный путь к ffmpeg в той же карточке. Камера
+работает, только пока её виджет на экране телефона, по умолчанию 5 кадров в секунду; рядом с камерой можно выбрать от
+1 до 10 (плавнее — больше нагрузка на ПК и больше данных на телефон), небольшая задержка неизбежна. Для камер, которые
+не отдают поток по TCP, выберите **UDP**. Одновременно работает не больше 4 камер.
 
-**Smart Stack** combines up to 12 widgets in one slot. Add it from the Layout category, then drag widgets into it or
-use its picker. Reorder cards, open their settings, or disable individual cards. Tap the dots or swipe vertically to
-change cards; horizontal swipes still change pages. Focused controls pause rotation. Command widgets belong directly
-on a page rather than inside a stack.
+**Смарт-стопка** объединяет до 12 виджетов в одном месте. Добавьте её из категории «Раскладка», затем перетащите
+виджеты внутрь или выберите их из списка. Карточки можно переупорядочить, открыть их настройки или отключить по
+отдельности. Нажмите на точки или проведите вертикально, чтобы сменить карточку; горизонтальный свайп по-прежнему
+листает страницы. Пока элемент в фокусе, смена приостанавливается. Виджеты команд ставьте прямо на страницу, а не в стопку.
 
-**CodexBar** is an optional source: install its `codexbar` CLI on the computer and the agent reads `usage --json`.
-The CodexBar template and quota widget can show every provider reported by the CLI, with configurable provider rotation.
-An optional cost overview shows the last 30 days of spend and tokens; it is off by default.
-Local Claude, Codex and Antigravity sources keep refreshing when CodexBar is absent, fails, or reports stale data. General settings
-provide defaults; a widget's own options override them, including an empty provider selection.
-Install a compatible CLI from [CodexBar](https://github.com/steipete/CodexBar) if available for your system.
-DeckBox uses native local sources when no compatible CLI is installed.
+**CodexBar** — необязательный источник: установите на компьютер его CLI `codexbar`, и агент будет читать
+`usage --json`. Шаблон CodexBar и виджет квот могут показывать все сервисы, которые сообщает CLI, с настраиваемой
+сменой. Необязательная карточка расходов показывает траты и токены за последние 30 дней; по умолчанию она выключена.
+Локальные источники Claude, Codex и Antigravity продолжают обновляться, если CodexBar нет, он падает или отдаёт
+устаревшие данные. Общие настройки задают значения по умолчанию; параметры виджета их переопределяют, включая пустой
+выбор сервисов. Совместимый CLI можно установить из [CodexBar](https://github.com/steipete/CodexBar), если он есть для
+вашей системы; без него DeckBox использует локальные источники.
 
-**Native Antigravity quotas** use a running app/hub's advertised HTTP port and CSRF token, or a signed-in
-`agy` CLI (1.1.11 or later). The CLI fallback runs `agy -p /usage --output-format json`, without a model prompt,
-and also finds the standard Windows installation in `%LOCALAPPDATA%\agy\bin`. Run `agy` in your terminal to sign
-in if needed. The agent reads measured session and weekly buckets, plus the plan when the local server provides it;
-CLI reports without plan metadata keep the neutral Antigravity title. Older IDE servers can supply model quotas
-through `GetUserStatus`; unavailable measurements are skipped, and weekly limits are never invented. Refresh
-failures retain the last measurements with an error. HTTPS-only endpoints without a compatible CLI can use CodexBar.
+**Квоты Antigravity** берутся из запущенного приложения или хаба (его HTTP-порт и CSRF-токен) или из авторизованного
+CLI `agy` (1.1.11 или новее). Запасной вариант через CLI запускает `agy -p /usage --output-format json` без запроса к
+модели и находит стандартную установку Windows в `%LOCALAPPDATA%\agy\bin`. При необходимости запустите `agy` в
+терминале, чтобы войти. Агент читает измеренные сессионные и недельные лимиты и тариф, если локальный сервер его
+сообщает. Старые серверы IDE могут отдавать квоты моделей через `GetUserStatus`; недоступные значения пропускаются,
+недельные лимиты никогда не выдумываются. При ошибке обновления сохраняются последние значения с сообщением об ошибке.
 
-Tap an AI session to see its model, timing and token details. Token counters describe the local session rather than
-the account allowance. Prompt/response text and tool arguments are not included in this panel data.
+Коснитесь сессии ИИ, чтобы увидеть модель, время и токены. Счётчики токенов относятся к локальной сессии, а не к
+лимиту аккаунта. Тексты запросов и ответов и аргументы инструментов в данные панели не попадают.
 
-## Layout editor & settings
+## Редактор и настройки
 
-Double-click the tray icon on Windows (or open <http://127.0.0.1:8765>):
+Дважды щёлкните значок в трее Windows (или откройте <http://127.0.0.1:8765>):
 
-<p align="center"><img src="screenshots/settings-editor.png" width="900" alt="The layout editor"></p>
+<p align="center"><img src="screenshots/settings-editor.png" width="900" alt="Редактор страниц"></p>
 
-- **Pages**: add pages from templates, reorder, show/hide, export and import them as files, choose how long each page
-  may stay before the panel goes home; arrange widgets on a phone-sized canvas (drag to move, drag
-  the corner to resize) and set their options. The widget palette is grouped by category and searchable.
-  **Live preview** swaps the canvas for the real panel with your unsaved changes and live data.
-- **Rules**: automations, see [Rules](#rules).
-- **Shortcuts**: add, edit, reorder and test keys (label, emoji, colour). A key runs a program, presses a key
-  combination (`ctrl+shift+m`), types text or runs a macro (keys, text, waits, other shortcuts); on / off keys show
-  their state on the phone (mute does by itself, others from a pushed value).
-- **Webhooks**: the webhook key, copy-paste examples, test buttons and the values pushed so far.
-- **General**: weather location search; calendars (ICS links from Google, Outlook or iCloud), Home Assistant and OBS
-  connections; night mode; theme and accent colour, orientation (landscape, portrait or follow the phone), clock seconds,
-  vibration, volume-key paging and the phone's sensors (brightness that follows the room, the night screen when the
-  room goes dark, wave to wake it); [OLED burn-in protection (unreleased)](#appearance); [page switching](#rules) (home page, countdown, back home after);
-  kiosk options (screen pinning, the panel as the phone's home screen so it starts after a reboot, keep the phone
-  awake on the charger; no root needed); on macOS, optionally follow the computer lock (sleep the phone on lock,
-  wake it and open DeckBox on unlock, with an ADB connection; phones secured by a PIN or password must be unlocked
-  manually). Lock sync needs the agent to run in the macOS GUI session; [battery care](#rules);
-  [Claude Code permission prompts](#claude-code-permission-prompts);
-  phones (several at once, each with its own pages); Wi-Fi & Tailscale; updates.
-- **Advanced**: the raw JSON.
+- **Страницы**: добавляйте страницы из шаблонов, меняйте порядок, показывайте и скрывайте, сохраняйте в файлы и
+  загружайте из файлов, выбирайте, сколько страница может оставаться на экране до возврата на главную; расставляйте
+  виджеты на холсте размером с телефон (перетаскивание — переместить, угол — изменить размер) и задавайте их параметры.
+  Список виджетов разбит по категориям и поддерживает поиск. **Предпросмотр** заменяет холст настоящей панелью с
+  несохранёнными изменениями и живыми данными.
+- **Правила**: автоматизация, см. [Правила](#правила).
+- **Ярлыки**: добавляйте, изменяйте, переупорядочивайте и проверяйте кнопки (подпись, эмодзи, цвет). Кнопка запускает
+  программу, нажимает сочетание клавиш (`ctrl+shift+m`), печатает текст или выполняет макрос (клавиши, текст, паузы,
+  другие ярлыки); кнопки-переключатели показывают своё состояние на телефоне (выключение звука — само, остальные — по
+  переданному значению).
+- **Вебхуки**: ключ вебхука, готовые примеры, кнопки проверки и уже переданные значения.
+- **Общие**: поиск города для погоды; календари (ссылки ICS из Google, Outlook или iCloud), подключения Home Assistant
+  и OBS; ночной режим; цвет акцента, ориентация (альбомная, портретная или как у телефона), секунды на часах, вибрация,
+  перелистывание кнопками громкости и датчики телефона (яркость по освещению, ночной экран в темноте, пробуждение
+  взмахом руки); [защита OLED от выгорания](#внешний-вид); [переключение страниц](#правила) (главная страница, отсчёт,
+  возврат на главную); режим киоска (закрепление экрана, панель как главный экран телефона, чтобы она запускалась
+  после перезагрузки, телефон не засыпает на зарядке; root не нужен); в macOS можно следовать блокировке компьютера
+  (усыплять телефон при блокировке, будить и открывать DeckBox при разблокировке через ADB; телефоны с PIN-кодом или
+  паролем разблокируются вручную, а агент должен работать в графической сессии macOS);
+  [бережная зарядка](#правила); [запросы разрешений Claude Code](#запросы-разрешений-claude-code);
+  телефоны (несколько одновременно, у каждого свои страницы); Wi-Fi и Tailscale; обновления.
+- **Расширенные**: настройки в виде JSON.
 
-Settings live in `%APPDATA%\DeckBox\config.json` (Linux: `~/.config/DeckBox`, macOS: `~/Library/Application Support/DeckBox`);
-the phone picks up changes within a few seconds.
-Use UTF-8 when editing this file externally. Saved page and shortcut icons use JSON Unicode escapes to survive
-ANSI-based editors; the settings editor displays the actual symbols. On startup, known double-encoded forms of
-the four affected default icons are repaired, with the original file kept in `config.json.bak`.
+Настройки хранятся в `%APPDATA%\DeckBox\config.json` (Linux: `~/.config/DeckBox`, macOS:
+`~/Library/Application Support/DeckBox`); телефон получает изменения за несколько секунд. Редактируя файл вручную,
+сохраняйте его в UTF-8. Значки страниц и ярлыков записываются экранированными Unicode-последовательностями JSON,
+чтобы пережить редакторы в кодировке ANSI; редактор настроек показывает сами символы.
 
-## Claude Code permission prompts
+## Запросы разрешений Claude Code
 
-When Claude Code asks for permission (run a command, edit a file, use an MCP tool…), the phone shows the request —
-project, tool and the command or file — with **Allow** and **Deny**. Turn it on in **Settings › General › Claude Code
-permission prompts** and press *Install hook*: DeckBox adds a `PermissionRequest` hook to `~/.claude/settings.json`
-(and keeps a backup next to it as `settings.json.deckbox.bak`). If the phone is not connected or nobody answers in
-time, the hook returns no decision and Claude Code asks in the terminal as usual. Optionally only when you have been
-away from the keyboard for a minute.
+Когда Claude Code просит разрешение (выполнить команду, изменить файл, использовать инструмент MCP…), телефон
+показывает запрос — проект, инструмент и команду или файл — с кнопками **Разрешить** и **Запретить**. Включите это в
+**Настройки › Общие › Запросы разрешений Claude Code** и нажмите *Установить хук*: DeckBox добавит хук
+`PermissionRequest` в `~/.claude/settings.json` (и сохранит рядом резервную копию `settings.json.deckbox.bak`). Если
+телефон не подключён или никто не ответил вовремя, хук не принимает решения, и Claude Code спрашивает в терминале, как
+обычно. Можно включать это только тогда, когда вас нет за клавиатурой больше минуты.
 
-WorkBuddy speaks the same hook protocol. Add the same `PermissionRequest` entry to `~/.workbuddy/settings.json` by
-hand: *Install hook* writes to `~/.claude/settings.json` only. WorkBuddy keeps its sessions in `~/.workbuddy`, so the
-card takes the project name from the workspace name WorkBuddy stores
-(`~/.workbuddy/workspace-display-names.json`) instead of the folder name.
+WorkBuddy использует тот же протокол хуков. Добавьте такую же запись `PermissionRequest` в
+`~/.workbuddy/settings.json` вручную: *Установить хук* пишет только в `~/.claude/settings.json`. WorkBuddy хранит
+сессии в `~/.workbuddy`, поэтому карточка берёт имя проекта из названия рабочего пространства WorkBuddy
+(`~/.workbuddy/workspace-display-names.json`), а не из имени папки.
 
-## Webhooks
+## Вебхуки
 
-The agent accepts data as well as serving it, so anything that can make an HTTP request can put things on the panel:
+Агент не только отдаёт данные, но и принимает их, поэтому всё, что умеет отправлять HTTP-запросы, может выводить
+информацию на панель:
 
 ```sh
-curl -X POST http://127.0.0.1:8765/api/push/temperature -d 21.5                     # shown by a "Pushed value" widget with key "temperature"
+curl -X POST http://127.0.0.1:8765/api/push/temperature -d 21.5                     # покажет виджет «Переданное значение» с ключом temperature
 curl -X POST http://127.0.0.1:8765/api/push/build -H "Content-Type: application/json" \
-     -d '{"value":"passed","sub":"main · 3m 12s"}'
-curl -X POST "http://127.0.0.1:8765/api/push/door?ttl=600" -d open                    # expires after 10 minutes
+     -d '{"value":"успешно","sub":"main · 3 мин 12 с"}'
+curl -X POST "http://127.0.0.1:8765/api/push/door?ttl=600" -d open                    # пропадёт через 10 минут
 curl -X POST http://127.0.0.1:8765/api/notify -H "Content-Type: application/json" \
-     -d '{"title":"Deploy","text":"Production is live","level":"ok","page":"feeds"}' # toast + vibration (+ switch page)
-curl -X POST http://127.0.0.1:8765/api/goto/music                                     # switch the phone to a page (id or number)
-curl -X POST "http://127.0.0.1:8765/api/goto/music?countdown=0"                        # …without the on-screen countdown
-curl -X POST http://127.0.0.1:8765/api/refresh                                        # refresh quotas/GitHub and the panel now (?reload=1 reloads it)
+     -d '{"title":"Деплой","text":"Продакшен запущен","level":"ok","page":"feeds"}'  # уведомление + вибрация (+ переход на страницу)
+curl -X POST http://127.0.0.1:8765/api/goto/music                                     # переключить телефон на страницу (id или номер)
+curl -X POST "http://127.0.0.1:8765/api/goto/music?countdown=0"                        # …без обратного отсчёта на экране
+curl -X POST http://127.0.0.1:8765/api/refresh                                        # обновить квоты / GitHub и панель сейчас (?reload=1 перезагружает её)
 ```
 
-| Payload field | Meaning |
+| Поле | Что значит |
 |---|---|
-| `value`, `title`, `sub`, `unit`, `icon`, `color` | What the widget shows. Plain text or a number works too. |
-| `level` | `ok` / `warn` / `error` colours it; values like `passed`, `failed`, `running` are coloured automatically. |
-| `progress` | 0–1 or 0–100: a bar under the value, or the ring in gauge style. |
-| `items` | A list (strings or `{label, value, level}`) for the list style. |
-| `ttl` | Seconds until the value disappears (also `?ttl=`). |
+| `value`, `title`, `sub`, `unit`, `icon`, `color` | Что показывает виджет. Подойдёт и простой текст или число. |
+| `level` | `ok` / `warn` / `error` задаёт цвет; значения вроде `passed`, `failed`, `running` окрашиваются автоматически. |
+| `progress` | 0–1 или 0–100: полоска под значением или кольцо в стиле шкалы. |
+| `items` | Список (строки или `{label, value, level}`) для стиля «список». |
+| `ttl` | Через сколько секунд значение исчезнет (также `?ttl=`). |
 
-Notifications take `title`, `text`, `level`, `vibrate`, `seconds`, `wake` (light up the night screen) and `page`.
-`GET /api/push` lists the values and `DELETE /api/push/<key>` removes one; values survive restarts.
+Уведомления принимают `title`, `text`, `level`, `vibrate`, `seconds`, `wake` (разбудить ночной экран) и `page`.
+`GET /api/push` выдаёт список значений, `DELETE /api/push/<key>` удаляет одно; значения переживают перезапуск.
 
-From this PC no key is needed. With Wi-Fi on, other machines on the network or Tailscale can use the same endpoints
-on `https://<pc>:8766` with the **webhook key** from the settings (`Authorization: Bearer <key>`, or `?token=<key>`
-for senders that cannot set headers). That key opens only the webhook endpoints, never the phone API.
+С этого компьютера ключ не нужен. Если включён Wi-Fi, другие компьютеры в сети или в Tailscale могут обращаться к тем
+же адресам на `https://<pc>:8766` с **ключом вебхука** из настроек (`Authorization: Bearer <key>` или `?token=<key>`
+для отправителей, которые не умеют задавать заголовки). Этот ключ открывает только вебхуки и никогда — API телефона.
 
-## Rules
+## Правила
 
-**Settings › Rules** lets the panel react to what happens on the computer. Each rule is *when → then*:
+**Настройки › Правила** позволяют панели реагировать на происходящее на компьютере. Каждое правило устроено как
+*когда → тогда*:
 
-| When | Then |
+| Когда | Тогда |
 |---|---|
-| an AI session needs you / is working (optionally for some projects) | show a page |
-| music or video plays (optionally in some apps: `Spotify\|Music`) | show a notification (`{detail}` = what happened) |
-| an app is running (`zoom\|Teams\|obs64`) | push a value (e.g. `onair`, shown by a Pushed value widget) |
-| an app is in front (`Code\|obs64\|Safari` — needs Accessibility on macOS, `xdotool` on Linux; not on Wayland) | |
-| the microphone / the camera is in use (Windows, Linux) | |
-| a calendar event is on (optionally by title) | |
-| OBS is recording or streaming | |
-| the CPU stays above a percentage for 15 s | |
-| you have been away from the keyboard for N minutes | |
-| it is between two times (`22:00-07:00`) | |
-| a pushed value is on, or above / below / equal to a value (a webhook from Home Assistant, a doorbell…) | run a shortcut |
-| an AI quota is above a percentage | |
-| a GitHub review is requested · CI fails on my pull request | |
-| a device battery is low · the network is slow or unreachable | |
-| always (with the days and hours below, for schedules) | |
+| сессия ИИ ждёт вас / работает (можно только для некоторых проектов) | показать страницу |
+| играет музыка или видео (можно в некоторых приложениях: `Spotify\|Music`) | показать уведомление (`{detail}` — что произошло) |
+| запущено приложение (`zoom\|Teams\|obs64`) | передать значение (например `onair`, его покажет виджет «Переданное значение») |
+| приложение на переднем плане (`Code\|obs64\|Safari` — в macOS нужен доступ «Универсальный доступ», в Linux `xdotool`; не в Wayland) | |
+| используется микрофон / камера (Windows, Linux) | |
+| идёт событие календаря (можно по названию) | |
+| OBS пишет или транслирует | |
+| ЦП загружен выше заданного процента 15 секунд | |
+| вас нет за клавиатурой N минут | |
+| время между двумя отметками (`22:00-07:00`) | |
+| переданное значение включено или выше / ниже / равно значению (вебхук из Home Assistant, дверной звонок…) | запустить ярлык |
+| квота ИИ выше процента | |
+| запрошено ревью в GitHub · CI упал в моём pull request | |
+| садится батарея устройства · сеть медленная или недоступна | |
+| всегда (с днями и часами ниже, для расписаний) | |
 
-Every rule can also be limited to **some days** and **some hours**, act only when its condition **lasts N seconds**,
-**rest** for a while before acting again, and has a **priority** and its own **countdown** for page switches.
+Каждое правило можно ограничить **днями** и **часами**, срабатывать только если условие **длится N секунд**,
+**ждать** перед повторным срабатыванием; у правила есть **приоритет** и свой **отсчёт** для смены страниц.
 
-**Page switches are calm.** The phone counts down before a rule changes the page (*"Claude needs me — switching to
-AI in 3…"*, tap **Stay** to keep the page or **Go now**), waits while you are using the panel, keeps a minimum time
-between two automatic switches and lets the higher-priority rule go first; rules that end before their turn are
-dropped, so a burst of rules never bounces the screen back and forth. Settings › General › Page switching sets the
-countdown, how long to wait after a touch, the minimum time between switches, the home page and how long a rule may
-keep its page (30 minutes by default, so a rule that never ends can't hold the panel for good; 0 keeps it for as long
-as the rule lasts). The phone's overview (and the Rules widget) pauses all rules for an hour.
+**Смена страниц спокойная.** Перед тем как правило сменит страницу, телефон ведёт обратный отсчёт (*«Claude ждёт меня —
+переход к ИИ через 3…»*, кнопка **Остаться** сохраняет страницу, **Перейти сейчас** — переходит), ждёт, пока вы
+пользуетесь панелью, выдерживает минимальное время между двумя автоматическими переключениями и пропускает вперёд
+правило с более высоким приоритетом; правила, закончившиеся до своей очереди, отбрасываются, поэтому вспышка правил
+не дёргает экран туда-сюда. В «Настройки › Общие › Переключение страниц» задаются отсчёт, ожидание после касания,
+минимальное время между переключениями, главная страница и то, сколько правило может держать свою страницу (по
+умолчанию 30 минут, чтобы бесконечное правило не захватило панель навсегда; 0 — пока правило действует). Обзор страниц
+на телефоне (и виджет «Правила») может приостановить все правила на час.
 
-With **only while it lasts**, the effect ends with the condition: the phone goes back to the page it was on (unless
-you moved on yourself) and stays on the rule's page instead of returning home when idle; a pushed value is removed
-again. The editor starts from examples (Claude needs me → AI page, music → Music page, on air during calls, CPU busy,
-away → Ambient, evenings → Calm, doorbell, quota warning, review requested, CI failed, workday mornings, low battery,
-too warm) and has a Test button for each rule.
+С параметром **только пока длится** действие заканчивается вместе с условием: телефон возвращается на прежнюю
+страницу (если вы сами не ушли с неё) и не возвращается на главную после простоя, пока правило действует; переданное
+значение снова удаляется. Редактор начинается с примеров (Claude ждёт меня → страница ИИ, музыка → страница музыки,
+«В эфире» во время звонков, ЦП загружен, меня нет → атмосфера, вечером → спокойствие, дверной звонок, предупреждение о
+квоте, запрошено ревью, CI упал, утром в будни, садится батарея, слишком жарко), и у каждого правила есть кнопка
+«Проверить».
 
-**Battery care** (Settings › General) keeps the phone's battery between two levels, 50–80 % by default, so a panel
-that is always plugged in lasts longer. Phones cannot stop charging without root, so DeckBox switches the power
-where it comes from: a smart plug in Home Assistant, or two shortcuts (for example `uhubctl` for a USB hub with
-switchable ports). The panel keeps running over Wi-Fi while the USB power is off.
+**Бережная зарядка** (Настройки › Общие) держит заряд батареи телефона между двумя уровнями, по умолчанию 50–80 %,
+чтобы постоянно подключённая панель служила дольше. Без root телефон не умеет сам прекращать зарядку, поэтому DeckBox
+переключает питание там, откуда оно приходит: умная розетка в Home Assistant или два ярлыка (например `uhubctl` для
+USB-хаба с отключаемыми портами). Пока питание по USB выключено, панель работает по Wi-Fi.
 
-## Security & privacy
+## Безопасность и конфиденциальность
 
-- The agent listens on `127.0.0.1` only. Requests with a foreign `Host` header (DNS rebinding) or a cross-site
-  `Origin` (CSRF) are rejected; only the settings page itself is accepted from browsers.
-- The optional Wi-Fi port (8766) only serves the panel API, only over TLS pinned to the paired certificate, and only
-  with the paired key. Settings, shortcut tests and pairing stay local. **New key** in the settings unpairs all phones.
-- The phone only ever sends a shortcut **id**; commands are defined on the PC. Command widgets work the same way:
-  the phone asks for a widget's output and never sees the command.
-- `config.json` (with the Wi-Fi, webhook and Home Assistant keys), its backup and the pushed data are readable only by
-  your user on macOS and Linux (0600); on Windows they live in your profile folder.
-- Webhooks from other machines need the separate webhook key, which cannot open the phone API and can be replaced
-  on its own.
-- Ending processes is limited to your own session, never touches a list of Windows-critical processes, and can be
-  switched off in the processes widget's options.
-- **Claude Code permission prompts** are opt-in. The hook only posts the request to the agent on `127.0.0.1`; the
-  phone can only answer allow or deny for that one request.
-- **Claude quota:** read with the OAuth token Claude Code stores in `~/.claude/.credentials.json`, sent only to
-  `api.anthropic.com/api/oauth/usage` (the endpoint behind Claude Code's `/usage`). The token is read-only: DeckBox
-  never refreshes it, so it can't interfere with Claude Code. This endpoint is undocumented and may change.
-  It is rate limited per account and shared with Claude Code, so DeckBox asks at most every 3 minutes, and waits
-  longer after errors and as long as a `429` asks for, across restarts too. An expired or refused token is not sent:
-  DeckBox waits until Claude Code renews it.
-- **Codex quota and sessions** are read from local files in `~/.codex/sessions`; Claude Code sessions from
+- Агент слушает только `127.0.0.1`. Запросы с чужим заголовком `Host` (DNS rebinding) или с посторонним `Origin`
+  (CSRF) отклоняются; из браузеров принимается только сама страница настроек.
+- Необязательный порт Wi-Fi (8766) отдаёт только API панели, только по TLS с закреплённым сертификатом и только с
+  ключом сопряжения. Настройки, проверка ярлыков и сопряжение остаются локальными. **Новый ключ** в настройках
+  отменяет сопряжение всех телефонов.
+- Телефон отправляет только **id** ярлыка; команды задаются на ПК. Виджеты команд работают так же: телефон просит вывод
+  виджета и никогда не видит саму команду.
+- `config.json` (с ключами Wi-Fi, вебхука и Home Assistant), его резервная копия и переданные данные в macOS и Linux
+  доступны только вашему пользователю (0600); в Windows они лежат в папке вашего профиля.
+- Вебхукам с других компьютеров нужен отдельный ключ вебхука, который не открывает API телефона и меняется отдельно.
+- Завершать можно только процессы вашей сессии, никогда — процессы из списка критичных для Windows; эту функцию можно
+  отключить в параметрах виджета процессов.
+- **Запросы разрешений Claude Code** включаются по желанию. Хук только отправляет запрос агенту на `127.0.0.1`;
+  телефон может лишь разрешить или запретить этот конкретный запрос.
+- **Квоты Claude** читаются с OAuth-токеном, который Claude Code хранит в `~/.claude/.credentials.json`, и
+  отправляются только на `api.anthropic.com/api/oauth/usage` (то, что стоит за `/usage` в Claude Code). Токен только
+  читается: DeckBox никогда его не обновляет и не мешает Claude Code. Этот адрес не документирован и может измениться.
+  У него есть ограничение частоты на аккаунт, общее с Claude Code, поэтому DeckBox спрашивает не чаще раза в 3 минуты,
+  а после ошибок и ответа `429` ждёт дольше, в том числе после перезапуска. Просроченный или отклонённый токен не
+  отправляется: DeckBox ждёт, пока Claude Code его обновит.
+- **Квоты и сессии Codex** читаются из локальных файлов в `~/.codex/sessions`, сессии Claude Code — из
   `~/.claude/sessions`.
-- **Native Antigravity quota:** the agent reads the running Antigravity server's port and CSRF token from its
-  process arguments and queries its loopback quota/status API, or invokes the signed-in CLI's structured usage
-  command. Only measured quota fields reach the panel; CLI conversation identifiers and token counters are omitted.
-  DeckBox does not manage Google OAuth credentials; the CLI uses its own authentication. CLI auto-updates are
-  disabled for these probes.
-- **No telemetry**: no accounts, no analytics, no crash reports. The [privacy policy](../PRIVACY.md) lists every
-  connection the agent and the app make (update check, weather, the widgets that use public APIs) and how to turn
-  each one off.
+- **Квоты Antigravity**: агент читает порт и CSRF-токен запущенного сервера Antigravity из аргументов процесса и
+  обращается к его локальному API квот или запускает команду использования авторизованного CLI. На панель попадают
+  только измеренные квоты; идентификаторы разговоров и счётчики токенов CLI отбрасываются. DeckBox не управляет
+  учётными данными Google OAuth; CLI использует свою авторизацию, а его автообновление для этих запросов отключено.
+- **Без телеметрии**: ни аккаунтов, ни аналитики, ни отчётов о сбоях. В [политике конфиденциальности](../PRIVACY.md)
+  перечислены все подключения агента и приложения (проверка обновлений, погода, виджеты с открытыми API) и как
+  отключить каждое.

@@ -1,53 +1,55 @@
-# Appearance
+# Внешний вид
 
-Appearance is optional. Existing settings without appearance overrides retain their original theme, spacing,
-widget-specific padding and responsive corner radii.
+DeckBox PRO — единственное оформление панели: графитовый фон, карточки с золотой кромкой и золотой акцент. Всё ниже —
+необязательные настройки поверх него. Настройки без собственных изменений внешнего вида сохраняют исходные отступы,
+внутренние поля виджетов и адаптивные скругления.
 
-## Desktop editor
+## Редактор на компьютере
 
-Open **General → Appearance** for global defaults. Choose a surface preset, then adjust:
+Откройте **Общие → Внешний вид**, чтобы задать общие значения. Выберите набор поверхностей, затем настройте:
 
-| Setting | Range | Scope |
+| Настройка | Диапазон | Где действует |
 |---|---|---|
-| Font | Original / sans / rounded / condensed / serif / mono | Global, page, widget |
-| Font size | 50–200% | Global, page, widget |
-| Corner radius | 0–32 CSS pixels | Global, page, widget |
-| Widget spacing | 0–24 CSS pixels | Global, page |
-| Widget inner padding | 0–24 CSS pixels | Global, page, widget |
-| Page edge padding | 0–32 CSS pixels | Global, page |
-| Widget border | Inherit / on / off | Global, page, widget |
-| Widget shadow | Inherit / on / off | Global, page, widget |
+| Шрифт | Исходный / без засечек / скруглённый / узкий / с засечками / моноширинный | Везде, страница, виджет |
+| Размер шрифта | 50–200 % | Везде, страница, виджет |
+| Скругление углов | 0–32 CSS-пикселя | Везде, страница, виджет |
+| Расстояние между виджетами | 0–24 CSS-пикселя | Везде, страница |
+| Внутренний отступ виджета | 0–24 CSS-пикселя | Везде, страница, виджет |
+| Отступ от края страницы | 0–32 CSS-пикселя | Везде, страница |
+| Рамка виджета | Наследовать / вкл. / выкл. | Везде, страница, виджет |
+| Тень виджета | Наследовать / вкл. / выкл. | Везде, страница, виджет |
 
-Use **Show live appearance preview** and choose a page to see unsaved settings in the real panel renderer.
-Save applies changes to connected phones. The preview does not save the settings by itself.
+Нажмите **Показать предпросмотр** и выберите страницу, чтобы увидеть несохранённые настройки в настоящей панели.
+«Сохранить» применяет изменения на подключённых телефонах. Сам предпросмотр ничего не сохраняет.
 
-In **Pages**, open **Page appearance** to override global defaults. Select a widget and open **Widget appearance**
-in its inspector to override that page. Widget duplication and page export/import keep these settings; Smart Stack
-children inherit their stack's appearance.
+Во вкладке **Страницы** откройте **Оформление страницы**, чтобы изменить общие значения для неё. Выберите виджет и
+откройте **Оформление виджета** в его настройках, чтобы изменить значения страницы. Дублирование виджета, экспорт и
+импорт страниц сохраняют эти настройки; виджеты внутри смарт-стопки наследуют оформление стопки.
 
-## Presets and inheritance
+## Наборы и наследование
 
-- **Original appearance** restores the original renderer at that scope, including responsive corners and each
-  widget's original padding. It can restore one original page or widget underneath a customized global preset.
-- **Rounded cards** uses 18px corners, 12px spacing/padding, borders and no shadow.
-- **Flat surfaces** uses solid surfaces, 12px corners/spacing/padding, no border and no shadow. Radius and spacing
-  remain independent controls: a flat surface can have rounded corners.
-- **Content only** uses transparent surfaces, square corners, 12px spacing/padding and no border/shadow.
-- **Seamless panel** uses square corners, zero grid spacing, 12px inner padding and borders.
+- **Исходный вид** возвращает исходное оформление на этом уровне, включая адаптивные скругления и родные отступы
+  каждого виджета. Так можно вернуть исходный вид одной странице или виджету при изменённом общем наборе.
+- **Скруглённые карточки**: скругление 18 пикселей, отступы 12 пикселей, рамки, без тени.
+- **Плоские поверхности**: сплошной фон, скругления и отступы 12 пикселей, без рамки и тени. Скругление и отступы
+  настраиваются отдельно: у плоской поверхности могут быть скруглённые углы.
+- **Только содержимое**: прозрачный фон, прямые углы, отступы 12 пикселей, без рамки и тени.
+- **Сплошная панель**: прямые углы, без промежутков между виджетами, внутренний отступ 12 пикселей и рамки.
 
-Choosing a preset replaces overrides at that scope. Individual adjustments then override its defaults. **Inherit**
-on an individual control removes only that explicit adjustment, restoring the preset/parent value.
-**Reset to inherited appearance** removes all appearance overrides at that scope.
+Выбор набора заменяет изменения на этом уровне. Отдельные настройки затем переопределяют значения набора.
+**Наследовать** у отдельной настройки убирает только её, возвращая значение набора или уровня выше.
+**Сбросить внешний вид** убирает все изменения оформления на этом уровне.
 
-Theme and accent remain under Display. Flat removes decorative surface gradients/blur/shadow defaults while
-retaining meaningful content such as album art, signal-meter colors and circular dials. Explicit shadow and border
-choices take precedence over a preset. Page edge padding always reserves the device safe area and page-navigation
-space. Grid spacing uses CSS grid gap, keeping widget coordinates unchanged.
+Цвет акцента настраивается в разделе «Дисплей» (по умолчанию — золото PRO `#d4af37`). Плоский набор убирает
+декоративные градиенты, размытие и тени, но оставляет значимое содержимое: обложки альбомов, цвета индикаторов и
+круглые шкалы. Явно выбранные тень и рамка важнее набора. Отступ от края страницы всегда оставляет место под
+безопасную зону устройства и навигацию по страницам. Расстояние между виджетами задаётся промежутком CSS-сетки,
+поэтому координаты виджетов не меняются.
 
-## Configuration
+## Файл настроек
 
-The same optional object is supported at `display.appearance`, `pages[].appearance` and
-`pages[].widgets[].appearance`. Grid spacing and page edge padding are ignored at widget scope.
+Один и тот же необязательный объект поддерживается в `display.appearance`, `pages[].appearance` и
+`pages[].widgets[].appearance`. Расстояние между виджетами и отступ от края страницы на уровне виджета игнорируются.
 
 ```json
 {
@@ -66,7 +68,7 @@ The same optional object is supported at `display.appearance`, `pages[].appearan
 }
 ```
 
-Supported style values are `default`, `cards`, `flat`, `borderless` and `seamless`. Supported font values are
-`default`, `sans`, `rounded`, `condensed`, `serif` and `mono`, and `fontScale` is clamped between `50` and `200`.
-Omitted/null properties inherit. Zero and false are explicit choices. Imported numeric values are bounded;
-unknown style or font names are discarded, and appearance does not accept arbitrary CSS.
+Допустимые значения `style`: `default`, `cards`, `flat`, `borderless` и `seamless`. Допустимые значения `font`:
+`default`, `sans`, `rounded`, `condensed`, `serif` и `mono`; `fontScale` ограничен диапазоном от `50` до `200`.
+Пропущенные и `null`-свойства наследуются. Ноль и `false` — это явный выбор. Импортированные числа ограничиваются;
+неизвестные стили и шрифты отбрасываются, а произвольный CSS не принимается.

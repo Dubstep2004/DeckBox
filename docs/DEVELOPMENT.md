@@ -1,59 +1,59 @@
-# Development guide
+# Руководство разработчика
 
-[Back to DeckBox](../README.md) · [Installation and connections](SETUP.md) · [User guide](GUIDE.md)
+[К описанию DeckBox](../README.md) · [Установка и подключения](SETUP.md) · [Руководство пользователя](GUIDE.md)
 
-[How it works](#how-it-works) · [Development](#development)
+[Как это устроено](#как-это-устроено) · [Разработка](#разработка)
 
-## How it works
+## Как это устроено
 
 ```mermaid
 flowchart LR
-  subgraph Phone["Android phone"]
-    UI["Panel UI<br/>(WebView, assets/www)"] -->|"/agent/*"| Proxy["Native proxy<br/>(AgentLink)"]
-    UI -->|weather, rates, HN| Web(("Public APIs"))
+  subgraph Phone["Телефон Android"]
+    UI["Интерфейс панели<br/>(WebView, assets/www)"] -->|"/agent/*"| Proxy["Нативный прокси<br/>(AgentLink)"]
+    UI -->|погода, курсы, HN| Web(("Открытые API"))
   end
   subgraph PC["Windows / Linux / macOS"]
-    Agent["DeckBox agent<br/>(.NET 10)"]
-    Agent --- Mon["System, GPU, media, volume,<br/>processes, sessions, quotas, GitHub"]
-    Agent --- Set["Settings page &<br/>layout editor"]
+    Agent["Агент DeckBox<br/>(.NET 10)"]
+    Agent --- Mon["Система, ГП, медиа, громкость,<br/>процессы, сессии, квоты, GitHub"]
+    Agent --- Set["Страница настроек<br/>и редактор страниц"]
   end
   Proxy -->|"USB: adb reverse → 127.0.0.1:8765"| Agent
-  Proxy -.->|"Wi-Fi / Tailscale: HTTPS :8766,<br/>pinned certificate + key"| Agent
-  Hooks["Scripts, CI,<br/>Home Assistant"] -->|webhooks| Agent
+  Proxy -.->|"Wi-Fi / Tailscale: HTTPS :8766,<br/>закреплённый сертификат + ключ"| Agent
+  Hooks["Скрипты, CI,<br/>Home Assistant"] -->|вебхуки| Agent
 ```
 
-- The WebView never talks to the PC directly: requests to `/agent/*` are intercepted by the app and forwarded over
-  the adb tunnel (or the pinned HTTPS connection), so there are no CORS, mixed-content or local-network issues.
-- Live events (page switches, notifications, permission prompts) arrive over one server-sent-events stream
-  (`/api/stream`); plain polling remains as the fallback.
-- The agent samples only what is on screen: process lists and command widgets run only while a phone looks at them.
+- WebView никогда не обращается к ПК напрямую: запросы к `/agent/*` перехватывает приложение и пересылает их через
+  туннель adb (или защищённое HTTPS-подключение), поэтому нет проблем с CORS, смешанным содержимым и локальной сетью.
+- События в реальном времени (смена страниц, уведомления, запросы разрешений) приходят по одному потоку
+  server-sent events (`/api/stream`); обычный опрос остаётся запасным вариантом.
+- Агент собирает только то, что на экране: списки процессов и виджеты команд работают, только пока телефон на них смотрит.
 
-## Development
+## Разработка
 
-Contributions are welcome: read [CONTRIBUTING.md](../CONTRIBUTING.md) first (scope, the security model, privacy and tests).
+Помощь приветствуется: сначала прочитайте [CONTRIBUTING.md](../CONTRIBUTING.md) (объём изменений, модель
+безопасности, конфиденциальность и тесты).
 
-Use the .NET 10 SDK for the agent, JDK 17 and Android SDK Platform 35 for Android builds, and Python 3 plus
-Node.js 22 for the browser tooling. The Gradle wrapper downloads Gradle automatically.
+Для агента нужен .NET 10 SDK, для сборки Android — JDK 17 и Android SDK Platform 35, для браузерных инструментов —
+Python 3 и Node.js 22. Gradle Wrapper скачивает Gradle сам.
 
-Run the following commands from the repository root unless a working directory is shown.
+Команды ниже выполняются из корня репозитория, если не указана другая папка.
 
-### Local preview
+### Локальный предпросмотр
 
 ```sh
 python tools/demo-server.py
 ```
 
-The server stays running in this terminal. Open <http://127.0.0.1:8790/panel/> or
-<http://127.0.0.1:8790/settings/>. Use a second terminal for other commands.
+Сервер работает в этом терминале. Откройте <http://127.0.0.1:8790/panel/> или <http://127.0.0.1:8790/settings/>.
+Для других команд используйте второй терминал.
 
-### Checks
+### Проверки
 
 ```sh
-python tools/check-release.py
 dotnet test agent/DeckBox.Agent.Tests
 ```
 
-Browser tests need Node.js 22 and Chromium:
+Браузерным тестам нужны Node.js 22 и Chromium:
 
 ```sh
 cd tools/ui-tests
@@ -62,43 +62,50 @@ npx playwright install chromium
 npx playwright test
 ```
 
-On Linux CI, use `npx playwright install --with-deps chromium`. Playwright starts its own demo on port 8781.
+В CI на Linux используйте `npx playwright install --with-deps chromium`. Playwright сам запускает демо на порту 8781.
+Тесты работают с английскими данными демо; посетители сайта видят русские.
 
-### Build and run
+### Сборка и запуск
 
-On Windows, from the repository root:
+В Windows из корня репозитория:
 
 ```powershell
-.\scripts\build.ps1 # release APK + five agent archives in dist/
+.\scripts\build.ps1 # APK и архивы агента в dist/
 ```
 
-To build only the Android app with API compatibility lint:
+Только приложение Android с проверкой совместимости API:
 
 ```powershell
 cd android
 .\gradlew.bat lintDebug assembleDebug
 ```
 
-Run the Windows agent from the repository root:
+Агент для Windows из корня репозитория:
 
 ```powershell
 dotnet run --project agent/DeckBox.Agent -f net10.0-windows10.0.19041.0
 ```
 
+В Linux или macOS агент запускается командой `dotnet run --project agent/DeckBox.Agent -f net10.0`, а APK
+собирается через `cd android && ./gradlew assembleDebug`. В Windows явный `-f` выбирает одну из двух целевых
+платформ проекта. Укажите путь к Android SDK в `ANDROID_HOME` или в `android/local.properties` (`sdk.dir`).
 
-On Linux or macOS, run the agent with `dotnet run --project agent/DeckBox.Agent -f net10.0` and build the APK
-with `cd android && ./gradlew assembleDebug`. On Windows, the explicit `-f` selects one of the project's two
-target frameworks. Set `ANDROID_HOME` or `android/local.properties` (`sdk.dir`) to the Android SDK location.
+### Установщик для Windows
 
-### Demo data and media
+[`installer/build.sh`](../installer/build.sh) собирает в Linux все файлы релиза: установщик
+`DeckBox-Setup-<версия>.exe` (NSIS, на русском, без прав администратора), архив агента
+`DeckBoxAgent-<версия>-win-x64.zip` для встроенного обновления, `DeckBox-<версия>.apk` и `SHA256SUMS-<версия>.txt`.
+Нужны .NET 10 SDK, JDK 17, Android SDK, `makensis` (`apt install nsis`), `zip` и ключ подписи (см. ниже).
 
-The demo server needs only Python. It serves the same demo as the [live one](https://ersinkoc.github.io/phonebox/)
-(made-up data in [`tools/pages/demo.js`](../tools/pages/demo.js)) straight from the sources, so a reload shows your
-changes. Size the browser window to 780 × 360 (the phone's screen in CSS pixels) and the panel behaves as on the
-phone, including webhooks: `curl -X POST http://127.0.0.1:8790/api/notify -d hello` (also `/api/push/<key>`,
-`/api/goto/<page>` and `/api/ask` for a made-up permission prompt).
+### Демо-данные и медиа
 
-With the demo server running, generate media from a second terminal:
+Демо-серверу нужен только Python. Он отдаёт то же демо, что и [сайт](https://dubstep2004.github.io/DeckBox/)
+(придуманные данные в [`tools/pages/demo.js`](../tools/pages/demo.js)), прямо из исходников, поэтому после
+перезагрузки видны ваши изменения. Задайте окну браузера размер 780 × 360 (экран телефона в CSS-пикселях), и панель
+поведёт себя как на телефоне, включая вебхуки: `curl -X POST http://127.0.0.1:8790/api/notify -d hello` (а также
+`/api/push/<key>`, `/api/goto/<page>` и `/api/ask` для придуманного запроса разрешения).
+
+Пока демо-сервер работает, медиа создаются из второго терминала:
 
 ```sh
 cd tools/ui-tests
@@ -107,29 +114,36 @@ node media.js tour
 node media.js hero
 ```
 
-Install the browser tooling above first. The tour also needs FFmpeg. Run `pwsh tools/make-icon.ps1` from the
-repository root to regenerate the application icon.
+Сначала установите браузерные инструменты выше. Для тура нужен ещё FFmpeg. Значок DeckBox PRO хранится в
+[`docs/brand/deckbox-icon.svg`](brand/deckbox-icon.svg); из него сделаны значки Android, `deckbox.ico` и значок сайта.
 
-### Source layout
+### Структура исходников
 
-The panel is plain ES modules: [`main.js`](../android/app/src/main/assets/www/main.js) (core, pages, navigation, data
-from the agent) and the widgets in [`widgets/`](../android/app/src/main/assets/www/widgets). A widget is a
-`{ needs, create(box, ctx) → { update(kind) } }` entry in the `W` registry, plus its styles in `style.css` and its catalogue entry
-(name, size, options) in [`widgets.json`](../agent/DeckBox.Agent/widgets.json), which drives the settings editor.
-Templates live in [`templates.json`](../agent/DeckBox.Agent/templates.json).
+Панель написана на обычных ES-модулях: [`main.js`](../android/app/src/main/assets/www/main.js) (ядро, страницы,
+навигация, данные от агента) и виджеты в [`widgets/`](../android/app/src/main/assets/www/widgets). Виджет — это
+запись `{ needs, create(box, ctx) → { update(kind) } }` в реестре `W`, его стили в `style.css` и описание в каталоге
+(название, размер, параметры) в [`widgets.json`](../agent/DeckBox.Agent/widgets.json), по которому строится редактор
+настроек. Шаблоны лежат в [`templates.json`](../agent/DeckBox.Agent/templates.json). Переводы — в
+[`i18n.js`](../android/app/src/main/assets/www/i18n.js) (ключи и каталог виджетов) и
+[`i18n-ru-dom.js`](../android/app/src/main/assets/www/i18n-ru-dom.js) (русские надписи страницы настроек, которые
+пишутся напрямую).
 
-### Isolated agent runs
+### Отдельный запуск агента
 
-To check a development agent beside an installed one, run it with an isolated settings file and port, for example
-`DeckBoxAgent.exe --config "D:\test folder\config.json" --port 18765`. Settings and browser checks use
-`http://127.0.0.1:18765/`; restarts preserve these arguments. The ordinary port remains 8765. Set `deviceSerial`
-explicitly in the test settings (an unmatched serial disables USB attachment) and turn off automatic updates.
-USB clients still use phone port 8765; do not assign the same phone to two agents at once.
+Чтобы проверить агент разработки рядом с установленным, запустите его с отдельным файлом настроек и портом, например
+`DeckBoxAgent.exe --config "D:\test folder\config.json" --port 18765`. Настройки и браузерные проверки используют
+`http://127.0.0.1:18765/`; перезапуск сохраняет эти аргументы. Обычный порт остаётся 8765. В тестовых настройках
+явно задайте `deviceSerial` (несовпадающий серийный номер отключает подключение по USB) и выключите автообновление.
+USB-клиенты всё равно используют порт телефона 8765; не назначайте один телефон двум агентам сразу.
 
-### Release signing
+### Подпись и выпуск
 
-Release APKs are signed with your own key when `DECKBOX_STORE_FILE`, `DECKBOX_STORE_PASSWORD`, `DECKBOX_KEY_ALIAS`
-and `DECKBOX_KEY_PASSWORD` are set (in `~/.gradle/gradle.properties` or the environment); otherwise the debug key
-is used. Debug builds make the WebView debuggable through `chrome://inspect`. To publish a release: bump the
-version in `DeckBox.Agent.csproj` and `android/app/build.gradle.kts`, commit, then run `.\scripts\release.ps1`.
-The script dispatches the gated GitHub release workflow; see [the release checklist](RELEASING.md).
+Релизные APK подписываются ключом DeckBox, если заданы `DECKBOX_STORE_FILE`, `DECKBOX_STORE_PASSWORD`,
+`DECKBOX_KEY_ALIAS` и `DECKBOX_KEY_PASSWORD` (в `~/.gradle/gradle.properties` или в переменных окружения); иначе
+используется отладочный ключ. Отладочные сборки позволяют отлаживать WebView через `chrome://inspect`.
+
+Чтобы выпустить версию: поднимите номер версии в `DeckBox.Agent.csproj` и `android/app/build.gradle.kts`
+(и `versionCode`), отправьте изменения и запустите workflow **DeckBox release** во вкладке Actions (или отправьте тег
+`v<версия>`). Он соберёт установщик, APK, архив агента и контрольные суммы и опубликует их в релизе. Для подписи
+нужны секреты репозитория `DECKBOX_KEYSTORE_BASE64` и `DECKBOX_KEYSTORE_PASSWORD`. Установленные агенты DeckBox
+сами находят новый релиз и обновляют себя и приложение на телефоне.

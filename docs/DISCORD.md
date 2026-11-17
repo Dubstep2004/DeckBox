@@ -1,61 +1,63 @@
-# Discord widget
+# Виджет Discord
 
-The **Discord** widget shows your current voice channel and its members, your servers and their voice channels, and
-Discord notifications. With **control** turned on it also mutes, deafens, leaves and joins.
+Виджет **Discord** показывает голосовой канал, в котором вы сейчас, и его участников, ваши серверы и их голосовые
+каналы, а также уведомления Discord. С включённым параметром **Управление** он ещё выключает микрофон и звук,
+выходит из канала и входит в каналы.
 
-DeckBox talks to the Discord desktop app running on the same computer, through Discord's local connection. Nothing
-goes through a DeckBox server, and the phone never contacts Discord. Discord has no shared DeckBox login, so you
-create a small Discord application of your own once (about five minutes, free).
+DeckBox общается с приложением Discord, запущенным на этом же компьютере, через локальное подключение Discord. Ничего
+не проходит через серверы DeckBox, а телефон к Discord не обращается. Общего входа DeckBox в Discord нет, поэтому один
+раз нужно создать своё небольшое приложение Discord (около пяти минут, бесплатно).
 
-Requirements: the Discord **desktop app** (not the browser version) running and signed in on the computer that runs the
-DeckBox agent. Windows, macOS and Linux work through Discord's local socket; the setup below was tested on Windows.
+Что нужно: **приложение Discord для компьютера** (не версия в браузере), запущенное и авторизованное на компьютере,
+где работает агент DeckBox. Windows, macOS и Linux работают через локальный сокет Discord; инструкция ниже проверена
+в Windows.
 
-## 1. Create a Discord application
+## 1. Создайте приложение Discord
 
-1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and sign in.
-2. Click **New Application**, name it (for example `DeckBox`), accept the terms and click **Create**.
-3. In the left menu open **OAuth2**.
-4. Under **Redirects** click **Add Redirect**, enter exactly `http://127.0.0.1` and click **Save Changes**.
-5. On the same page copy the **Client ID**. Click **Reset Secret** to show the **Client Secret** and copy it too.
-   Discord shows the secret only once; if you lose it, reset it again.
+1. Откройте [Discord Developer Portal](https://discord.com/developers/applications) и войдите.
+2. Нажмите **New Application**, назовите его (например `DeckBox`), примите условия и нажмите **Create**.
+3. В меню слева откройте **OAuth2**.
+4. В разделе **Redirects** нажмите **Add Redirect**, введите ровно `http://127.0.0.1` и нажмите **Save Changes**.
+5. На той же странице скопируйте **Client ID**. Нажмите **Reset Secret**, чтобы показать **Client Secret**, и тоже
+   скопируйте его. Discord показывает секрет только один раз; если потеряете, сбросьте ещё раз.
 
-## 2. Enter it in DeckBox
+## 2. Введите данные в DeckBox
 
-1. Open the DeckBox settings page, choose **General** and find the **Discord** card.
-2. Turn on **Connect to the Discord app on this PC**.
-3. Paste the **Client ID** and **Client secret**, then save.
-4. Discord shows an approval window ("DeckBox wants to access your Discord"). Click **Authorize**. This happens
-   once; the login is kept in `discord-token.json` next to your settings and renewed automatically.
+1. Откройте настройки DeckBox, выберите **Общие** и найдите карточку **Discord**.
+2. Включите **Подключаться к приложению Discord на этом ПК**.
+3. Вставьте **Client ID** и **Client secret** и сохраните.
+4. Discord покажет окно подтверждения («DeckBox запрашивает доступ к вашему Discord»). Нажмите **Авторизовать**. Это
+   нужно один раз: вход хранится в `discord-token.json` рядом с настройками и продлевается сам.
 
-If Discord refuses the login, open your application in the Developer Portal, go to **App Testers** and add your own
-Discord account (an application can be used by its owner and testers without verification).
+Если Discord отклоняет вход, откройте своё приложение в Developer Portal, перейдите в **App Testers** и добавьте свой
+аккаунт Discord (приложением без проверки могут пользоваться владелец и тестировщики).
 
-## 3. Add the widget
+## 3. Добавьте виджет
 
-Add a **Discord** widget to a page in the editor. Options:
+Добавьте виджет **Discord** на страницу в редакторе. Параметры:
 
-| Option | Meaning |
+| Параметр | Что делает |
 |---|---|
-| Channels | Show your servers as tiles; tap one to see and join its voice channels |
-| Notifications | Show recent Discord notifications. DeckBox only asks Discord for them, and only sends them to the phone, while a widget with this option on is on an enabled page |
-| Control | Allow mute, deafen, leave and join from the phone. **Off by default** |
+| Каналы | Показывает ваши серверы плитками; нажмите на сервер, чтобы увидеть его голосовые каналы и войти |
+| Уведомления | Показывает последние уведомления Discord. DeckBox запрашивает их у Discord и отправляет на телефон, только пока виджет с этим параметром стоит на включённой странице |
+| Управление | Разрешает с телефона выключать микрофон и звук, выходить и входить в каналы. **По умолчанию выключено** |
 
-Without **Control** the widget only displays state. Joining works only for voice channels the agent already listed.
+Без **Управления** виджет только показывает состояние. Войти можно только в голосовые каналы, которые агент уже получил в списке.
 
-## What is requested
+## Какие права запрашиваются
 
-The login asks for these Discord permissions, all of them on your own account and only through the local app:
-`rpc`, `rpc.voice.read`, `rpc.voice.write` and `rpc.notifications.read`. The client secret stays on the computer and is
-never sent to the phone. See the Discord row in [PRIVACY.md](../PRIVACY.md) for the connections involved.
+При входе запрашиваются права Discord `rpc`, `rpc.voice.read`, `rpc.voice.write` и `rpc.notifications.read` — все
+для вашего собственного аккаунта и только через локальное приложение. Секрет приложения остаётся на компьютере и на
+телефон не отправляется. Подробнее о подключениях — в строке Discord в [PRIVACY.md](../PRIVACY.md).
 
-## Troubleshooting
+## Если что-то не работает
 
-| Problem | What to try |
+| Проблема | Что попробовать |
 |---|---|
-| Widget says Discord is not connected | Start the Discord desktop app, then wait a few seconds; the agent retries on its own |
-| "Invalid redirect" or similar login error | The redirect must be exactly `http://127.0.0.1` (no trailing slash, no port) |
-| Discord refuses the login | Add your account under **App Testers** in the Developer Portal |
-| Login keeps failing after changing the secret | Paste the new secret in Settings; delete `discord-token.json` next to `config.json` to force a fresh login |
-| Only some servers appear | The widget lists voice channels of the first 60 servers Discord reports, so servers beyond that do not appear. For fewer than 60: the list comes from the Discord app and is retried every minute, so wait a little or restart Discord |
-| The login is not asked again after Cancel, a timeout or a wrong secret | On purpose: DeckBox stops instead of showing a new prompt every few seconds. Change the client ID or secret, or turn **Connect to the Discord app** off and on, to try again |
-| Buttons do nothing | Turn on **Control** in the widget's options |
+| Виджет пишет, что Discord не подключён | Запустите приложение Discord и подождите несколько секунд: агент повторит попытку сам |
+| «Invalid redirect» или похожая ошибка входа | Адрес перенаправления должен быть ровно `http://127.0.0.1` (без косой черты в конце и без порта) |
+| Discord отклоняет вход | Добавьте свой аккаунт в **App Testers** в Developer Portal |
+| После смены секрета вход не проходит | Вставьте новый секрет в настройках; удалите `discord-token.json` рядом с `config.json`, чтобы войти заново |
+| Видны не все серверы | Виджет показывает голосовые каналы первых 60 серверов, которые сообщает Discord. Если серверов меньше: список приходит из приложения Discord и обновляется каждую минуту — подождите или перезапустите Discord |
+| После отмены, таймаута или неверного секрета вход больше не предлагается | Так задумано: DeckBox останавливается, а не показывает новое окно каждые несколько секунд. Чтобы попробовать снова, измените Client ID или секрет либо выключите и снова включите **Подключаться к приложению Discord** |
+| Кнопки ничего не делают | Включите **Управление** в параметрах виджета |

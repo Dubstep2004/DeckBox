@@ -1,86 +1,88 @@
-# Contributing to DeckBox
+# Как помочь DeckBox
 
-Thanks for helping. DeckBox runs on someone's computer all day, can start programs and talks to a phone over the
-network, so reviews focus on what a change lets the phone (or anyone else) do, and on what leaves the machine. This
-page lists what reviews keep asking for; following it gets a pull request merged much faster.
+Спасибо за помощь! DeckBox весь день работает на чужом компьютере, умеет запускать программы и общается с телефоном
+по сети, поэтому при проверке изменений главное — что изменение позволяет делать телефону (или кому-то ещё) и что
+уходит с компьютера. Здесь собрано то, о чём обычно спрашивают на ревью; если следовать этим правилам, pull request
+примут гораздо быстрее.
 
-## Before you start
+## Перед началом
 
-- **Small fixes** (a bug, a wrong label, a missing check): open a pull request straight away.
-- **New widgets, integrations, providers or anything that changes how the phone and the agent talk**: open an issue
-  first and describe what it does for the user. It saves you from building something that has to be reshaped.
-- **One change per pull request.** Keep it reviewable: as a rough guide, under about 800 changed lines outside tests.
-  A large feature can be a series of pull requests, each one working and tested on its own. Unrelated changes (a new
-  widget plus a refactor plus a dependency bump) go in separate pull requests.
+- **Небольшие исправления** (ошибка, неверная подпись, недостающая проверка): сразу открывайте pull request.
+- **Новые виджеты, интеграции, сервисы или всё, что меняет общение телефона и агента**: сначала создайте issue и
+  опишите, что это даст пользователю. Так вы не построите то, что потом придётся переделывать.
+- **Одно изменение — один pull request.** Пусть его можно будет проверить: ориентир — до 800 изменённых строк без
+  тестов. Большую функцию можно разбить на серию pull request, каждый из которых работает и протестирован сам по себе.
+  Несвязанные изменения (новый виджет, рефакторинг и обновление зависимости) — в разные pull request.
 
-## The security model, in short
+## Модель безопасности вкратце
 
-- The agent listens on `127.0.0.1` (the phone reaches it through `adb reverse`). The optional Wi-Fi port serves only
-  the paths on the allow-list in `agent/DeckBox.Agent/Lan.cs`, over TLS pinned to the paired certificate, with the
-  paired key. Settings, pairing and tests stay local. **Adding a path to that allow-list is a security decision**:
-  say in the pull request why the phone needs it.
-- **The phone sends ids, never commands, paths or URLs.** Shortcuts, command widgets, apps and calendars are defined
-  on the computer; the phone asks for one by id, and the agent looks it up in its own settings.
-- **Anything that controls the computer goes through a per-widget option** (like Docker's `control` or the processes
-  widget's `allowKill`) that the agent checks with `Widgets(enabledPagesOnly: true)`, so removing or hiding the
-  widget turns it off. New features that start programs, record or send data are off by default.
-- **Secrets never reach the phone.** `AgentConfig.ToPublic()` is what the phone gets; tokens, keys, calendar URLs
-  and commands stay out of it (including inside Smart Stack children). Don't log them either.
-- **Processes**: start them with `ProcessStartInfo.ArgumentList`, never through a shell and never with text from a
-  request. Kill them on timeout and cancel.
-- **Panel and settings UI**: build elements with `textContent`; no `innerHTML` with data from the agent, a widget
-  option or the network. Custom HTML widgets stay sandboxed.
-- Report vulnerabilities privately, see [SECURITY.md](SECURITY.md).
+- Агент слушает `127.0.0.1` (телефон достаёт до него через `adb reverse`). Необязательный порт Wi-Fi отдаёт только
+  пути из разрешённого списка в `agent/DeckBox.Agent/Lan.cs`, по TLS с закреплённым сертификатом и ключом сопряжения.
+  Настройки, сопряжение и тесты остаются локальными. **Добавление пути в этот список — решение о безопасности**:
+  объясните в pull request, зачем он нужен телефону.
+- **Телефон отправляет только id, а не команды, пути или адреса.** Ярлыки, виджеты команд, приложения и календари
+  задаются на компьютере; телефон просит нужный по id, а агент ищет его в своих настройках.
+- **Всё, что управляет компьютером, включается параметром конкретного виджета** (например `control` у Docker или
+  `allowKill` у процессов), который агент проверяет через `Widgets(enabledPagesOnly: true)`: если виджет убрать или
+  скрыть, функция отключится. Новые функции, которые запускают программы, записывают или отправляют данные, по
+  умолчанию выключены.
+- **Секреты никогда не попадают на телефон.** Телефон получает то, что возвращает `AgentConfig.ToPublic()`; токены,
+  ключи, адреса календарей и команды туда не входят (в том числе внутри смарт-стопок). В журнал их тоже не пишите.
+- **Процессы** запускайте через `ProcessStartInfo.ArgumentList`, никогда через оболочку и никогда с текстом из
+  запроса. Завершайте их по таймауту и при отмене.
+- **Интерфейс панели и настроек**: создавайте элементы через `textContent`; никакого `innerHTML` с данными от агента,
+  из параметров виджетов или из сети. Виджеты «Свой HTML» остаются в песочнице.
+- Об уязвимостях сообщайте закрыто, см. [SECURITY.md](SECURITY.md).
 
-## Privacy
+## Конфиденциальность
 
-- DeckBox has no telemetry, accounts or servers of its own, and that stays so.
-- **Every new outbound connection** (a public API, a cloud provider, a download) needs a row in
-  [PRIVACY.md](PRIVACY.md): the host, what is sent, and how to turn it off. Sending the user's data (audio, text,
-  location, files) somewhere must be opt-in and say so where it is switched on.
-- "Local" means this computer or the local network. Don't label something local when it can reach the internet.
+- У DeckBox нет телеметрии, аккаунтов и своих серверов, и так останется.
+- **Каждое новое исходящее подключение** (открытый API, облачный сервис, загрузка) должно появиться отдельной строкой
+  в [PRIVACY.md](PRIVACY.md): адрес, что отправляется и как это отключить. Отправка данных пользователя (звук, текст,
+  местоположение, файлы) куда-либо включается только по желанию и с пояснением там, где её включают.
+- «Локально» значит на этом компьютере или в локальной сети. Не называйте локальным то, что может выйти в интернет.
 
-## Settings, widgets and the phone app
+## Настройки, виджеты и приложение для телефона
 
-- **A new setting** goes in `Config.cs` (with a default and normalization of bad values), in all three
-  `config.default*.json` files, and in the settings page. Decide whether the phone needs it; if not, keep it out of
-  `ToPublic()`.
-- **A new widget** needs its entry in `agent/DeckBox.Agent/widgets.json`, the widget in
-  `android/app/src/main/assets/www/widgets/`, an icon in `WIDGET_ICONS`, the README count (`tools/check-release.py`
-  checks it) and, if it calls the agent, a mock in `tools/pages/demo.js` so the web demo and the UI tests can render
-  it. Outside the app (no native bridge) it must show an empty state, not throw.
-- **The Android app** targets Android 7.0 (API 24) and later and runs the panel in the system WebView. On Android 7
-  to 9 that WebView comes from Chrome, so its version doesn't follow the Android version. The panel needs Chrome 105
-  or later (container query units); below that, `index.html` shows an update notice from a plain script that runs even
-  when the panel's modules don't. Changing `minSdk` needs `./gradlew lintDebug` to pass and a note on the devices
-  and WebView versions you tried.
-- **Don't change behaviour users rely on** (removing a choice, renaming a setting, changing a default) without
-  migrating existing settings and saying so in the pull request.
+- **Новая настройка** добавляется в `Config.cs` (со значением по умолчанию и исправлением неверных значений), во все
+  три файла `config.default*.json` и на страницу настроек. Решите, нужна ли она телефону; если нет — не включайте её
+  в `ToPublic()`.
+- **Новый виджет** требует записи в `agent/DeckBox.Agent/widgets.json`, самого виджета в
+  `android/app/src/main/assets/www/widgets/`, значка в `WIDGET_ICONS`, русского перевода названия и параметров
+  (`CATALOG.ru` в `i18n.js`) и, если он обращается к агенту, заглушки в `tools/pages/demo.js`, чтобы демо на сайте
+  и тесты интерфейса могли его показать. Вне приложения (без нативного моста) он должен показывать пустое состояние,
+  а не падать.
+- **Приложение Android** поддерживает Android 7.0 (API 24) и новее и показывает панель в системном WebView. На
+  Android 7–9 этот WebView берётся из Chrome, поэтому его версия не зависит от версии Android. Панели нужен Chrome 105
+  или новее (единицы контейнерных запросов); на более старых `index.html` показывает уведомление об обновлении.
+  Изменение `minSdk` требует успешного `./gradlew lintDebug` и описания устройств и версий WebView, на которых вы
+  проверяли.
+- **Не меняйте поведение, на которое опираются пользователи** (убрать вариант, переименовать настройку, сменить
+  значение по умолчанию), не перенося существующие настройки и не написав об этом в pull request.
+- **Оформление DeckBox PRO** (графит и золото) — единственное: не добавляйте отдельные темы, а пользуйтесь переменными
+  из `style.css` (`--gold`, `--card`, `--line` и т. д.).
 
-## Tests
+## Тесты
 
-Run what CI runs, and say in the pull request what you ran and what you tried by hand:
+Запускайте то же, что и CI, и пишите в pull request, что запускали и что проверяли руками:
 
 ```sh
 dotnet test agent/DeckBox.Agent.Tests
 cd tools/ui-tests && npm ci && npx playwright install chromium && npx playwright test
-python tools/check-release.py
-cd android && ./gradlew lintDebug assembleDebug     # when the Android app changes
+cd android && ./gradlew lintDebug assembleDebug     # если менялось приложение Android
 ```
 
-- A bug fix comes with a test that fails without the fix, where that's practical.
-- Tests must not depend on the machine they run on (ports, clocks, the user's real settings or install folder).
-- For UI changes, a screenshot at a small and a large widget size helps a lot.
+- Исправление ошибки сопровождается тестом, который без исправления падает, если это возможно.
+- Тесты не должны зависеть от машины, на которой запускаются (порты, часы, настоящие настройки или папка установки).
+- Для изменений интерфейса очень помогает снимок экрана виджета в маленьком и большом размере.
 
-## Pull requests
+## Pull request
 
-- Describe what changes for the user, why, and how you tested it. Link the issue.
-- Write code, comments, UI text and commit messages in English. Comments explain why, not what.
-- Leave `CHANGELOG.md` and the version numbers to the maintainer; they are updated when the change is merged and
-  released.
-- Contributions written with AI tools are welcome. You are still the author: read the diff, run the tests, and make
-  sure the description matches what the code does.
-- An automated reviewer (CodeRabbit) comments on every pull request. Fix what is right, reply where it is wrong;
-  conversations must be resolved before merging.
+- Опишите, что меняется для пользователя, зачем и как вы это проверили. Добавьте ссылку на issue.
+- Код, комментарии в коде и сообщения коммитов пишите на английском; тексты интерфейса — через словари `i18n.js`
+  с русским переводом.
+- `CHANGELOG.md` и номера версий оставьте сопровождающему: они обновляются при выпуске.
+- Изменения, написанные с помощью ИИ, приветствуются. Автор всё равно вы: прочитайте diff, запустите тесты и
+  убедитесь, что описание соответствует тому, что делает код.
 
-By contributing you agree that your contribution is licensed under the [MIT License](LICENSE).
+Отправляя изменения, вы соглашаетесь, что они распространяются по [лицензии MIT](LICENSE).

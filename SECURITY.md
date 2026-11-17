@@ -1,10 +1,12 @@
-# Security policy
+# Политика безопасности
 
-Please report vulnerabilities through [GitHub private vulnerability reporting](https://github.com/ersinkoc/phonebox/security/advisories/new).
-Include the affected version, operating system, connection mode (USB or paired Wi-Fi), reproduction steps and impact.
-Do not include access tokens, pairing keys, calendar URLs or personal session transcripts.
+Сообщайте об уязвимостях через [закрытое сообщение об уязвимости на GitHub](https://github.com/Dubstep2004/DeckBox/security/advisories/new).
+Укажите версию, операционную систему, способ подключения (USB или сопряжённый Wi-Fi), шаги воспроизведения и последствия.
+Не прикладывайте токены доступа, ключи сопряжения, адреса календарей и личные переписки из сессий.
 
-Security fixes target the latest release. Install the latest agent and Android app together when a fix changes both sides.
+Исправления безопасности выходят для последнего релиза. Если исправление затрагивает обе стороны, обновляйте агент и
+приложение Android вместе.
 
-DeckBox can run shortcuts and control local applications. Keep the agent on loopback or its authenticated, pinned-TLS
-Wi-Fi connection. Custom HTML widgets are sandboxed; they must use the documented widget messaging interface.
+DeckBox умеет запускать ярлыки и управлять программами на компьютере. Держите агент только на локальном адресе
+(`127.0.0.1`) или на защищённом подключении по Wi-Fi с ключом и закреплённым сертификатом TLS. Виджеты «Свой HTML»
+работают в песочнице и должны общаться с панелью только через описанный интерфейс сообщений.

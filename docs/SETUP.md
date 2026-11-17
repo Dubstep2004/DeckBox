@@ -1,288 +1,222 @@
-# Installation and connections
+# Установка и подключения
 
-[Back to DeckBox](../README.md) · [User guide](GUIDE.md) · [Development](DEVELOPMENT.md)
+[К описанию DeckBox](../README.md) · [Руководство пользователя](GUIDE.md) · [Разработка](DEVELOPMENT.md)
 
-[Quick start](#quick-start) · [Wi-Fi & Tailscale](#wi-fi--tailscale) · [Updates](#updates) · [FAQ & troubleshooting](#faq--troubleshooting)
+[Быстрый старт](#быстрый-старт) · [Wi-Fi и Tailscale](#wi-fi-и-tailscale) · [Обновления](#обновления) · [Вопросы и неполадки](#вопросы-и-неполадки)
 
-## Quick start
+## Быстрый старт
 
-### 1. Install DeckBox on the computer
+### 1. Установите DeckBox на компьютер
 
-**Windows 10/11**: open PowerShell (a normal window, not *Run as administrator*) and paste:
+**Windows 10/11 x64** — установщиком:
 
-```powershell
-irm https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.ps1 | iex
-```
+1. Скачайте `DeckBox-Setup-<версия>.exe` со страницы [последнего релиза](https://github.com/Dubstep2004/DeckBox/releases/latest).
+2. Если хотите сразу поставить приложение на телефон, включите на нём отладку по USB (см. шаг 2) и подключите кабелем.
+3. Запустите установщик. Права администратора не нужны, .NET, adb и Android Studio тоже: всё уже внутри.
 
-**Linux and macOS**: open a terminal and paste (run it as yourself, not with `sudo`):
+Установщик:
+
+- ставит агент для вашего пользователя в `%LOCALAPPDATA%\DeckBox\app` (настройки — в `%APPDATA%\DeckBox`,
+  при переустановке сохраняются);
+- кладёт рядом adb для связи с телефоном по USB;
+- по желанию включает запуск вместе с Windows;
+- ставит приложение на телефон по USB (можно позже: **Пуск › DeckBox › Установить приложение на телефон**);
+- останавливает и удаляет старый PhoneBox, если он был установлен; его настройки DeckBox копирует при первом запуске;
+- запускает агент и открывает настройки на <http://127.0.0.1:8765>.
+
+Удаление: **Пуск › DeckBox › Удалить DeckBox** или «Параметры › Приложения». Установщик спросит, удалить ли и настройки.
+
+**Linux и macOS** — из исходников (нужен [.NET 10 SDK](https://dotnet.microsoft.com/download) и `adb`):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.sh | bash
+git clone https://github.com/Dubstep2004/DeckBox && cd DeckBox
+./scripts/install.sh --autostart   # служба пользователя systemd (Linux) или агент launchd (macOS)
 ```
 
-Setup installs the [latest release](https://github.com/ersinkoc/phonebox/releases/latest) and anything missing:
+Приложение для телефона возьмите готовым — файл `DeckBox-<версия>.apk` на странице
+[релиза](https://github.com/Dubstep2004/DeckBox/releases/latest) — или соберите сами флагом `--apk` (нужны JDK 17 и
+Android SDK Platform 35, например из Android Studio, с `JAVA_HOME` и `ANDROID_HOME`).
 
-1. **Checks the computer**: Windows x64; Linux x64 / ARM64 with glibc; macOS on Apple silicon or Intel.
-2. **Downloads and checks the agent**: the download must match the release's SHA-256 checksums. With the
-   [GitHub CLI](https://cli.github.com) 2.93.0 or later signed in, it also verifies the build provenance (`gh attestation verify`).
-   No .NET to install: the agent is one self-contained program.
-3. **Installs adb if it is missing**, after asking. adb is the USB link to the phone. Setup gets it from winget, Homebrew or
-   your distribution (apt, dnf, pacman, zypper), or from Google's download as a fallback.
-4. **Offers optional helpers** for more widgets. On Linux: `playerctl` for Now Playing, `pactl` for volume, and `xprintidle`.
-   On macOS: `nowplaying-cli`.
-5. **Installs the agent for your user only**:
-
-   | | Program | Settings (kept on reinstall) |
-   |---|---|---|
-   | Windows | `%LOCALAPPDATA%\DeckBox\app` | `%APPDATA%\DeckBox` |
-   | Linux | `~/.local/share/DeckBox/app` | `~/.config/DeckBox` |
-   | macOS | `~/Library/Application Support/DeckBox/app` | `~/Library/Application Support/DeckBox` |
-
-   Then it asks whether to start DeckBox at login: a Startup-folder shortcut on Windows, a systemd user service
-   on Linux, a launchd agent on macOS.
-6. **Puts the app on the phone over USB**, if you want. It shows how to turn on USB debugging and waits for the phone.
-7. **Starts the agent** and opens its settings at <http://127.0.0.1:8765>.
-
-The agent installs for your user. System package managers may request administrator rights for missing dependencies;
-on Linux, setup asks before using `sudo`. Run it again
-any time to update or repair DeckBox; settings and pairings are kept. Read [`setup.ps1`](../setup.ps1) or
-[`setup.sh`](../setup.sh) before you run it if you like. With `-DryRun` / `--dry-run` it downloads and checks everything
-and changes nothing.
-
-<details><summary><b>Setup options</b></summary>
-
-| Windows (`setup.ps1`) | Linux / macOS (`setup.sh`) | |
+| | Программа | Настройки (сохраняются при переустановке) |
 |---|---|---|
-| `-Yes` | `--yes` | Take the default answer to every question (unattended) |
-| `-NoPhone` | `--no-phone` | Do not install the app over USB (for a Wi-Fi-only phone) |
-| `-Serial <id>` | `--serial <id>` | The phone to use when several are connected (`adb devices`) |
-| `-NoAutostart` | `--no-autostart` | Do not start DeckBox at login |
-| `-NoStart` | `--no-start` | Install only |
-| — | `--no-extras` | Do not offer the optional helpers |
-| `-Version 0.9.8` | `--version 0.9.8` | Install that release instead of the latest |
-| `-DryRun` | `--dry-run` | Download and check, change nothing |
+| Windows | `%LOCALAPPDATA%\DeckBox\app` | `%APPDATA%\DeckBox` |
+| Linux | `~/.local/share/DeckBox/app` | `~/.config/DeckBox` |
+| macOS | `~/Library/Application Support/DeckBox/app` | `~/Library/Application Support/DeckBox` |
 
-To pass options:
+<details><summary><b>Перед установкой: предупреждения</b></summary>
 
-```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.ps1))) -NoPhone
-```
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.sh | bash -s -- --no-phone
-```
-
-</details>
-
-<details><summary><b>Before you run it: warnings</b></summary>
-
-- **The Windows agent is not code-signed yet.** The [SignPath Foundation](../README.md#code-signing-policy) application is pending.
-  Windows SmartScreen or an antivirus may warn about a new, unsigned program, and some antivirus engines have flagged
-  it ([#69](https://github.com/ersinkoc/phonebox/issues/69)). Setup only installs a file that matches the release
-  checksum. If your antivirus removes `DeckBoxAgent.exe`, setup says so; restore it from quarantine or report it.
-- **Smart App Control** (Windows 11) blocks programs that are neither signed nor known to Microsoft. The agent is
-  not code-signed yet (signing through SignPath Foundation is pending, [#56](https://github.com/ersinkoc/phonebox/issues/56)),
-  so with Smart App Control on, Windows refuses to start it: "An Application Control policy has blocked this file"
-  ([#69](https://github.com/ersinkoc/phonebox/issues/69)). Setup warns you first, still installs it, and explains
-  if Windows blocks it. Please keep Smart App Control on: on older Windows builds it cannot be turned back on without
-  resetting Windows. In evaluation mode it blocks nothing yet. On a work or school computer, an AppLocker or group
-  policy can block the agent too; its administrator can allow it.
-- **USB debugging gives a computer you allow control over the phone.** Allow only your own computers. You can
-  withdraw them on the phone under *Developer options › Revoke USB debugging authorisations*.
-- **Wi-Fi is off until you turn it on.** Until then the agent listens only on this computer (`127.0.0.1:8765`).
-  When you turn it on, Windows asks to let DeckBox through the firewall: allow *Private* networks only. On Linux
-  with ufw or firewalld, open TCP port 8766 for your local network. Every connection DeckBox makes is listed in
-  the [privacy policy](../PRIVACY.md).
-- **Linux USB permissions**: if `adb devices` shows `no permissions`, adb also needs udev rules. Install
-  `android-sdk-platform-tools-common` on Debian/Ubuntu or `android-udev` on Arch. Some systems also need the
-  `plugdev` group (`sudo usermod -aG plugdev $USER`, then log out and in). Setup points this out when it happens.
-- **On macOS**, the agent is signed ad hoc, not with an Apple Developer ID. The first time, macOS may ask whether
-  it may control Music or Spotify (for Now Playing), or accept incoming connections (with Wi-Fi on).
-- **Windows USB drivers**: if the phone never appears, Windows may need its USB driver. Google phones use the
-  Google USB Driver; other brands have one on their support site.
-- **Scoop users**: setup stops if DeckBox is installed with Scoop, so two copies don't fight over the same port.
-  Keep using `scoop update deckbox`, or `scoop uninstall deckbox` first and then run setup.
-- **Windows on ARM** and **musl Linux** (Alpine) have no release build yet.
+- **Агент для Windows не подписан.** Windows SmartScreen или антивирус могут предупредить о новой неподписанной
+  программе: нажмите «Подробнее» → «Выполнить в любом случае». Если антивирус удалил `DeckBoxAgent.exe`, восстановите
+  его из карантина. Сверить файлы можно по `SHA256SUMS-<версия>.txt` из релиза.
+- **Smart App Control** (Windows 11) блокирует программы, которые не подписаны и неизвестны Microsoft: Windows
+  откажется запускать агент («Политика управления приложениями заблокировала этот файл»). Не выключайте Smart App
+  Control ради DeckBox: в старых сборках Windows его потом нельзя включить без переустановки. На рабочем или учебном
+  компьютере агент может заблокировать AppLocker или групповая политика; разрешить его может администратор.
+- **Отладка по USB даёт разрешённому компьютеру управление телефоном.** Разрешайте только свои компьютеры. Отозвать
+  разрешения можно на телефоне: *Для разработчиков › Отозвать доступ к отладке по USB*.
+- **Wi-Fi выключен, пока вы его не включите.** До этого агент слушает только этот компьютер (`127.0.0.1:8765`).
+  Когда включите, Windows попросит пропустить DeckBox через брандмауэр: разрешите только *частные* сети. В Linux с
+  ufw или firewalld откройте TCP-порт 8766 для локальной сети. Все подключения DeckBox перечислены в
+  [политике конфиденциальности](../PRIVACY.md).
+- **Права USB в Linux**: если `adb devices` показывает `no permissions`, adb нужны правила udev. Установите
+  `android-sdk-platform-tools-common` в Debian/Ubuntu или `android-udev` в Arch. Некоторым системам нужна ещё группа
+  `plugdev` (`sudo usermod -aG plugdev $USER`, затем выйдите и войдите снова).
+- **В macOS** при первом запуске система может спросить, можно ли управлять Music или Spotify (для «Сейчас играет»)
+  и принимать входящие подключения (если включён Wi-Fi).
+- **Драйверы USB в Windows**: если телефон не появляется, Windows может понадобиться его USB-драйвер. Для телефонов
+  Google это Google USB Driver, у других производителей он есть на сайте поддержки.
+- **Windows на ARM** и **Linux с musl** (Alpine) готовых сборок пока не имеют.
 
 </details>
 
-### 2. Connect the phone
+### 2. Подключите телефон
 
-- **Over USB** (recommended): it wakes the phone on plug-in, updates the app and falls back to USB when Wi-Fi drops.
-  The phone needs Android 7.0 or later with USB debugging turned on:
-  1. *Settings › About phone*: tap *Build number* seven times.
-  2. *Developer options*: turn on *USB debugging*. On Xiaomi, Redmi and POCO, also turn on *Install via USB*.
-  3. Plug the phone in with a data cable and answer *Allow USB debugging?* with *Allow*.
+- **По USB** (рекомендуется): телефон просыпается при подключении, приложение обновляется само, а при пропаже Wi-Fi
+  связь переходит на USB. Нужен Android 7.0 или новее с включённой отладкой по USB:
+  1. *Настройки › О телефоне*: нажмите *Номер сборки* семь раз.
+  2. *Для разработчиков*: включите *Отладку по USB*. На Xiaomi, Redmi и POCO включите ещё *Установку через USB*.
+  3. Подключите телефон кабелем с передачей данных и ответьте *Разрешить* на запрос *Разрешить отладку по USB?*.
 
-  Setup installs the app, or use *Settings › General › Install the phone app* later. Then the phone wakes up and
-  opens the panel whenever it is plugged in.
-- **Over Wi-Fi only**, with no developer options or adb: install the APK from the
-  [release page](https://github.com/ersinkoc/phonebox/releases/latest) on the phone. Then on the computer turn on
-  *Settings › General › Wi-Fi & Tailscale*, click **Pair a phone over Wi-Fi** and scan the QR code (see
-  [Wi-Fi & Tailscale](#wi-fi--tailscale)).
+  Установщик ставит приложение сам, или сделайте это позже из меню Пуск. После этого при каждом подключении телефон
+  просыпается и открывает панель.
+- **Только по Wi-Fi**, без режима разработчика и adb: установите на телефон `DeckBox-<версия>.apk` со страницы
+  [релиза](https://github.com/Dubstep2004/DeckBox/releases/latest). Затем на компьютере включите
+  *Настройки › Общие › Wi-Fi и Tailscale*, нажмите **Сопрячь телефон по Wi-Fi** и отсканируйте QR-код (см.
+  [Wi-Fi и Tailscale](#wi-fi-и-tailscale)).
 
-The settings are at <http://127.0.0.1:8765>, on Windows also from the tray icon.
+Настройки открываются на <http://127.0.0.1:8765>, в Windows — ещё и через значок в трее.
 
-### Other ways to install
+### Что где работает
 
-- **Manual download**: the [release](https://github.com/ersinkoc/phonebox/releases/latest) has the signed Android
-  APK and agents for Windows x64, Linux x64/ARM64 and macOS Apple silicon/Intel, with SHA-256 checksums and build
-  provenance. Unzip the agent and run it. It can update itself only from the install folder in the table above.
-- **Scoop** (Windows), which can then put the app on the phone from *Settings › General › Install the phone app*:
-
-  ```powershell
-  scoop bucket add deckbox https://github.com/ersinkoc/phonebox
-  scoop install main/adb deckbox/deckbox
-  ```
-
-- **winget**: a package (`ersinkoc.DeckBox`) is prepared in [`packaging/winget`](../packaging/winget) for
-  winget-pkgs. Once it is accepted, `winget install ersinkoc.DeckBox` will install it.
-- **From source** (for development): needs the [.NET 10 SDK](https://dotnet.microsoft.com/download) and `adb`. To build
-  the phone app it also needs **JDK 17** and **Android SDK Platform 35** (for example through Android Studio), with
-  `JAVA_HOME` set and `ANDROID_HOME` or `android/local.properties` (`sdk.dir`) pointing at the SDK.
-
-  ```powershell
-  git clone https://github.com/ersinkoc/phonebox; cd deckbox
-  .\scripts\install.ps1 -Apk -Autostart   # add -Serial <id> with several devices; -BuildApk always rebuilds the app
-  ```
-
-  ```sh
-  git clone https://github.com/ersinkoc/phonebox && cd deckbox
-  ./scripts/install.sh --apk --autostart  # systemd user service (Linux) or launchd agent (macOS)
-  ```
-
-### Uninstall
-
-```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/ersinkoc/phonebox/main/scripts/uninstall.ps1))) # add -Purge -Apk
-```
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/ersinkoc/phonebox/main/scripts/uninstall.sh | bash -s --   # add --purge --apk
-```
-
-Without options it removes the program and the start-at-login entry and keeps the settings. `-Purge` / `--purge` also
-deletes the settings, and `-Apk` / `--apk` removes the app from the connected phone.
-
-### What works where
-
-<details><summary><b>Full platform compatibility</b></summary>
+<details><summary><b>Полная таблица совместимости</b></summary>
 
 | | Windows | Linux | macOS |
 |---|---|---|---|
-| CPU, RAM, network, disks, ping | ✓ | ✓ | ✓ |
-| CPU temperature | LibreHardwareMonitor | ✓ (hwmon) | — |
-| GPU load, VRAM, temperature | Any vendor (Windows GPU counters); NVIDIA adds power, fan and clocks (`nvidia-smi`), AMD / Intel add them with LibreHardwareMonitor | NVIDIA (`nvidia-smi`), AMD (`amdgpu` sysfs), Intel (clock) | Apple silicon (`ioreg`) |
-| Now playing + controls | ✓ (any app) | ✓ (MPRIS via `playerctl`) | System media, including browser video, with `nowplaying-cli`; Spotify and Music fallback |
-| Volume | ✓ | ✓ (`wpctl` / `pactl`) | ✓ |
-| Processes, end one / all | ✓ | ✓ (your own) | ✓ (your own) |
-| App icons | ✓ | ✓ (icon theme) | ✓ (app bundles) |
-| Shortcuts, lock, screen off | ✓ | ✓ (`loginctl`, `xset`) | ✓ (`open`, `pmset`) |
-| Command widgets | PowerShell | bash | zsh |
-| Claude / Codex quotas & sessions, GitHub, webhooks | ✓ | ✓ | ✓ (Claude token from the Keychain) |
-| Tray icon | ✓ | — (settings in the browser) | — |
-| Start at login | Startup folder | systemd user service | launchd agent |
+| ЦП, ОЗУ, сеть, диски, пинг | ✓ | ✓ | ✓ |
+| Температура ЦП | LibreHardwareMonitor | ✓ (hwmon) | — |
+| Загрузка ГП, видеопамять, температура | Любой производитель (счётчики ГП Windows); у NVIDIA ещё мощность, вентилятор и частоты (`nvidia-smi`), у AMD / Intel — через LibreHardwareMonitor | NVIDIA (`nvidia-smi`), AMD (`amdgpu` sysfs), Intel (частота) | Apple silicon (`ioreg`) |
+| «Сейчас играет» и управление | ✓ (любое приложение) | ✓ (MPRIS через `playerctl`) | Системные медиа, включая видео в браузере, через `nowplaying-cli`; запасной вариант — Spotify и Music |
+| Громкость | ✓ | ✓ (`wpctl` / `pactl`) | ✓ |
+| Процессы, завершение одного / всех | ✓ | ✓ (только свои) | ✓ (только свои) |
+| Значки приложений | ✓ | ✓ (тема значков) | ✓ (пакеты приложений) |
+| Ярлыки, блокировка, выключение экрана | ✓ | ✓ (`loginctl`, `xset`) | ✓ (`open`, `pmset`) |
+| Виджеты команд | PowerShell | bash | zsh |
+| Квоты и сессии Claude / Codex, GitHub, вебхуки | ✓ | ✓ | ✓ (токен Claude из связки ключей) |
+| Значок в трее | ✓ | — (настройки в браузере) | — |
+| Запуск при входе | Папка автозагрузки | Служба пользователя systemd | Агент launchd |
 
-On macOS, `nowplaying-cli` supplies system media metadata and cover art. The agent labels matching Safari or Chrome tabs as YouTube or YouTube Music. The progress bar advances from the last position supplied by macOS; Safari may report an outdated starting position. Volume follows the selected system output. When macOS does not expose its volume, an optional `m1ddc` installation can read it from a compatible display; display volume is read only in DeckBox. Unsupported outputs show `n/a`. Apple silicon GPU usage comes from IORegistry when macOS exposes it; temperature, power and VRAM figures may remain unavailable.
+В macOS `nowplaying-cli` даёт сведения о системных медиа и обложки. Вкладки Safari и Chrome с YouTube подписываются
+как YouTube или YouTube Music. Полоса прогресса идёт от последней позиции, которую сообщила macOS; Safari может
+сообщать устаревшую начальную позицию. Громкость относится к выбранному системному выходу; если macOS её не отдаёт,
+необязательный `m1ddc` может прочитать её у совместимого монитора (только чтение). Неподдерживаемые выходы показывают
+`н/д`. Загрузка ГП Apple silicon берётся из IORegistry, если macOS её отдаёт; температура, мощность и видеопамять
+могут быть недоступны.
 
 </details>
 
-Optional extras that light up more widgets: the [GitHub CLI](https://cli.github.com) (`gh auth login`), Claude Code,
-Codex, and [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) with its web server on
-port 8085 for the CPU temperature and, on AMD and Intel graphics cards, the hot spot, memory temperature, board power in
-watts, fan speed and clocks. Without it Windows still reports any GPU's load, VRAM, temperature and power share; NVIDIA
-cards get the full set from `nvidia-smi`. A PC with two GPUs (a graphics card and the processor's integrated one) shows
-both: the card is the main GPU, the GPU details widget can show either.
+Дополнительные программы, которые оживляют больше виджетов: [GitHub CLI](https://cli.github.com) (`gh auth login`),
+Claude Code, Codex и [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) с
+веб-сервером на порту 8085 — для температуры ЦП, а у видеокарт AMD и Intel ещё для горячей точки, температуры памяти,
+мощности в ваттах, вентилятора и частот. Без него Windows всё равно сообщает загрузку, видеопамять, температуру и долю
+мощности любого ГП; карты NVIDIA получают полный набор от `nvidia-smi`. ПК с двумя ГП (видеокарта и встроенная
+графика процессора) показывает оба: видеокарта — основной ГП, а виджет «Видеокарта подробно» может показать любой.
 
-#### LibreHardwareMonitor on Windows
+#### LibreHardwareMonitor в Windows
 
-DeckBox reads LibreHardwareMonitor's sensor list from `http://127.0.0.1:8085/data.json` whenever it is there; there
-is nothing to turn on in DeckBox.
+DeckBox читает список датчиков LibreHardwareMonitor с `http://127.0.0.1:8085/data.json`, когда он доступен; в самом
+DeckBox ничего включать не нужно.
 
-1. Download the latest release from
-   [LibreHardwareMonitor's releases](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases), unzip it
-   to a folder of its own and start `LibreHardwareMonitor.exe` **as administrator** (CPU temperatures and several GPU
-   sensors need it).
-2. In its menu choose **Options › Remote Web Server › Run**. The port stays **8085** (DeckBox only looks there).
-3. Check it in a browser on the PC: <http://127.0.0.1:8085/data.json> should show a long JSON text. Within a few
-   seconds the CPU temperature and the extra GPU values appear on the phone.
-4. To keep it running: **Options › Start Minimized**, **Minimize To Tray** and **Run On Windows Startup**.
+1. Скачайте последнюю версию со страницы
+   [релизов LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases), распакуйте
+   в отдельную папку и запустите `LibreHardwareMonitor.exe` **от имени администратора** (это нужно для температур ЦП
+   и некоторых датчиков ГП).
+2. В меню выберите **Options › Remote Web Server › Run**. Порт оставьте **8085** (DeckBox смотрит только туда).
+3. Проверьте в браузере на ПК: <http://127.0.0.1:8085/data.json> должен показать длинный текст JSON. Через несколько
+   секунд на телефоне появятся температура ЦП и дополнительные значения ГП.
+4. Чтобы он работал постоянно: **Options › Start Minimized**, **Minimize To Tray** и **Run On Windows Startup**.
 
-The web server answers on every network the PC is on. If Windows Firewall asks, DeckBox only needs it on this
-computer, so you can leave the network access unchecked. Menu names are those of recent LibreHardwareMonitor versions
-and may differ slightly in older ones.
+Веб-сервер отвечает во всех сетях, где есть ПК. Если брандмауэр Windows спросит, DeckBox нужен только этот компьютер,
+поэтому сетевой доступ можно не разрешать. Названия пунктов меню взяты из свежих версий и в старых могут немного
+отличаться.
 
-## Wi-Fi & Tailscale
+## Wi-Fi и Tailscale
 
-Turn on **Settings › General › Wi-Fi & Tailscale** and restart the agent when asked. Then pair the phone in one
-of two ways:
+Включите **Настройки › Общие › Wi-Fi и Tailscale** и перезапустите агент, когда он попросит. Затем сопрягите телефон
+одним из двух способов:
 
-- **Without a cable:** click **Pair a phone over Wi-Fi**. The window shows a QR code that downloads the app and one
-  that pairs. Scan the second with the phone's camera, open the link and tap **Open in DeckBox**; the phone asks you
-  to confirm a code that the window also shows. No developer options, USB debugging or adb needed. The QR code holds
-  the PC's addresses, its certificate fingerprint and a one-time code (5 minutes, single use), never the key itself.
-  A phone paired this way only uses Wi-Fi: plugging it into the PC does not wake it or open the panel, there is no
-  USB fallback when Wi-Fi drops, and app updates are installed from the release page instead of over USB.
-- **Over USB:** plug the phone in once.
+- **Без кабеля:** нажмите **Сопрячь телефон по Wi-Fi**. В окне будут QR-код для скачивания приложения и QR-код для
+  сопряжения. Отсканируйте второй камерой телефона, откройте ссылку (страница
+  [dubstep2004.github.io/DeckBox/pair](https://dubstep2004.github.io/DeckBox/pair/)) и нажмите **Открыть в DeckBox**;
+  телефон попросит подтвердить код, который показан и в окне на компьютере. Режим разработчика, отладка по USB и adb
+  не нужны. QR-код содержит адреса ПК, отпечаток его сертификата и одноразовый код (5 минут, один раз), но не сам
+  ключ. Телефон, сопряжённый так, работает только по Wi-Fi: подключение к ПК его не будит и не открывает панель, при
+  пропаже Wi-Fi нет перехода на USB, а обновления приложения ставятся со страницы релиза, а не по USB.
+- **По USB:** один раз подключите телефон кабелем.
 
-Either way the phone gets the PC's addresses, a secret key and the fingerprint of the agent's self-signed TLS
-certificate, and trusts only that certificate. With USB, when the cable is unplugged it switches to
-`https://<pc>:8766` automatically and back to USB when it is plugged in again; the status line shows which one it
-uses.
+В обоих случаях телефон получает адреса ПК, секретный ключ и отпечаток самоподписанного TLS-сертификата агента и
+доверяет только этому сертификату. При подключении по USB после отключения кабеля телефон сам переходит на
+`https://<pc>:8766`, а при повторном подключении — обратно на USB; строка состояния показывает, что используется.
 
-- The phone and the PC need to be on the same network. If they are not (separate Wi-Fi networks, another
-  building…), install [Tailscale](https://tailscale.com) on both: the agent offers its Tailscale address too.
-- Windows Firewall asks once when Wi-Fi is turned on; allow it for the network types you use.
-- The screen stays on, so the phone still needs a charger — just not necessarily the PC.
+- Телефон и ПК должны быть в одной сети. Если нет (разные сети Wi-Fi, другое здание…), установите
+  [Tailscale](https://tailscale.com) на оба: агент предложит и свой адрес Tailscale.
+- Брандмауэр Windows спросит один раз при включении Wi-Fi; разрешите для нужных типов сетей.
+- Экран не гаснет, поэтому телефону всё равно нужна зарядка — просто не обязательно от ПК.
 
-With several computers (each paired once over USB), the page overview on the phone lists them and switches between
-them over Wi-Fi.
+Если компьютеров несколько (каждый сопряжён один раз по USB), обзор страниц на телефоне показывает их список и
+переключается между ними по Wi-Fi.
 
-## Updates
+## Обновления
 
-The agent checks the latest GitHub release every 6 hours (or **Settings › General › Updates › Check now**) and, with
-automatic updates on, installs the new APK on the phone with `adb install -r` while it is plugged in (no prompt on the
-phone; over Wi-Fi the panel shows "plug in USB to update") and replaces its own files, then restarts. Android only
-accepts an update signed with the same key as the installed app; the agent never uninstalls to force one.
-When GitHub turns away anonymous requests (it answers 503 / 504 now and then), the agent asks again with the
-[GitHub CLI](https://cli.github.com)'s token if `gh` is signed in; the token only goes to `api.github.com`.
-See the [changelog](../CHANGELOG.md).
+Агент проверяет последний релиз [DeckBox на GitHub](https://github.com/Dubstep2004/DeckBox/releases) каждые 6 часов
+(или по кнопке **Настройки › Общие › Обновления › Проверить сейчас**). Если включено автообновление, он ставит новый
+APK на телефон через `adb install -r`, пока тот подключён по USB (без запроса на телефоне; по Wi-Fi панель пишет
+«подключите USB для обновления»), заменяет свои файлы из `DeckBoxAgent-<версия>-win-x64.zip` и перезапускается.
+Каждая загрузка сверяется с `SHA256SUMS-<версия>.txt` из релиза. Android принимает обновление только с той же
+подписью, что у установленного приложения; агент никогда не удаляет приложение ради обновления.
 
-## FAQ & troubleshooting
+Если GitHub отклоняет анонимные запросы (иногда он отвечает 503 / 504), агент повторяет запрос с токеном
+[GitHub CLI](https://cli.github.com), если `gh` авторизован; токен уходит только на `api.github.com`.
+История изменений — в [CHANGELOG](../CHANGELOG.md).
 
-<details><summary><b>The panel says "PC not connected".</b></summary>
+## Вопросы и неполадки
 
-Is the agent running (tray icon)? Run `adb devices`: the phone must be listed as `device`, not `unauthorized` —
-accept the USB debugging prompt on the phone. If several devices are connected, pick the phone under
-**Settings › General › Phone connection**. Over Wi-Fi, check that Wi-Fi is enabled on the agent, pair with the
-QR code or over USB, and allow the agent through the firewall for your private network.
+<details><summary><b>Панель пишет «ПК не подключён».</b></summary>
+
+Работает ли агент (значок в трее)? Выполните `adb devices`: телефон должен быть в списке как `device`, а не
+`unauthorized` — подтвердите запрос отладки по USB на телефоне. Если подключено несколько устройств, выберите телефон в
+**Настройки › Общие › Подключение телефона**. По Wi-Fi проверьте, что Wi-Fi включён у агента, сопрягите телефон по
+QR-коду или по USB и разрешите агенту доступ в частной сети в брандмауэре.
 </details>
 
-<details><summary><b>The phone keeps dropping off USB.</b></summary>
+<details><summary><b>Телефон постоянно отваливается от USB.</b></summary>
 
-The panel carries on over Wi-Fi when Wi-Fi is on, and **Settings › General › Phone connection** says what the phone
-itself sees: if it is charging but has no USB data connection, the cable or the port only carries power — try another
-cable, or a port straight on the computer instead of a hub or a front-panel port. Updates of the phone app need USB.
+Если Wi-Fi включён, панель продолжит работать по нему, а **Настройки › Общие › Подключение телефона** покажут, что
+видит сам телефон: если он заряжается, но передачи данных по USB нет, кабель или порт дают только питание —
+попробуйте другой кабель или порт прямо на компьютере вместо хаба и передней панели. Обновления приложения требуют USB.
 </details>
 
-<details><summary><b>Some widgets show "—" or "No data".</b></summary>
+<details><summary><b>Некоторые виджеты показывают «—» или «Нет данных».</b></summary>
 
-GPU values come from Windows itself (the temperature, as in Task Manager, needs Windows 10 2004 or later and a WDDM 2.4 driver), `nvidia-smi` for NVIDIA cards, `amdgpu` sysfs on Linux, or IORegistry on Apple silicon. The GPU hot spot and an AMD or Intel card's watts, fan and clocks need LibreHardwareMonitor. CPU temperature needs LibreHardwareMonitor's web server on port 8085,
-GitHub needs `gh auth login`, quotas and sessions need Claude Code / Codex to have been used on this PC.
+Значения ГП берутся у самой Windows (температура, как в Диспетчере задач, требует Windows 10 2004 или новее и
+драйвер WDDM 2.4), у `nvidia-smi` для карт NVIDIA, из `amdgpu` sysfs в Linux или из IORegistry на Apple silicon.
+Горячей точке ГП и ваттам, вентилятору и частотам карт AMD и Intel нужен LibreHardwareMonitor. Температуре ЦП нужен
+веб-сервер LibreHardwareMonitor на порту 8085, GitHub — `gh auth login`, квотам и сессиям — Claude Code / Codex,
+которыми пользовались на этом ПК.
 </details>
 
-<details><summary><b>I want the volume keys to change the phone's volume.</b></summary>
+<details><summary><b>Хочу, чтобы кнопки громкости меняли громкость телефона.</b></summary>
 
-Turn off **Settings › General › Display › The phone's volume keys switch pages**.
+Выключите **Настройки › Общие › Дисплей › Кнопки громкости телефона листают страницы**.
 </details>
 
-<details><summary><b>The update was not installed on the phone.</b></summary>
+<details><summary><b>Обновление не установилось на телефон.</b></summary>
 
-App updates need USB (Android installs them through adb without a prompt). They also need to be signed with the same
-key as the installed app — if you built the app yourself, keep using your own release key.
+Обновления приложения требуют USB (Android ставит их через adb без запроса). И они должны быть подписаны тем же
+ключом, что установленное приложение: если вы ставили старый PhoneBox или собирали приложение сами, удалите его и
+поставьте DeckBox из релиза (установщик делает это сам).
 </details>
 
-<details><summary><b>Can I use it without root?</b></summary>
+<details><summary><b>Можно ли без root?</b></summary>
 
-Yes. DeckBox needs no root on the phone and no admin rights on the PC.
+Да. DeckBox не нужен root на телефоне и права администратора на ПК.
 </details>

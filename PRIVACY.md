@@ -1,89 +1,87 @@
-# Privacy policy
+# Политика конфиденциальности
 
-DeckBox has no accounts, no servers of its own, no telemetry, no analytics and no crash reporting. The project never
-receives any data from you. This page lists every place the agent (on your computer) and the Android app (on your
-phone) connect to, so you can see exactly what leaves your machine and turn it off.
+У DeckBox нет аккаунтов, своих серверов, телеметрии, аналитики и отчётов о сбоях. Проект не получает от вас никаких
+данных. Здесь перечислено каждое место, куда подключаются агент (на компьютере) и приложение Android (на телефоне),
+чтобы вы точно знали, что уходит с ваших устройств, и могли это отключить.
 
-Last updated: 2026-11-15 (DeckBox 0.9.6).
+Обновлено: 2026-11-18 (DeckBox 1.1.0).
 
-## What stays on your devices
+## Что остаётся на ваших устройствах
 
-- **Settings and layouts**: `config.json` in `%APPDATA%\DeckBox` (Windows), `~/.config/DeckBox` (Linux) or
-  `~/Library/Application Support/DeckBox` (macOS), plus `data.json` (pushed values and notifications) next to it.
-  On macOS and Linux these files are readable only by your user (0600).
-- **Discord login**: if you use the Discord widget, `discord-token.json` next to `config.json` holds the access and
-  refresh token Discord gave DeckBox (on macOS and Linux readable only by your user).
-- **Last Claude quota reading**: `claude-quota.json` next to the log (usage percentages and reset times, no token),
-  so the panel can show the last values after a restart, and `claude-quota-schedule.json` (when the next check may
-  run, the last error message and, after Anthropic refused a token, a 16-character hash of that token, never the token
-  itself), so a restart doesn't ask Anthropic again sooner than it should.
-- **Log**: `agent.log` in `%LOCALAPPDATA%\DeckBox` (Windows), `~/.local/share/DeckBox` (Linux) or
+- **Настройки и страницы**: `config.json` в `%APPDATA%\DeckBox` (Windows), `~/.config/DeckBox` (Linux) или
+  `~/Library/Application Support/DeckBox` (macOS), рядом `data.json` (переданные значения и уведомления).
+  На macOS и Linux эти файлы доступны только вашему пользователю (0600).
+- **Вход в Discord**: если вы пользуетесь виджетом Discord, рядом с `config.json` лежит `discord-token.json` с токеном
+  доступа и токеном обновления, которые Discord выдал DeckBox (на macOS и Linux доступен только вашему пользователю).
+- **Последние квоты Claude**: `claude-quota.json` рядом с журналом (проценты использования и время сброса, без токена),
+  чтобы после перезапуска панель показала последние значения, и `claude-quota-schedule.json` (когда можно проверять
+  снова, последняя ошибка и, если Anthropic отклонил токен, 16-символьный хеш этого токена, но не сам токен), чтобы
+  после перезапуска не обращаться к Anthropic раньше времени.
+- **Журнал**: `agent.log` в `%LOCALAPPDATA%\DeckBox` (Windows), `~/.local/share/DeckBox` (Linux) или
   `~/Library/Application Support/DeckBox` (macOS).
-- **Phone app**: caches (weather, rates, widget state) in its own app storage. The app asks for `INTERNET` and
-  `VIBRATE`, and for the microphone (`RECORD_AUDIO`) only when a Dictation widget's button is tapped for the first time.
-- **Computer data shown on the panel** (CPU, GPU, memory, disks, processes, media, volume, AI coding sessions and
-  quotas, Docker / Podman, OBS) is read locally and goes only to your phone: over the USB cable (`adb reverse` to
-  `127.0.0.1`) or, after pairing, over Wi-Fi / Tailscale with a pinned certificate and a key.
-- **Sound for the Spectrum bars widget** (Windows): while an enabled page with the widget is on the phone's screen,
-  the agent captures what the default output device plays, analyzes it in memory and sends only 48 loudness levels
-  per frame to the phone. Audio is never stored or sent; capture stops a few seconds after the widget leaves the
-  screen, and removing the widget or turning its page off turns it off.
-- **Local services**: LibreHardwareMonitor's web server (`127.0.0.1:8085`), a running Antigravity language server
-  (loopback), the Docker / Podman socket, OBS WebSocket and the Discord desktop app's local connection (a named pipe
-  or socket on this computer) are local connections.
+- **Приложение на телефоне**: кэши (погода, курсы, состояние виджетов) в своём хранилище. Приложение запрашивает
+  `INTERNET` и `VIBRATE`, а микрофон (`RECORD_AUDIO`) — только при первом нажатии кнопки виджета «Диктовка».
+- **Данные компьютера на панели** (ЦП, ГП, память, диски, процессы, медиа, громкость, сессии и квоты ИИ,
+  Docker / Podman, OBS) читаются локально и уходят только на ваш телефон: по USB-кабелю (`adb reverse` на
+  `127.0.0.1`) или после сопряжения по Wi-Fi / Tailscale с закреплённым сертификатом и ключом.
+- **Звук для виджета «Спектр»** (Windows): пока на экране телефона включённая страница с этим виджетом, агент
+  захватывает звук устройства вывода по умолчанию, анализирует его в памяти и отправляет на телефон только 48 уровней
+  громкости на кадр. Звук никогда не сохраняется и не передаётся; захват останавливается через несколько секунд после
+  того, как виджет ушёл с экрана.
+- **Локальные службы**: веб-сервер LibreHardwareMonitor (`127.0.0.1:8085`), запущенный языковой сервер Antigravity,
+  сокет Docker / Podman, OBS WebSocket и локальное подключение приложения Discord — это соединения внутри компьютера.
 
-[`scripts/uninstall.ps1 -Purge`](scripts/uninstall.ps1) and [`scripts/uninstall.sh --purge`](scripts/uninstall.sh)
-remove the agent together with its settings, pushed data and log (without the switch, settings are kept). Uninstalling
-the Android app removes everything on the phone.
+Удаление через **Пуск › DeckBox › Удалить DeckBox** (или `scripts\uninstall.ps1 -Purge` / `scripts/uninstall.sh --purge`)
+может удалить агент вместе с настройками, переданными данными и журналом. Удаление приложения Android стирает всё на телефоне.
 
-## Connections made by default
+## Подключения по умолчанию
 
-Each of these servers sees your IP address, like any web request. DeckBox sends none of them an identifier for you
-or your devices, with one exception: the update check can retry with your GitHub CLI token (see below), which
-identifies your GitHub account to GitHub.
+Каждый из этих серверов видит ваш IP-адрес, как при любом веб-запросе. DeckBox не отправляет им никаких
+идентификаторов вас или ваших устройств, за одним исключением: проверка обновлений может повторить запрос с токеном
+GitHub CLI (см. ниже), по которому GitHub узнает ваш аккаунт.
 
-| What | Where | What is sent | How to turn it off |
+| Что | Куда | Что отправляется | Как отключить |
 |---|---|---|---|
-| Update check | `api.github.com` (release info), `github.com` (downloads) | The repository name; with `gh` signed in and only when GitHub turns away an anonymous request, your GitHub CLI token, to `api.github.com` only | **Settings › General › Updates › Install new releases automatically** turns off installing. The check every 6 hours stays; it sends nothing about you |
-| Network latency (ping metric, "ping high" rule) | `1.1.1.1` (Cloudflare DNS) by default, an ICMP echo every 5 seconds | An empty ping packet | From 0.9.6: empty **Settings › General › Ping**, or enter another host. 0.9.5 and earlier: not switchable; block ICMP to `1.1.1.1` in your firewall |
-| Weather (phone) | `api.open-meteo.com`, every 15 minutes | The coordinates of the city you chose (Tallinn by default) | From 0.9.6: asked only while a page has a widget that shows the weather (weather, forecast, sun & moon, a clock with its weather line, or a Custom HTML widget, which gets the weather too); remove those, or turn off the clock's weather line. 0.9.5 and earlier: asked while the panel runs; choose a city you are comfortable sharing in **Settings › General › Weather** |
-| Air quality widget (phone) | `air-quality-api.open-meteo.com`, while the widget is on a page | The same coordinates | Remove the widget |
-| City search (settings page) | `geocoding-api.open-meteo.com` | The city name you type, only when you search | Don't search |
+| Проверка обновлений | `api.github.com` (сведения о релизе), `github.com` (загрузки) | Имя репозитория `Dubstep2004/DeckBox`; если `gh` авторизован и GitHub отклонил анонимный запрос — токен GitHub CLI, только на `api.github.com` | **Настройки › Общие › Обновления › Устанавливать обновления автоматически** отключает установку. Проверка раз в 6 часов остаётся; она ничего о вас не сообщает |
+| Задержка сети (показатель «Пинг», правило «сеть медленная») | По умолчанию `1.1.1.1` (DNS Cloudflare), ICMP-запрос раз в 5 секунд | Пустой пакет ping | Очистите **Настройки › Общие › Пинг** или укажите другой адрес |
+| Погода (телефон) | `api.open-meteo.com`, раз в 15 минут | Координаты выбранного города (по умолчанию Москва) | Запрашивается, только пока на странице есть виджет с погодой (погода, прогноз, солнце и луна, часы со строкой погоды, свой HTML). Уберите такие виджеты или строку погоды у часов |
+| Виджет «Качество воздуха» (телефон) | `air-quality-api.open-meteo.com`, пока виджет на странице | Те же координаты | Уберите виджет |
+| Поиск города (страница настроек) | `geocoding-api.open-meteo.com` | Название города, которое вы ввели, только при поиске | Не пользуйтесь поиском |
 
-## Connections made only when you use a feature
+## Подключения только при использовании функции
 
-| Feature | Where | What is sent |
+| Функция | Куда | Что отправляется |
 |---|---|---|
-| Discord widget | `discord.com/api/oauth2/token`, once at login and when the token needs renewing; `cdn.discordapp.com`, once per server icon and avatar shown (the agent fetches them, the phone never contacts Discord; the rest goes through the Discord app on this PC, locally). Turn off in **Settings › General › Discord** | The application's client ID and secret, and the one-time login code or the saved refresh token; for images only the image's id and hash, which Discord already knows |
-| Claude quota | `api.anthropic.com/api/oauth/usage` | The OAuth token Claude Code stores in `~/.claude/.credentials.json`, or on macOS, when that file doesn't exist, the "Claude Code-credentials" item from the default keychain search list (normally the login Keychain), read with `security find-generic-password`; read-only, DeckBox never refreshes it |
-| GitHub widget | `api.github.com`, through your own GitHub CLI (`gh`) | Whatever `gh` sends with its own sign-in |
-| Hacker News widget (phone) | `hacker-news.firebaseio.com` | Nothing but the request |
-| Exchange rates widget (phone) | `api.frankfurter.dev` | The currencies you chose |
-| Crypto widget (phone) | `api.coingecko.com` | The coins and currency you chose |
-| Internet radio | `*.api.radio-browser.info`, `opml.radiotime.com`, the station's own stream server and logo host | Station searches, the station you play and its logo request |
-| Spotify control | `accounts.spotify.com`, `api.spotify.com` | Your own Spotify app's client ID and the sign-in you approve; the token is saved in `config.json.spotify.json` next to your settings |
-| Spotify queue covers (phone) | `i.scdn.co`, while a Spotify queue widget shows covers. Turn off with the widget's **Show covers** option | The request for each cover image |
-| Pairing over Wi-Fi without USB | `ersinkoc.github.io` (the page the QR code opens), then your computer | GitHub Pages serves the page and sees your IP address; the pairing details are after `#` in the link, which browsers never send, and the page removes them from the history. The phone then sends the one-time code only to your computer, over TLS pinned to its certificate |
-| Calendars | The iCal addresses you add | The request to that address |
-| Dictation widget | Only while you hold a dictation open (the microphone button is red, at most a minute): the phone's own speech recognizer hears you. On most phones that is Google's, which may send the audio to Google. With the widget's **Recognize on the phone only** option the app uses Android's on-device recognizer, which keeps the audio on the phone; that needs Android 12 or later and the offline language, and on older Android the option refuses to listen rather than fall back. The recognized text goes from the phone to the agent and is typed into the app in front if the widget's **Type the text on the computer** option is on (off by default). Neither the audio nor the text is stored or logged by DeckBox. Android asks for the microphone the first time the button is tapped; you can take it back in Android's app settings | Google (or your phone's recognizer), only while dictating; nothing with on-device recognition |
-| App console widget | Nothing. On Windows the agent reads the process name of the focused window to pick the matching app profile; that name stays on the computer, and the phone only gets the profile's name and key labels (a key without a label shows its keys, such as ctrl+z). With the widget's **Send keys to the computer** option on (off by default), a tap sends the profile's id and the key's slot, and the agent presses the keys only if the app in front still matches that profile | Nothing |
-| News feeds widget | The RSS and Atom addresses you add in **Settings › General**, fetched by the agent at most every 15 minutes and only while a page shows the widget; the phone never contacts the feed sites. With the widget's **Open articles on the PC** option on (off by default), tapping a headline opens its article in the computer's browser. Turn the requests off by removing the feeds in **Settings › General › News feeds**, or the widget from your pages | The request to that address, with the feed's last `ETag` / `Last-Modified` so an unchanged feed is not sent again |
-| Home Assistant | Your Home Assistant server | The access token you enter |
-| Image widget | The image address you enter | The request to that address |
-| Camera widget | The RTSP cameras you add in **Settings › General › Cameras**, pulled by ffmpeg on this computer only while an enabled page shows a Camera widget for them, and stopped a few seconds after it leaves the screen. The phone gets JPEG pictures (5 a second by default, 1 to 10 per camera) over USB or the paired Wi-Fi link and never contacts the camera. The addresses, with the user names and passwords in them, stay in `config.json` and never go to the phone, but while a camera runs its address is visible in this computer's process list (ffmpeg's command line). The pictures are not stored, and the log names the camera, never its address | The camera's own RTSP login and stream requests |
-| Photo frame widget | Nothing outside your network: the photos in the folder you choose in **Settings › General** go from the agent to the phone over USB or the paired Wi-Fi link (on Windows and macOS large JPEG and PNG photos are scaled down first), one at a time and only while an enabled page shows the widget. Clearing the folder setting or removing the widget stops it, and clearing the folder also deletes the scaled copies. Photos that are only in the cloud (OneDrive Files On-Demand and the like) are skipped, so nothing is downloaded for the slideshow | Nothing |
-| Album art on Linux | The artwork address your music player reports | The request to that address |
-| OSC controls (Control Deck) | The OSC host and port you configure, over UDP | The control value |
-| Antigravity quota through its CLI | Whatever the Antigravity CLI contacts with its own sign-in (DeckBox only starts it) | Decided by the CLI |
-| Webhooks | Inbound only: scripts and services you set up post to the agent | Nothing is sent out |
-| Setup scripts (`setup.ps1`, `setup.sh`), when you run them | `raw.githubusercontent.com` (the script), `api.github.com` and `github.com` (release info and downloads); only for what is missing and after asking: winget, Homebrew or your distribution's package servers, or `dl.google.com` (adb) | The requests themselves; nothing about you or the computer. With `gh` 2.93.0 or later signed in, the GitHub CLI checks the build provenance with its own sign-in, which also contacts `tuf-repo.github.com` and Sigstore's servers (`tuf-repo-cdn.sigstore.dev`) |
+| Виджет Discord | `discord.com/api/oauth2/token` — при входе и при обновлении токена; `cdn.discordapp.com` — по разу за каждый показанный значок сервера и аватар (их загружает агент, телефон к Discord не обращается; остальное идёт локально через приложение Discord на этом ПК). Отключается в **Настройки › Общие › Discord** | Client ID и секрет приложения, одноразовый код входа или сохранённый токен обновления; для картинок только их id и хеш, которые Discord и так знает |
+| Квоты Claude | `api.anthropic.com/api/oauth/usage` | OAuth-токен, который Claude Code хранит в `~/.claude/.credentials.json`, а на macOS, если этого файла нет, — запись «Claude Code-credentials» из связки ключей (читается через `security find-generic-password`); только чтение, DeckBox его не обновляет |
+| Виджет GitHub | `api.github.com`, через ваш GitHub CLI (`gh`) | То, что `gh` отправляет со своей авторизацией |
+| Виджет Hacker News (телефон) | `hacker-news.firebaseio.com` | Только сам запрос |
+| Виджет «Курсы валют» (телефон) | `api.frankfurter.dev` | Выбранные валюты |
+| Виджет «Криптовалюты» (телефон) | `api.coingecko.com` | Выбранные монеты и валюта |
+| Интернет-радио | `*.api.radio-browser.info`, `opml.radiotime.com`, сервер потока станции и сервер её логотипа | Поиск станций, станция, которую вы слушаете, и запрос её логотипа |
+| Управление Spotify | `accounts.spotify.com`, `api.spotify.com` | Client ID вашего приложения Spotify и вход, который вы подтвердили; токен хранится в `config.json.spotify.json` рядом с настройками |
+| Обложки в очереди Spotify (телефон) | `i.scdn.co`, пока виджет «Очередь Spotify» показывает обложки. Отключается параметром **Показывать обложки** | Запрос каждой обложки |
+| Сопряжение по Wi-Fi без USB | `dubstep2004.github.io` (страница, которую открывает QR-код), затем ваш компьютер | GitHub Pages отдаёт страницу и видит ваш IP-адрес; данные сопряжения стоят после `#` в ссылке, браузеры их не отправляют, а страница удаляет их из истории. Затем телефон отправляет одноразовый код только вашему компьютеру по TLS с закреплённым сертификатом |
+| Календари | Добавленные вами адреса iCal | Запрос к этому адресу |
+| Виджет «Диктовка» | Только пока диктовка открыта (кнопка микрофона красная, не дольше минуты): вас слышит распознаватель речи телефона. На большинстве телефонов это распознаватель Google, который может отправлять звук в Google. С параметром **Распознавать только на телефоне** приложение использует встроенный распознаватель Android, и звук не покидает телефон; для этого нужен Android 12 или новее и офлайн-язык. Распознанный текст уходит с телефона агенту и печатается в активное окно, если включён параметр **Печатать текст на компьютере** (по умолчанию выключен). DeckBox не сохраняет и не записывает в журнал ни звук, ни текст | Google (или распознаватель телефона), только во время диктовки; при распознавании на телефоне — ничего |
+| Виджет «Консоль приложения» | Ничего. В Windows агент читает имя процесса активного окна, чтобы выбрать профиль; это имя остаётся на компьютере, а телефон получает только название профиля и подписи кнопок. С параметром **Отправлять нажатия на компьютер** (по умолчанию выключен) нажатие передаёт id профиля и номер кнопки, и агент жмёт клавиши, только если активное приложение всё ещё подходит под профиль | Ничего |
+| Виджет «Новостные ленты» | Добавленные в **Настройки › Общие** адреса RSS и Atom; агент загружает их не чаще раза в 15 минут и только пока страница показывает виджет, телефон к сайтам не обращается. С параметром **Открывать статьи на ПК** (по умолчанию выключен) нажатие на заголовок открывает статью в браузере компьютера | Запрос к адресу ленты с её последними `ETag` / `Last-Modified`, чтобы неизменённая лента не передавалась заново |
+| Home Assistant | Ваш сервер Home Assistant | Введённый вами токен доступа |
+| Виджет «Изображение» | Указанный адрес картинки | Запрос к этому адресу |
+| Виджет «Камера» | RTSP-камеры из **Настройки › Общие › Камеры**; ffmpeg на этом компьютере получает поток, только пока включённая страница показывает виджет этой камеры, и останавливается через несколько секунд после ухода с экрана. Телефон получает JPEG-кадры (по умолчанию 5 в секунду, от 1 до 10) по USB или сопряжённому Wi-Fi и к камере не обращается. Адреса с логинами и паролями остаются в `config.json` и не уходят на телефон, но пока камера работает, её адрес виден в списке процессов компьютера (командная строка ffmpeg). Кадры не сохраняются, в журнале указано имя камеры, но не адрес | Вход и запросы потока самой камеры по RTSP |
+| Виджет «Фоторамка» | Ничего за пределами вашей сети: фото из выбранной в **Настройки › Общие** папки идут от агента на телефон по USB или сопряжённому Wi-Fi (в Windows и macOS большие JPEG и PNG сначала уменьшаются), по одному и только пока включённая страница показывает виджет. Фото, которые есть только в облаке (OneDrive «Файлы по запросу» и т. п.), пропускаются, поэтому для слайд-шоу ничего не скачивается | Ничего |
+| Обложки альбомов в Linux | Адрес обложки, который сообщает плеер | Запрос к этому адресу |
+| OSC-кнопки (пульт управления) | Заданные вами хост и порт OSC, по UDP | Значение кнопки |
+| Квоты Antigravity через его CLI | То, к чему обращается Antigravity CLI со своей авторизацией (DeckBox только запускает его) | Определяет CLI |
+| Вебхуки | Только входящие: ваши скрипты и сервисы отправляют данные агенту | Ничего не отправляется наружу |
+| Установщик DeckBox-Setup | Ничего: всё нужное (агент, adb, приложение) уже внутри установщика | Ничего |
 
-When the phone has no internet connection of its own, the agent can fetch the public widget feeds above (Open-Meteo,
-Hacker News, Frankfurter, CoinGecko) on its behalf. Only those hosts are allowed, and the same data is sent.
+Если у телефона нет своего интернета, агент может загружать перечисленные выше открытые ленты виджетов (Open-Meteo,
+Hacker News, Frankfurter, CoinGecko) за него. Разрешены только эти адреса, и отправляются те же данные.
 
-Third-party services have their own privacy policies; DeckBox does not control what they log.
+У сторонних сервисов свои политики конфиденциальности; DeckBox не управляет тем, что они записывают.
 
-## Contact
+## Связь
 
-Questions or concerns: open an issue at <https://github.com/ersinkoc/phonebox/issues>, or for anything sensitive see
-[SECURITY.md](SECURITY.md).
+Вопросы и замечания: создайте issue на <https://github.com/Dubstep2004/DeckBox/issues>, а по чувствительным вопросам
+смотрите [SECURITY.md](SECURITY.md).

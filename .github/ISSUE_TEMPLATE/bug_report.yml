@@ -1,49 +1,49 @@
-name: Bug report
-description: Something doesn't work as described
+name: Сообщение об ошибке
+description: Что-то работает не так, как описано
 labels: [bug]
 body:
   - type: textarea
     id: what
     attributes:
-      label: What happened, and what did you expect?
+      label: Что произошло и чего вы ожидали?
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Steps to reproduce
+      label: Как воспроизвести
       placeholder: "1. …\n2. …"
   - type: input
     id: version
     attributes:
-      label: DeckBox version
-      description: The settings page shows it next to its title (the agent and the phone app should match).
-      placeholder: "0.9.6"
+      label: Версия DeckBox
+      description: Страница настроек показывает её рядом с заголовком (агент и приложение на телефоне должны совпадать).
+      placeholder: "1.1.0"
     validations:
       required: true
   - type: input
     id: computer
     attributes:
-      label: Computer
+      label: Компьютер
       placeholder: "Windows 11 24H2 / Ubuntu 24.04 / macOS 15 (Apple silicon)"
     validations:
       required: true
   - type: input
     id: phone
     attributes:
-      label: Phone and Android version
+      label: Телефон и версия Android
       placeholder: "Pixel 4a, Android 13"
   - type: dropdown
     id: connection
     attributes:
-      label: Connection
-      options: [USB, Wi-Fi, Tailscale, Not connected yet]
+      label: Подключение
+      options: [USB, Wi-Fi, Tailscale, Ещё не подключён]
   - type: textarea
     id: log
     attributes:
-      label: Agent log
+      label: Журнал агента
       description: >-
-        The end of agent.log: %LOCALAPPDATA%\DeckBox (Windows), ~/.local/share/DeckBox (Linux),
-        ~/Library/Application Support/DeckBox (macOS). Remove anything private first (keys, tokens, calendar URLs,
-        names of your files or sessions).
+        Конец agent.log: %LOCALAPPDATA%\DeckBox (Windows), ~/.local/share/DeckBox (Linux),
+        ~/Library/Application Support/DeckBox (macOS). Сначала уберите личное (ключи, токены, адреса календарей,
+        названия ваших файлов и сессий).
       render: text

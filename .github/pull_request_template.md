@@ -1,19 +1,20 @@
-## What changes for the user
+## Что меняется для пользователя
 
-<!-- One or two sentences. Link the issue: Fixes #123 -->
+<!-- Одно-два предложения. Ссылка на issue: Fixes #123 -->
 
-## How it works
+## Как это работает
 
-<!-- The approach, and anything a reviewer should look at first. -->
+<!-- Подход и то, на что проверяющему стоит посмотреть в первую очередь. -->
 
-## Checklist
+## Чек-лист
 
-- [ ] One change; unrelated changes are in their own pull request
-- [ ] New outbound connections have a row in `PRIVACY.md` and can be turned off
-- [ ] New paths reachable over Wi-Fi (`Lan.cs` allow-list) or new ways to control the computer are explained above
-- [ ] Secrets stay out of `ToPublic()` and logs; processes start with `ArgumentList`, no shell
-- [ ] Tests: `dotnet test agent/DeckBox.Agent.Tests`, `npx playwright test` (in `tools/ui-tests`), `python tools/check-release.py`
+- [ ] Одно изменение; несвязанные — в отдельных pull request
+- [ ] Новые исходящие подключения описаны в `PRIVACY.md` и отключаются
+- [ ] Новые пути, доступные по Wi-Fi (список в `Lan.cs`), или новые способы управлять компьютером объяснены выше
+- [ ] Секреты не попадают в `ToPublic()` и журнал; процессы запускаются через `ArgumentList`, без оболочки
+- [ ] Новые тексты интерфейса переведены на русский (`i18n.js`)
+- [ ] Тесты: `dotnet test agent/DeckBox.Agent.Tests`, `npx playwright test` (в `tools/ui-tests`)
 
-## How I tested it
+## Как я проверял
 
-<!-- Commands you ran, what you tried by hand, on which OS / phone / Android version. Screenshots for UI changes. -->
+<!-- Какие команды запускали, что проверяли руками, на какой ОС / телефоне / версии Android. Снимки для изменений интерфейса. -->
