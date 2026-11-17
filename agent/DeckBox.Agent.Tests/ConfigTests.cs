@@ -380,36 +380,36 @@ public class ConfigConcurrencyTests
     }
 
     [Fact]
-    public void DisplayLanguageDefaultsAndExposesToPublic()
+    public void DisplayLanguageIsAlwaysRussianAndExposedToThePhone()
     {
         var (s, path) = NewStore();
         try
         {
-            Assert.Equal("auto", s.Get().Display.Language);
+            Assert.Equal("ru", s.Get().Display.Language);
 
             Assert.Null(s.Save("""{"display":{"language":"tr"}}"""));
-            Assert.Equal("tr", s.Get().Display.Language);
+            Assert.Equal("ru", s.Get().Display.Language);
             var pub = JsonSerializer.Serialize(s.Get().ToPublic(), ConfigStore.WriteOpts);
             using var doc = JsonDocument.Parse(pub);
-            Assert.Equal("tr", doc.RootElement.GetProperty("display").GetProperty("language").GetString());
+            Assert.Equal("ru", doc.RootElement.GetProperty("display").GetProperty("language").GetString());
         }
         finally { File.Delete(path); File.Delete(path + ".bak"); }
     }
 
     [Theory]
-    [InlineData("\"TR\"", "tr")]       // any case
-    [InlineData("\" de \"", "de")]     // stray spaces
-    [InlineData("\"vi\"", "vi")]       // added after the list was first written (#177)
-    [InlineData("\"xx\"", "auto")]     // a language DeckBox does not have
-    [InlineData("null", "auto")]
-    [InlineData("\"\"", "auto")]
-    public void ADisplayLanguageItDoesNotKnowFollowsThePhone(string json, string expected)
+    [InlineData("\"auto\"")]   // PhoneBox's default
+    [InlineData("\"EN\"")]
+    [InlineData("\" de \"")]
+    [InlineData("\"xx\"")]
+    [InlineData("null")]
+    [InlineData("\"\"")]
+    public void AnySavedLanguageBecomesRussian(string json)
     {
         var (s, path) = NewStore();
         try
         {
             Assert.Null(s.Save("{\"display\":{\"language\":" + json + "}}"));
-            Assert.Equal(expected, s.Get().Display.Language);
+            Assert.Equal("ru", s.Get().Display.Language);
         }
         finally { File.Delete(path); File.Delete(path + ".bak"); }
     }
@@ -422,15 +422,15 @@ public class ConfigConcurrencyTests
     }
 
     [Fact]
-    public void EveryLanguageThePanelHasCanBeSaved()
+    public void ThePanelSpeaksRussianOnly()
     {
-        // a language added to i18n.js but not to DisplayConfig.Languages is saved as "auto", so picking it does nothing
+        // i18n.js keeps English only as the internal fallback; Russian is the one language the agent saves
         using var s = AppPaths.Resource("www/i18n.js");
         Assert.NotNull(s);
         var js = new StreamReader(s!).ReadToEnd();
-        var codes = System.Text.RegularExpressions.Regex.Matches(js, @"\{\s*code:\s*'([a-z]{2,3})'").Select(m => m.Groups[1].Value).ToHashSet();
-        Assert.Contains("en", codes);
-        Assert.Equal(codes.Order(), DisplayConfig.Languages.Where(l => l != "auto").Order());
+        var codes = System.Text.RegularExpressions.Regex.Matches(js, @"\{\s*code:\s*'([a-z]{2,3})'").Select(m => m.Groups[1].Value).Order().ToArray();
+        Assert.Equal(["en", "ru"], codes);
+        Assert.Equal(["ru"], DisplayConfig.Languages);
     }
 }
 

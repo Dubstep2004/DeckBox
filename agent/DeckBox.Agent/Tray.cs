@@ -48,26 +48,26 @@ public sealed class Tray : IHostedService
 
         using var iconStream = AppPaths.Resource("deckbox.ico");
         var status = new ToolStripMenuItem { Enabled = false };
-        var autostart = new ToolStripMenuItem("Start with Windows");
+        var autostart = new ToolStripMenuItem("Запускать вместе с Windows");
         autostart.Click += (_, _) => { ToggleAutostart(); autostart.Checked = File.Exists(AppPaths.StartupShortcut); };
 
         var menu = new ContextMenuStrip();
         menu.Items.Add(new ToolStripMenuItem($"DeckBox {AppPaths.Version}") { Enabled = false });
         menu.Items.Add(status);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Settings…", null, (_, _) => OpenUrl(SettingsUrl)) { Font = new Font(menu.Font, FontStyle.Bold) });
+        menu.Items.Add(new ToolStripMenuItem("Настройки…", null, (_, _) => OpenUrl(SettingsUrl)) { Font = new Font(menu.Font, FontStyle.Bold) });
         // cancelled while Windows is ending the session (no adb is started then, for at most a minute): nothing to show
-        menu.Items.Add("Open panel on phone", null, async (_, _) => { try { await _adb.OpenPanelAsync(); } catch (OperationCanceledException) { } });
+        menu.Items.Add("Открыть панель на телефоне", null, async (_, _) => { try { await _adb.OpenPanelAsync(); } catch (OperationCanceledException) { } });
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Edit config.json", null, (_, _) => Open("notepad.exe", AppPaths.ConfigPath));
-        menu.Items.Add("Open log", null, (_, _) => Open("notepad.exe", AppPaths.LogPath));
+        menu.Items.Add("Открыть config.json", null, (_, _) => Open("notepad.exe", AppPaths.ConfigPath));
+        menu.Items.Add("Открыть журнал", null, (_, _) => Open("notepad.exe", AppPaths.LogPath));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(autostart);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Quit", null, (_, _) => _life.StopApplication());
+        menu.Items.Add("Выход", null, (_, _) => _life.StopApplication());
         menu.Opening += (_, _) =>
         {
-            status.Text = _adb.Connected ? $"Phone connected ({_adb.Devices})" : "No phone connected";
+            status.Text = _adb.Connected ? $"Телефон подключён ({_adb.Devices})" : "Телефон не подключён";
             autostart.Checked = File.Exists(AppPaths.StartupShortcut);
         };
 
@@ -81,7 +81,7 @@ public sealed class Tray : IHostedService
         _icon.DoubleClick += (_, _) => OpenUrl(SettingsUrl);
         _adb.StateChanged += () =>
         {
-            try { host.BeginInvoke(() => _icon.Text = _adb.Connected ? "DeckBox — phone connected" : "DeckBox — waiting for phone"); } catch { }
+            try { host.BeginInvoke(() => _icon.Text = _adb.Connected ? "DeckBox — телефон подключён" : "DeckBox — ждёт телефон"); } catch { }
         };
 
         Application.Run(_ctx);
@@ -110,12 +110,12 @@ public sealed class Tray : IHostedService
             dynamic lnk = shell.CreateShortcut(AppPaths.StartupShortcut);
             lnk.TargetPath = Environment.ProcessPath;
             lnk.WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath);
-            lnk.Description = "DeckBox agent";
+            lnk.Description = "Агент DeckBox";
             lnk.Save();
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Could not change the startup shortcut: " + ex.Message, "DeckBox", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show("Не удалось изменить ярлык автозапуска: " + ex.Message, "DeckBox", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 }

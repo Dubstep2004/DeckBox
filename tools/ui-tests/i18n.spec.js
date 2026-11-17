@@ -1,5 +1,5 @@
 // Localisation gaps the first i18n pass left behind: literals the dictionary already translates, and one spot
-// that compared a localized label against the English word. Against the web demo, in German.
+// that compared a localized label against the English word. Against the web demo, in Russian (DeckBox's only language).
 const { test, expect } = require('@playwright/test');
 
 async function show(page, widgets) {
@@ -8,7 +8,7 @@ async function show(page, widgets) {
     localStorage.clear();
     localStorage.setItem('pb-demo-config', JSON.stringify({
       night: { enabled: false }, rules: [], shortcuts: [],
-      display: { language: 'de' },
+      display: { language: 'ru' },
       pages: [{ id: 'one', title: 'One', widgets }],
     }));
   }, widgets);
@@ -51,78 +51,47 @@ test('a small agenda shows relative times in the panel language', async ({ page 
   await show(page, [{ id: 'ag', type: 'agenda', x: 0, y: 0, w: 12, h: 1, options: {} }]);
   await page.evaluate(() => window.DeckBoxDemo.emit('refresh'));
   const sub = page.locator('.ag-big-s').first();
-  await expect(sub).toHaveText(/^in \d+ Min/); // German "in 35 Min · 12:35", not "Heute · 12:35"
-  await expect(sub).not.toHaveText(/Heute/);
+  await expect(sub).toHaveText(/^через \d+/); // "через 35 мин · 12:35", not "Сегодня · 12:35"
+  await expect(sub).not.toHaveText(/Сегодня/);
 });
 
 test('the breathe widget greets in the panel language before the first tap', async ({ page }) => {
   await show(page, [{ id: 'br', type: 'breathe', x: 0, y: 0, w: 4, h: 2, options: {} }]);
-  await expect(page.locator('.br-w')).toHaveText('Tippen zum Starten');
+  await expect(page.locator('.br-w')).toHaveText('Нажмите для старта');
 });
 
-// Panel keys are translated in all twelve languages and are checked strictly. Settings-page strings were added for
-// English and Vietnamese only: t() falls back to the English entry for a key a language does not define, so a missing
-// s.* key never shows a key name. The languages that do define a key must not carry English text in its place, which is
-// the failure mode a plain "every key exists" check cannot see.
-test('every translated key is really translated, and the rest fall back to English', async ({ page }) => {
+// DeckBox speaks Russian only: every key has a Russian text, and none of them is English left in place.
+test('the Russian dictionary is complete and really translated', async ({ page }) => {
   await page.goto('/panel/');
   const result = await page.evaluate(() => {
     const I18n = window.DeckBoxI18n;
     const S = I18n.STRINGS;
-    const en = S.en;
-    // Panel keys (everything outside s.*) are the strings the phone shows, and they are translated in all twelve
-    // languages, so a missing one is a regression. Settings-page keys (s.*) were added for English and Vietnamese only
-    // and are allowed to fall back; every other gap is a failure.
-    const gaps = Object.keys(S).flatMap((lang) =>
-      lang === 'en' ? [] : Object.keys(en)
-        .filter((k) => !k.startsWith('s.') && !(k in S[lang]))
-        .map((k) => `${lang}:${k}`));
-    // a key whose text is identical to English is either a name that is not translated (Wi-Fi, USB, Client secret) or
-    // padding; the Vietnamese dictionary is complete, so check it exactly, and spot-check the rest for copied sentences.
+    const gaps = Object.keys(S.en).filter((k) => !(k in S.ru));
     const SAME_IS_FINE = new Set(['s.discord.clientSecret', 'status.wiFi', 'status.usb', 's.cd.clientId']);
-    const copied = Object.keys(S).filter((lang) => lang !== 'en').flatMap((lang) =>
-      Object.keys(S[lang])
-        .filter((k) => S[lang][k] === en[k] && !SAME_IS_FINE.has(k) && en[k].length > 12 && /[a-z]{4,} [a-z]{3,}/.test(en[k]))
-        .map((k) => `${lang}:${k}`));
-    // a missing key must fall back to English, not print the key
-    I18n.setLang('de');
-    const fallback = I18n.t('s.js.addWidget');
-    I18n.setLang('vi');
-    const translated = I18n.t('s.js.addWidget');
-    return { gaps, copied, fallback, translated };
+    const copied = Object.keys(S.ru)
+      .filter((k) => S.ru[k] === S.en[k] && !SAME_IS_FINE.has(k) && S.en[k].length > 12 && /[a-z]{4,} [a-z]{3,}/.test(S.en[k]));
+    return { gaps, copied, languages: I18n.LANGUAGES.map((l) => l.code).sort(), dictionaries: Object.keys(S).sort() };
   });
-  expect(result.gaps).toEqual([]); // panel keys must exist in every language; s.* may fall back to English
+  expect(result.gaps).toEqual([]);
   expect(result.copied).toEqual([]);
-  expect(result.fallback).toBe('Add a widget');
-  expect(result.translated).toBe('Thêm widget');
-});
-
-test('the Vietnamese panel dictionary is complete', async ({ page }) => {
-  await page.goto('/panel/');
-  const gaps = await page.evaluate(() => {
-    const S = window.DeckBoxI18n.STRINGS;
-    return Object.keys(S.en).filter((k) => !(k in S.vi));
-  });
-  expect(gaps).toEqual([]);
+  expect(result.languages).toEqual(['en', 'ru']); // English is only the internal fallback
+  expect(result.dictionaries).toEqual(['en', 'ru']);
 });
 
 test('the widget catalog translates by its English text', async ({ page }) => {
   await page.goto('/panel/');
   const out = await page.evaluate(() => {
     const I18n = window.DeckBoxI18n;
-    I18n.setLang('vi');
+    I18n.setLang('ru');
     return {
       name: I18n.tc('Clock'),
       desc: I18n.tc('Clock, weather, now playing and PC tiles.'),
       category: I18n.tc('Weather & sky'),
       untouched: I18n.tc('not in the catalog'),
-      // the catalog is keyed by English, so another language keeps the English name rather than a wrong one
-      other: (I18n.setLang('de'), I18n.tc('Clock')),
     };
   });
-  expect(out.name).toBe('Đồng hồ');
-  expect(out.desc).toContain('Đồng hồ');
-  expect(out.category).toBe('Thời tiết & bầu trời');
+  expect(out.name).toBe('Часы');
+  expect(out.desc).toContain('Часы');
+  expect(out.category).toBe('Погода и небо');
   expect(out.untouched).toBe('not in the catalog');
-  expect(out.other).toBe('Clock');
 });

@@ -86,7 +86,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
             {
                 await CheckAsync(ct);
                 // a failed check (GitHub answering 504 now and then) is retried soon instead of in 6 hours
-                nextCheck = DateTime.UtcNow + (_error?.StartsWith("Update check failed") == true ? TimeSpan.FromMinutes(15) : TimeSpan.FromHours(6));
+                nextCheck = DateTime.UtcNow + (_error?.StartsWith("Проверка обновлений не удалась") == true ? TimeSpan.FromMinutes(15) : TimeSpan.FromHours(6));
             }
             if (cfg.Get().Updates.Auto) await ApplyAsync(ct);
             await Task.Delay(TimeSpan.FromMinutes(1), ct);
@@ -120,7 +120,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex)
         {
-            _error = "Update check failed: " + Describe(ex);
+            _error = "Проверка обновлений не удалась: " + Describe(ex);
             log.LogWarning("update check failed: {Error}", Describe(ex));
             _state = "idle";
         }
@@ -168,13 +168,13 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     public async Task<string?> InstallAppAsync(CancellationToken ct = default)
     {
         var targets = adb.MissingApp;
-        if (targets.Length == 0) return "no connected phone is missing the app";
-        if (!await _gate.WaitAsync(0, ct)) return "an update is already running";
+        if (targets.Length == 0) return "на всех подключённых телефонах приложение уже есть";
+        if (!await _gate.WaitAsync(0, ct)) return "обновление уже идёт";
         try
         {
             _state = "installing the phone app";
             if (_latest is null) { await CheckCoreAsync(ct); _state = "installing the phone app"; } // not CheckAsync: this method already holds the gate
-            if (_latest?.Apk is null) return "could not find the phone app in the GitHub releases";
+            if (_latest?.Apk is null) return "в релизах на GitHub не найдено приложение для телефона";
             var apk = await VerifiedDownloadAsync(_latest.Apk, $"DeckBox-{_latest.Version}.apk", ct);
             var adbExe = AdbReverse.FindAdb(cfg.Get().AdbPath) ?? throw new InvalidOperationException("adb not found");
             foreach (var serial in targets)
