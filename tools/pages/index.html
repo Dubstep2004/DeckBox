@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DeckBox — live demo</title>
-<meta name="description" content="Turn an old Android phone into a desk panel for your computer. Try the panel and the layout editor in your browser.">
+<title>DeckBox — живое демо</title>
+<meta name="description" content="Превратите старый Android-телефон в настольную панель для компьютера. Попробуйте панель и редактор прямо в браузере.">
 <link rel="icon" href="favicon.ico">
 <style>
 :root { --bg: #07090d; --panel: #10141b; --line: #232a35; --text: #eef2f6; --muted: #8a94a3; --accent: #2dd4bf; color-scheme: dark; }
@@ -63,39 +63,38 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 1
     <h1>DeckBox</h1>
     <a class="gh" href="https://github.com/Dubstep2004/DeckBox">★ <span>GitHub</span></a>
   </header>
-  <p class="lead">Turn an old Android phone into a <b>desk panel for your computer</b> (Windows, Linux or macOS): {{widgets}} widgets, a visual layout editor,
-    AI coding sessions and quotas, music, a Control Deck, webhooks and rules. This is the real panel of DeckBox {{version}} running in your browser
-    with made-up data — swipe it, tap it.</p>
+  <p class="lead">Превратите старый Android-телефон в <b>настольную панель для компьютера</b> (Windows, Linux или macOS): {{widgets}} виджетов, визуальный редактор,
+    сессии и квоты ИИ, музыка, пульт управления, вебхуки и правила. Ниже — настоящая панель DeckBox {{version}}, работающая в вашем браузере
+    на придуманных данных: листайте и нажимайте.</p>
 
-  <div class="stage"><div class="phone"><div class="screen"><iframe id="panel" src="panel/" title="DeckBox panel"></iframe></div></div></div>
+  <div class="stage"><div class="phone"><div class="screen"><iframe id="panel" src="panel/" title="Панель DeckBox"></iframe></div></div></div>
 
   <div class="controls">
-    <button id="prev">◀ Previous page</button>
-    <button id="next">Next page ▶</button>
-    <button id="overview">▦ All pages</button>
-    <button id="notify">🔔 Send a notification</button>
-    <button id="approval">✳ Claude asks for permission</button>
-    <a class="primary" href="settings/#pages" target="_blank" rel="noopener">✎ Open the layout editor ↗</a>
+    <button id="prev">◀ Предыдущая страница</button>
+    <button id="next">Следующая страница ▶</button>
+    <button id="overview">▦ Все страницы</button>
+    <button id="notify">🔔 Отправить уведомление</button>
+    <button id="approval">✳ Claude просит разрешение</button>
+    <a class="primary" href="settings/#pages" target="_blank" rel="noopener">✎ Открыть редактор страниц ↗</a>
   </div>
-  <p class="hint">Changes you make in the layout editor show up here right away. Everything stays in your browser.</p>
+  <p class="hint">Изменения в редакторе сразу появляются здесь. Всё остаётся в вашем браузере.</p>
 
   <div class="grid">
-    <div class="card"><h3>{{widgets}} widgets, {{templates}} templates</h3><p>Smart Stack, clocks, weather, calendars, media, gauges, charts, processes, Docker / Podman, OBS, Home Assistant, timers, checklists, markets… on a 12 × 6 grid, as many pages as you like. Every template is a page in this demo.</p></div>
-    <div class="card"><h3>AI coding at a glance</h3><p>Claude, Codex and Antigravity quotas with a burn-rate forecast, Claude Code and Codex sessions, GitHub reviews, and Allow / Deny for Claude Code's permission prompts right on the phone.</p></div>
-    <div class="card"><h3>Control Deck</h3><p>App and device volume, microphone, media, OBS, tasks, dev servers and display brightness as touch controls. The phone sends IDs only; commands stay on the computer. The native audio and display controls are Windows-only.</p></div>
-    <div class="card"><h3>Webhooks and rules</h3><p>Scripts, CI and Home Assistant push values and notifications with one <code>curl</code>; rules switch pages calmly when a call, music or a waiting AI session needs the screen.</p></div>
-    <div class="card"><h3>USB or Wi-Fi, no cloud</h3><p>Over the USB cable, or over Wi-Fi / Tailscale with a pinned certificate and a key. No accounts, no telemetry: see the <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">privacy policy</a>.</p></div>
+    <div class="card"><h3>{{widgets}} виджетов, {{templates}} шаблонов</h3><p>Смарт-стопка, часы, погода, календари, медиа, шкалы, графики, процессы, Docker / Podman, OBS, Home Assistant, таймеры, чек-листы, курсы… на сетке 12 × 6 и сколько угодно страниц. Каждый шаблон — отдельная страница в этом демо.</p></div>
+    <div class="card"><h3>ИИ-программирование на виду</h3><p>Квоты Claude, Codex и Antigravity с прогнозом расхода, сессии Claude Code и Codex, ревью GitHub, а также «Разрешить / Запретить» для запросов Claude Code прямо на телефоне.</p></div>
+    <div class="card"><h3>Пульт управления</h3><p>Громкость приложений и устройств, микрофон, медиа, OBS, задачи, серверы разработки и яркость экрана — сенсорными кнопками. Телефон передаёт только ID, команды остаются на компьютере. Встроенное управление звуком и дисплеем — только в Windows.</p></div>
+    <div class="card"><h3>Вебхуки и правила</h3><p>Скрипты, CI и Home Assistant отправляют значения и уведомления одной командой <code>curl</code>; правила сами переключают страницы, когда экран нужен для звонка, музыки или ожидающей сессии ИИ.</p></div>
+    <div class="card"><h3>USB или Wi-Fi, без облака</h3><p>По USB-кабелю или по Wi-Fi / Tailscale с закреплённым сертификатом и ключом. Без аккаунтов и телеметрии — подробнее в <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">политике конфиденциальности</a>.</p></div>
   </div>
 
   <div class="cta">
-    <p>Install on Windows (PowerShell, not as administrator):<br><code>irm https://raw.githubusercontent.com/Dubstep2004/DeckBox/main/setup.ps1 | iex</code></p>
-    <p>On Linux and macOS:<br><code>curl -fsSL https://raw.githubusercontent.com/Dubstep2004/DeckBox/main/setup.sh | bash</code></p>
-    <p>Setup checks the download, installs adb if it is missing and can put the app on the phone. See the
-      <a href="https://github.com/Dubstep2004/DeckBox#quick-start">quick start</a> for what it does and its warnings, or download a
-      <a href="https://github.com/Dubstep2004/DeckBox/releases/latest">release</a>.</p>
+    <p><b>Установка на Windows 10/11:</b> скачайте <a href="https://github.com/Dubstep2004/DeckBox/releases/latest">DeckBox-Setup</a> со страницы последнего релиза и запустите.
+      Права администратора не нужны. Установщик поставит агент, adb и приложение на телефон, подключённый по USB.</p>
+    <p>Уже установленный DeckBox обновляется сам: Настройки › Общие › Обновления.
+      Подробнее — в <a href="https://github.com/Dubstep2004/DeckBox#установка">инструкции по установке</a>.</p>
   </div>
 
-  <footer>DeckBox {{version}} · MIT licensed · <a href="https://github.com/Dubstep2004/DeckBox">github.com/Dubstep2004/DeckBox</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/CHANGELOG.md">changelog</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">privacy</a> · based on <a href="https://github.com/ersinkoc/phonebox">PhoneBox</a> by ersinkoc</footer>
+  <footer>DeckBox {{version}} · лицензия MIT · <a href="https://github.com/Dubstep2004/DeckBox">github.com/Dubstep2004/DeckBox</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/CHANGELOG.md">история изменений</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">конфиденциальность</a> · основан на <a href="https://github.com/ersinkoc/phonebox">PhoneBox</a> (автор ersinkoc)</footer>
 </div>
 
 <script>
@@ -109,10 +108,10 @@ document.getElementById('prev').onclick = () => panel().onAndroidKey?.('prev');
 document.getElementById('next').onclick = () => panel().onAndroidKey?.('next');
 document.getElementById('overview').onclick = () => panel().openOverview?.();
 const notes = [
-  { title: 'Build #143', text: 'main passed in 2m 48s', level: 'ok' },
-  { title: 'Deploy', text: 'Production is live 🚀', level: 'ok' },
-  { title: 'Doorbell', text: 'Someone is at the front door', level: 'warn' },
-  { title: 'Disk space', text: 'D: is 95% full', level: 'error' },
+  { title: 'Сборка #143', text: 'main прошла за 2 мин 48 с', level: 'ok' },
+  { title: 'Деплой', text: 'Продакшен запущен 🚀', level: 'ok' },
+  { title: 'Дверной звонок', text: 'Кто-то у входной двери', level: 'warn' },
+  { title: 'Место на диске', text: 'Диск D: заполнен на 95%', level: 'error' },
 ];
 let n = 0;
 document.getElementById('notify').onclick = () => panel().DeckBoxDemo?.emit('notify', notes[n++ % notes.length]);

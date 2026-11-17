@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
-<title>Pair DeckBox</title>
+<title>Сопряжение DeckBox</title>
 <link rel="icon" href="../favicon.ico">
 <style>
 :root { --bg: #07090d; --panel: #10141b; --line: #232a35; --text: #eef2f6; --muted: #8a94a3; --accent: #2dd4bf; --warn: #f59e0b; color-scheme: dark; }
@@ -27,33 +27,33 @@ code { font-size: 13px; }
 </head>
 <body>
 <div class="wrap">
-  <header><img src="../favicon.ico" alt=""><h1>Pair DeckBox</h1></header>
+  <header><img src="../favicon.ico" alt=""><h1>Сопряжение DeckBox</h1></header>
 
   <div class="card" id="ok" hidden>
-    <h2>Pair this phone with a computer?</h2>
-    <p class="muted">“<span id="pc"></span>” at <span id="hosts"></span>. Check that the computer's pairing window shows the code
-      <b id="check"></b>, and continue only if you started pairing there.</p>
-    <a class="btn primary" id="open" href="#">Open in DeckBox</a>
-    <p class="muted" id="plainWrap" hidden style="margin-top:10px">Did a store open instead? Some browsers send app links there;
-      <a id="plain" href="#" style="color:var(--accent)">open the pairing link directly</a>. If Android then asks which app to
-      open it with, choose DeckBox: another app that accepts these links would get the pairing code.</p>
-    <p class="muted" style="margin-top:10px">The pairing code works once, for 5 minutes. If it expired, start pairing again on the computer.</p>
+    <h2>Сопрячь этот телефон с компьютером?</h2>
+    <p class="muted">«<span id="pc"></span>», адрес <span id="hosts"></span>. Убедитесь, что в окне сопряжения на компьютере показан код
+      <b id="check"></b>, и продолжайте, только если сопряжение начали вы сами.</p>
+    <a class="btn primary" id="open" href="#">Открыть в DeckBox</a>
+    <p class="muted" id="plainWrap" hidden style="margin-top:10px">Вместо приложения открылся магазин? Некоторые браузеры отправляют такие ссылки туда;
+      <a id="plain" href="#" style="color:var(--accent)">откройте ссылку сопряжения напрямую</a>. Если Android спросит, каким приложением
+      её открыть, выберите DeckBox: другое приложение, принимающее такие ссылки, получило бы код сопряжения.</p>
+    <p class="muted" style="margin-top:10px">Код сопряжения действует один раз и 5 минут. Если время вышло, начните сопряжение на компьютере заново.</p>
   </div>
 
   <div class="card" id="bad" hidden>
-    <h2 class="warn">This pairing link is incomplete</h2>
-    <p class="muted">Scan the QR code again from DeckBox on the computer: Settings › General › Wi-Fi &amp; Tailscale › Pair a phone over Wi-Fi.</p>
+    <h2 class="warn">Ссылка для сопряжения неполная</h2>
+    <p class="muted">Отсканируйте QR-код ещё раз в DeckBox на компьютере: Настройки › Общие › Wi-Fi и Tailscale › Сопрячь телефон по Wi-Fi.</p>
   </div>
 
   <div class="card">
-    <h2>No DeckBox app yet?</h2>
-    <p class="muted">Install it first (Android 7.0 or later), then scan the QR code again.</p>
-    <a class="btn secondary" href="https://github.com/Dubstep2004/DeckBox/releases/latest">Download the app</a>
+    <h2>Ещё нет приложения DeckBox?</h2>
+    <p class="muted">Сначала установите его (Android 7.0 или новее), затем отсканируйте QR-код ещё раз.</p>
+    <a class="btn secondary" href="https://github.com/Dubstep2004/DeckBox/releases/latest">Скачать приложение</a>
   </div>
 
-  <p class="muted">This page runs only in your browser. The pairing details are in the part of the link after <code>#</code>,
-    which browsers never send to a server, and the page removes them from your history.
-    <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md" style="color:var(--accent)">Privacy policy</a></p>
+  <p class="muted">Эта страница работает только в вашем браузере. Данные сопряжения находятся в части ссылки после <code>#</code>,
+    которую браузеры никогда не отправляют на сервер, а страница удаляет их из истории.
+    <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md" style="color:var(--accent)">Политика конфиденциальности</a></p>
 </div>
 <script>
 (() => {
@@ -75,8 +75,8 @@ code { font-size: 13px; }
   if (!ok) { document.getElementById('bad').hidden = false; return; }
   p.set('h', hosts.join(','));
   p.set('port', String(port));
-  document.getElementById('pc').textContent = (p.get('pc') || 'your computer').slice(0, 64);
-  document.getElementById('hosts').textContent = hosts.join(', ') + ' (port ' + port + ')';
+  document.getElementById('pc').textContent = (p.get('pc') || 'ваш компьютер').slice(0, 64);
+  document.getElementById('hosts').textContent = hosts.join(', ') + ' (порт ' + port + ')';
   document.getElementById('check').textContent = (p.get('fp').slice(0, 4) + ' ' + p.get('fp').slice(4, 8)).toUpperCase();
   // Chrome on Android opens intent:// links in the app and falls back to the download page when it is not installed;
   // other browsers get the plain deckbox:// link. The intent names the package, so no other app that claims the

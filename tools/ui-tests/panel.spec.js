@@ -519,7 +519,7 @@ test('the landing page embeds the panel', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 });
   await page.goto('/');
   await expect(page.frameLocator('#panel').locator('.w').first()).toBeVisible();
-  await page.getByRole('button', { name: /notification/ }).click();
+  await page.getByRole('button', { name: /уведомление/ }).click();
   await expect(page.frameLocator('#panel').locator('#toast')).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -530,7 +530,7 @@ test('the pairing page hands a checked link to the app and clears it from the ad
   const fp = 'ab'.repeat(32);
   await page.goto(`/pair/#v=1&pc=Desk%20PC&fp=${fp}&port=8766&h=192.168.1.10,100.64.0.7&c=${'A'.repeat(22)}&extra=%23x;y`);
   await expect(page.locator('#pc')).toHaveText('Desk PC');
-  await expect(page.locator('#hosts')).toHaveText('192.168.1.10, 100.64.0.7 (port 8766)');
+  await expect(page.locator('#hosts')).toHaveText('192.168.1.10, 100.64.0.7 (порт 8766)');
   await expect(page.locator('#check')).toHaveText('ABAB ABAB');
   const href = await page.locator('#open').getAttribute('href');
   expect(href).toBe(`intent://pair?v=1&pc=Desk%20PC&fp=${fp}&port=8766&h=192.168.1.10%2C100.64.0.7&c=${'A'.repeat(22)}`
@@ -547,7 +547,7 @@ test('the pairing page hands a checked link to the app and clears it from the ad
   await expect(page.locator('#bad')).toBeVisible();
   await page.goto('about:blank');
   await page.goto(`/pair/#v=1&pc=x&fp=${fp}&port=8766&h=192.168.1.10,8.8.8.8&c=${'A'.repeat(22)}`); // a public address is dropped
-  await expect(page.locator('#hosts')).toHaveText('192.168.1.10 (port 8766)');
+  await expect(page.locator('#hosts')).toHaveText('192.168.1.10 (порт 8766)');
   expect(await page.locator('#open').getAttribute('href')).toContain('&h=192.168.1.10&');
   await page.goto('about:blank');
   await page.goto(`/pair/#v=1&pc=x&fp=${fp}&port=8766&h=8.8.8.8&c=${'A'.repeat(22)}`);
