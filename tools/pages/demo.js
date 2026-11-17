@@ -10,14 +10,18 @@
   const START = Date.now();
   const now = () => Date.now();
   const rnd = (a, b) => a + Math.random() * (b - a);
+  // the public demo shows Russian data; the browser tests (navigator.webdriver) keep the English data they check
+  const RU = !navigator.webdriver;
+  const L = (en, ru) => (RU ? ru : en);
+  const CONFIG_KEY = RU ? 'pb-demo-config-ru' : 'pb-demo-config';
   const wave = (period, lo, hi, phase = 0, noise = 0) =>
     lo + (hi - lo) * (0.5 + 0.5 * Math.sin((2 * Math.PI * (now() - START)) / 1000 / period + phase)) + rnd(-noise, noise);
 
   const SHORTCUTS = [
-    ['terminal', 'Terminal', '⌨️', '#4b5563'], ['code', 'VS Code', '📝', '#2f80ed'], ['browser', 'Browser', '🌐', '#0ea5e9'],
-    ['files', 'Files', '📁', '#e5b84b'], ['music', 'Spotify', '🎧', '#1db954'], ['chat', 'Discord', '💬', '#6366f1'],
-    ['snip', 'Snip', '✂️', '#14b8a6'], ['taskmgr', 'Task Manager', '📊', '#22c55e'], ['mute', 'Mute', '🔇', '#f59e0b'],
-    ['screenoff', 'Screen Off', '🌙', '#8b5cf6'], ['lock', 'Lock', '🔒', '#ef4444'], ['settings', 'Settings', '⚙️', '#94a3b8'],
+    ['terminal', L('Terminal', 'Терминал'), '⌨️', '#4b5563'], ['code', 'VS Code', '📝', '#2f80ed'], ['browser', L('Browser', 'Браузер'), '🌐', '#0ea5e9'],
+    ['files', L('Files', 'Файлы'), '📁', '#e5b84b'], ['music', 'Spotify', '🎧', '#1db954'], ['chat', 'Discord', '💬', '#6366f1'],
+    ['snip', L('Snip', 'Снимок'), '✂️', '#14b8a6'], ['taskmgr', L('Task Manager', 'Диспетчер задач'), '📊', '#22c55e'], ['mute', L('Mute', 'Без звука'), '🔇', '#f59e0b'],
+    ['screenoff', L('Screen Off', 'Экран выкл.'), '🌙', '#8b5cf6'], ['lock', L('Lock', 'Блокировка'), '🔒', '#ef4444'], ['settings', L('Settings', 'Настройки'), '⚙️', '#94a3b8'],
   ].map(([id, label, icon, color]) => ({ id, label, icon, color, cmd: id === 'mute' ? 'builtin:mute' : 'demo', args: null, toggle: false }));
   const PAGES = ['home', 'dashboard', 'ai', 'work', 'system', 'procs', 'deck', 'music', 'status', 'ambient', 'world', 'daily', 'markets', 'feeds', 'focus', 'calm', 'clock', 'automation', 'planner', 'nightstand', 'weekend', 'focuswork',
     'codexbar', 'devops', 'audio-deck', 'stream-deck', 'meeting-deck', 'development-deck', 'music-deck', 'system-deck'];
@@ -35,11 +39,11 @@
   };
 
   async function loadConfig() {
-    let c = store.get('pb-demo-config', null);
+    let c = store.get(CONFIG_KEY, null);
     if (c) return c;
     const { templates } = await loadCatalog();
     // A tab can save a layout while the first catalog request is still pending.
-    c = store.get('pb-demo-config', null);
+    c = store.get(CONFIG_KEY, null);
     if (c) return c;
     const byId = Object.fromEntries(templates.map((t) => [t.id, t]));
     const rule = (r) => ({ enabled: true, match: null, value: null, page: null, text: null, level: null, key: null, pushValue: null, whileActive: true, shortcut: null,
@@ -49,18 +53,18 @@
     c = {
       codexBar: { providers: ['claude', 'codex', 'antigravity'], rotate: true, pageSize: 2, rotateInterval: 8 },
       controls: { allowListening: false, allowPower: false, actions: [
-        action('build', 'Build', 'task', 'npm run build'), action('tests', 'Run tests', 'task', 'npm test'),
-        action('web', 'Web dev server', 'server', 'npm run dev'), action('api', 'API dev server', 'server', 'dotnet watch'),
-        action('meet-mic', 'Mute in meeting', 'meeting', 'Ctrl+D'), action('meet-cam', 'Camera', 'meeting', 'Ctrl+E'), action('meet-hand', 'Raise hand', 'meeting', 'Ctrl+Alt+H'),
-        action('chime', 'Chime', 'sound', 'chime.wav', 75), action('applause', 'Applause', 'sound', 'applause.wav', 75),
-      ], profiles: [{ id: 'meeting', label: 'Meeting', levels: [], actions: [], output: null, input: null, defaults: {} },
-        { id: 'music', label: 'Music', levels: [], actions: [], output: null, input: null, defaults: {} }],
+        action('build', L('Build', 'Сборка'), 'task', 'npm run build'), action('tests', L('Run tests', 'Тесты'), 'task', 'npm test'),
+        action('web', L('Web dev server', 'Веб-сервер'), 'server', 'npm run dev'), action('api', L('API dev server', 'API-сервер'), 'server', 'dotnet watch'),
+        action('meet-mic', L('Mute in meeting', 'Микрофон на встрече'), 'meeting', 'Ctrl+D'), action('meet-cam', L('Camera', 'Камера'), 'meeting', 'Ctrl+E'), action('meet-hand', L('Raise hand', 'Поднять руку'), 'meeting', 'Ctrl+Alt+H'),
+        action('chime', L('Chime', 'Колокольчик'), 'sound', 'chime.wav', 75), action('applause', L('Applause', 'Аплодисменты'), 'sound', 'applause.wav', 75),
+      ], profiles: [{ id: 'meeting', label: L('Meeting', 'Встреча'), levels: [], actions: [], output: null, input: null, defaults: {} },
+        { id: 'music', label: L('Music', 'Музыка'), levels: [], actions: [], output: null, input: null, defaults: {} }],
         spotifyToken: null, spotifyDevice: null, mixerExecutable: null, mixerLibrary: null, spotifyClientId: null, spotifyRefreshToken: null },
       deviceSerial: null, adbPath: null,
-      weather: { city: 'Tallinn', lat: 59.437, lon: 24.745 },
+      weather: RU ? { city: 'Москва', lat: 55.756, lon: 37.617 } : { city: 'Tallinn', lat: 59.437, lon: 24.745 },
       night: { enabled: false, start: '00:30', end: '07:30', brightness: 0.02 },
       // the public demo opens in Russian; the browser tests (navigator.webdriver) keep following the browser, in English
-      display: { language: navigator.webdriver ? 'auto' : 'ru', appearance: null, showSeconds: true, hour12: false, idleReturnSec: 0, vibrate: true, volumeKeys: true, orientation: 'landscape', theme: 'default', accent: '#2dd4bf',
+      display: { language: navigator.webdriver ? 'auto' : 'ru', appearance: null, showSeconds: true, hour12: false, idleReturnSec: 0, vibrate: true, volumeKeys: true, orientation: 'landscape', theme: 'pro', accent: '#d4af37',
         pixelShift: false, idleDimMin: 0,
         artTint: true, autoBrightness: false, nightWhenDark: false, proximityWake: true, pin: false, homeScreen: false, keepAwake: true, followComputerLock: false,
         homePage: null, switchCountdownSec: 3, touchGraceSec: 20, minDwellSec: 15, holdMaxMin: 30 },
@@ -69,7 +73,7 @@
       claude: { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false },
       pages: PAGES.filter((id) => byId[id]).map((id) => {
         const t = byId[id], seen = {};
-        return { appearance: null, id, title: t.title, icon: t.icon, enabled: true, idleSec: null, widgets: t.widgets.map((w) => {
+        return { appearance: null, id, title: (RU && window.DeckBoxI18n?.CATALOG?.ru?.[t.title]) || t.title, icon: t.icon, enabled: true, idleSec: null, widgets: t.widgets.map((w) => {
           const n = (seen[w.type] = (seen[w.type] || 0) + 1);
           const control = w.type === 'docker' || /^obs(-|$)/.test(w.type) ? { control: true } : {};
           return { ...w, id: n === 1 ? w.type : `${w.type}-${n}`, options: { ...(w.options || {}), ...control } };
@@ -77,11 +81,11 @@
       }),
       shortcuts: SHORTCUTS,
       rules: [
-        rule({ id: 'claude-needs-me', name: 'Claude needs me', when: 'session-waiting', then: 'goto', page: 'ai', priority: 8 }),
-        rule({ id: 'music', name: 'Music', when: 'media-playing', match: 'Spotify', then: 'goto', page: 'music', priority: 2 }),
-        rule({ id: 'in-a-meeting', name: 'In a meeting', when: 'calendar-event', then: 'push', key: 'onair', pushValue: '{detail}' }),
-        rule({ id: 'review-requested', name: 'Review requested', when: 'review-requested', then: 'notify', text: '{detail}', whileActive: false, days: 'mon,tue,wed,thu,fri', during: '09:00-18:00' }),
-        rule({ id: 'evenings', name: 'Evenings', when: 'time', match: '22:00-07:00', then: 'goto', page: 'calm', priority: 2 }),
+        rule({ id: 'claude-needs-me', name: L('Claude needs me', 'Claude ждёт меня'), when: 'session-waiting', then: 'goto', page: 'ai', priority: 8 }),
+        rule({ id: 'music', name: L('Music', 'Музыка'), when: 'media-playing', match: 'Spotify', then: 'goto', page: 'music', priority: 2 }),
+        rule({ id: 'in-a-meeting', name: L('In a meeting', 'На встрече'), when: 'calendar-event', then: 'push', key: 'onair', pushValue: '{detail}' }),
+        rule({ id: 'review-requested', name: L('Review requested', 'Запрошено ревью'), when: 'review-requested', then: 'notify', text: '{detail}', whileActive: false, days: 'mon,tue,wed,thu,fri', during: '09:00-18:00' }),
+        rule({ id: 'evenings', name: L('Evenings', 'Вечером'), when: 'time', match: '22:00-07:00', then: 'goto', page: 'calm', priority: 2 }),
       ],
       charge: { enabled: true, min: 50, max: 80, method: 'ha', entity: 'switch.phone_charger', onShortcut: null, offShortcut: null },
       phones: [], calendars: [],
@@ -89,7 +93,7 @@
       obs: { enabled: true, url: 'ws://127.0.0.1:4455', password: null },
     };
     c = JSON.parse(JSON.stringify(c, (_, v) => v === null ? undefined : v)); // the agent leaves unset (null) settings out
-    store.set('pb-demo-config', c);
+    store.set(CONFIG_KEY, c);
     return c;
   }
   async function config() {
@@ -131,11 +135,11 @@
   }
   const push = {
     temperature: { data: 21.5, at: now() - 180e3, expiresAt: null },
-    build: { data: { value: 'passed', sub: 'main · 3m 12s' }, at: now() - 240e3, expiresAt: null },
-    deploy: { data: { value: 'running', sub: 'production' }, at: now() - 60e3, expiresAt: null },
+    build: { data: { value: L('passed', 'успешно'), sub: L('main · 3m 12s', 'main · 3 мин 12 с') }, at: now() - 240e3, expiresAt: null },
+    deploy: { data: { value: L('running', 'идёт'), sub: L('production', 'продакшен') }, at: now() - 60e3, expiresAt: null },
     progress: { data: { value: 64 }, at: now() - 30e3, expiresAt: null },
-    todo: { data: { items: [{ label: 'Try the layout editor', value: 'now', level: 'warn' }, { label: 'Widgets', value: 'done', level: 'ok' },
-      { label: 'Webhooks', value: 'done', level: 'ok' }, 'Water the plants'] }, at: now() - 600e3, expiresAt: null },
+    todo: { data: { items: [{ label: L('Try the layout editor', 'Попробуйте редактор'), value: L('now', 'сейчас'), level: 'warn' }, { label: L('Widgets', 'Виджеты'), value: L('done', 'готово'), level: 'ok' },
+      { label: L('Webhooks', 'Вебхуки'), value: L('done', 'готово'), level: 'ok' }, L('Water the plants', 'Полить цветы')] }, at: now() - 600e3, expiresAt: null },
   };
   let pushVersion = 1;
   let rulesPaused = 0;
@@ -143,9 +147,9 @@
   let phoneBattery = { level: 72, plugged: true, temp: 29, at: now() - 20e3, source: 'usb', usb: 'configured' };
   let approvals = [];
   const SAMPLE_PROMPTS = [
-    { tool: 'Run a command', detail: 'git push origin main --force-with-lease', description: 'Push the rebased branch', project: 'api-gateway' },
-    { tool: 'Edit a file', detail: 'src/routes/billing.ts\n\n  export const limit = rateLimit({ windowMs: 60_000, max: 120 })', description: '', project: 'docs-site' },
-    { tool: 'Fetch a web page', detail: 'https://docs.github.com/en/rest/pulls', description: '', project: 'blog-engine' },
+    { tool: L('Run a command', 'Выполнить команду'), detail: 'git push origin main --force-with-lease', description: L('Push the rebased branch', 'Отправить ветку после rebase'), project: 'api-gateway' },
+    { tool: L('Edit a file', 'Изменить файл'), detail: 'src/routes/billing.ts\n\n  export const limit = rateLimit({ windowMs: 60_000, max: 120 })', description: '', project: 'docs-site' },
+    { tool: L('Fetch a web page', 'Открыть веб-страницу'), detail: 'https://docs.github.com/en/rest/pulls', description: '', project: 'blog-engine' },
   ];
   function ask(sample, broadcast = true) {
     const s = sample || SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)];
@@ -167,7 +171,7 @@
 
   // ---- made-up computer
   const audio = { volume: 42, muted: false, canControl: true };
-  const TRACKS = [['Midnight Circuit', 'Neon Harbor', 'Low Tide Lights', 214000], ['Paper Lanterns', 'Neon Harbor', 'Low Tide Lights', 187000], ['Slow Orbit', 'Hollow Pines', 'Northern Rooms', 243000]];
+  const TRACKS = [[L('Midnight Circuit', 'Полуночный трамвай'), L('Neon Harbor', 'Неоновая гавань'), L('Low Tide Lights', 'Огни отлива'), 214000], [L('Paper Lanterns', 'Бумажные фонари'), L('Neon Harbor', 'Неоновая гавань'), L('Low Tide Lights', 'Огни отлива'), 187000], [L('Slow Orbit', 'Медленная орбита'), L('Hollow Pines', 'Тихий бор'), L('Northern Rooms', 'Северные комнаты'), 243000]];
   const player = { track: 0, playing: true, posMs: 61000, at: now() };
   const position = () => { const dur = TRACKS[player.track][3]; return player.playing ? (player.posMs + now() - player.at) % dur : Math.min(player.posMs, dur); };
   function mediaAction(action, ms) {
@@ -215,20 +219,20 @@
 
   // made-up OBS: streaming for a while, buttons and scenes work
   const dc = { muted: false, deaf: false, in: 'c1' };
-  const obs = { streamingSince: now() - 754e3, recordingSince: 0, paused: false, scene: 'Desk', mic: false };
+  const obs = { streamingSince: now() - 754e3, recordingSince: 0, paused: false, scene: L('Desk', 'Стол'), mic: false };
   function obsState() {
     return { enabled: true, control: true, snapshot: {
       connected: true, error: null, streaming: !!obs.streamingSince, streamMs: obs.streamingSince ? now() - obs.streamingSince : 0,
       recording: !!obs.recordingSince, recordPaused: obs.paused, recordMs: obs.recordingSince ? now() - obs.recordingSince : 0,
-      scene: obs.scene, scenes: ['Desk', 'Camera', 'Screen share', 'BRB'], micMuted: obs.mic, micName: 'Mic/Aux' } };
+      scene: obs.scene, scenes: [L('Desk', 'Стол'), L('Camera', 'Камера'), L('Screen share', 'Демонстрация'), L('BRB', 'Скоро вернусь')], micMuted: obs.mic, micName: 'Mic/Aux' } };
   }
 
   // made-up Home Assistant entities; switching flips them
   const ha = {
-    'light.desk': { name: 'Desk lamp', state: 'on' }, 'light.ceiling': { name: 'Ceiling', state: 'off' },
-    'switch.coffee': { name: 'Coffee machine', state: 'off' }, 'sensor.office_temperature': { name: 'Office', state: '21.4', unit: '°C', deviceClass: 'temperature' },
-    'sensor.office_humidity': { name: 'Humidity', state: '43', unit: '%', deviceClass: 'humidity' }, 'binary_sensor.front_door': { name: 'Front door', state: 'off', deviceClass: 'door' },
-    'lock.front_door': { name: 'Door lock', state: 'locked' }, 'scene.movie': { name: 'Movie night', state: 'scening' },
+    'light.desk': { name: L('Desk lamp', 'Настольная лампа'), state: 'on' }, 'light.ceiling': { name: L('Ceiling', 'Люстра'), state: 'off' },
+    'switch.coffee': { name: L('Coffee machine', 'Кофемашина'), state: 'off' }, 'sensor.office_temperature': { name: L('Office', 'Кабинет'), state: '21.4', unit: '°C', deviceClass: 'temperature' },
+    'sensor.office_humidity': { name: L('Humidity', 'Влажность'), state: '43', unit: '%', deviceClass: 'humidity' }, 'binary_sensor.front_door': { name: L('Front door', 'Входная дверь'), state: 'off', deviceClass: 'door' },
+    'lock.front_door': { name: L('Door lock', 'Замок двери'), state: 'locked' }, 'scene.movie': { name: L('Movie night', 'Вечер кино'), state: 'scening' },
   };
   function haStates(ids) {
     const list = (ids.length ? ids : Object.keys(ha)).filter((id) => ha[id]).map((id) => ({ id, unit: null, deviceClass: null, icon: null, changed: now() - 6e5, ...ha[id] }));
@@ -261,13 +265,13 @@
     const work = '#60a5fa', home = '#34d399';
     const utcDay = (n) => { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() + n); };
     return { updated: t - 4 * M, errors: [], events: [
-      ev('Design review', t - 20 * M, 45, 'Work', work, 'Room 4'),
-      ev('1:1 with Sam', t + 90 * M, 30, 'Work', work, null),
-      ev('Gym', day + 18.5 * H, 60, 'Personal', home, null),
-      ev('Release day', utcDay(1), 24 * 60, 'Work', work, null, true), // all-day: UTC midnight of the date, as the agent sends it
-      ev('Sprint planning', day + 33.5 * H, 60, 'Work', work, 'Big room'),
-      ev('Lunch with Alex', day + 36 * H, 60, 'Personal', home, 'Noodle bar'),
-      ev('Dentist', day + 2 * 24 * H + 10 * H, 45, 'Personal', home, null),
+      ev(L('Design review', 'Ревью дизайна'), t - 20 * M, 45, L('Work', 'Работа'), work, L('Room 4', 'Переговорная 4')),
+      ev(L('1:1 with Sam', 'Встреча 1:1 с Сашей'), t + 90 * M, 30, L('Work', 'Работа'), work, null),
+      ev(L('Gym', 'Спортзал'), day + 18.5 * H, 60, L('Personal', 'Личное'), home, null),
+      ev(L('Release day', 'День релиза'), utcDay(1), 24 * 60, L('Work', 'Работа'), work, null, true), // all-day: UTC midnight of the date, as the agent sends it
+      ev(L('Sprint planning', 'Планирование спринта'), day + 33.5 * H, 60, L('Work', 'Работа'), work, L('Big room', 'Большой зал')),
+      ev(L('Lunch with Alex', 'Обед с Лёшей'), day + 36 * H, 60, L('Personal', 'Личное'), home, L('Noodle bar', 'Лапшичная')),
+      ev(L('Dentist', 'Стоматолог'), day + 2 * 24 * H + 10 * H, 45, L('Personal', 'Личное'), home, null),
     ].sort((a, b) => a.start - b.start) };
   }
 
@@ -275,13 +279,13 @@
     const n = now();
     return { providers: [
       { id: 'claude', name: 'Claude', plan: 'Max 5x', updatedAt: n - 120e3, extra: '', error: null, codex: null, source: 'local', limits: [
-        { label: '5-hour session', percent: 34, resetsAt: n + 2.6 * 3600e3, windowSec: 18000 },
-        { label: 'Weekly', percent: 52, resetsAt: n + 3.2 * 86400e3, windowSec: 604800 },
-        { label: 'Weekly · Fable', percent: 9, resetsAt: n + 3.2 * 86400e3, windowSec: 604800 }] },
-      { id: 'codex', name: 'Codex', plan: 'Pro', updatedAt: n - 300e3, extra: 'Credits: 1,250', error: null, source: 'local',
-        codex: { model: 'Demo coding model', effort: 'high', totalTokens: 187000, totalInput: 150000, totalOutput: 37000, totalCached: 90000, totalReasoning: 12000, lastInput: 42000, contextWindow: 256000 }, limits: [
-        { label: '5-hour session', percent: 12, resetsAt: n + 4.1 * 3600e3, windowSec: 18000 },
-        { label: 'Weekly', percent: 27, resetsAt: n + 5.5 * 86400e3, windowSec: 604800 }] },
+        { label: L('5-hour session', 'Сессия 5 часов'), percent: 34, resetsAt: n + 2.6 * 3600e3, windowSec: 18000 },
+        { label: L('Weekly', 'Неделя'), percent: 52, resetsAt: n + 3.2 * 86400e3, windowSec: 604800 },
+        { label: L('Weekly · Fable', 'Неделя · Fable'), percent: 9, resetsAt: n + 3.2 * 86400e3, windowSec: 604800 }] },
+      { id: 'codex', name: 'Codex', plan: 'Pro', updatedAt: n - 300e3, extra: L('Credits: 1,250', 'Кредиты: 1 250'), error: null, source: 'local',
+        codex: { model: L('Demo coding model', 'Демо-модель для кода'), effort: 'high', totalTokens: 187000, totalInput: 150000, totalOutput: 37000, totalCached: 90000, totalReasoning: 12000, lastInput: 42000, contextWindow: 256000 }, limits: [
+        { label: L('5-hour session', 'Сессия 5 часов'), percent: 12, resetsAt: n + 4.1 * 3600e3, windowSec: 18000 },
+        { label: L('Weekly', 'Неделя'), percent: 27, resetsAt: n + 5.5 * 86400e3, windowSec: 604800 }] },
     ] };
   }
 
@@ -290,16 +294,16 @@
     const s = (i, tool, name, status, mins, waitingFor = null) => ({ id: `${tool}:${i}`, tool, name, project: name, status, waitingFor, since: n - mins * 60e3, startedAt: n - 3 * 3600e3,
       pid: 4000 + i * 211, outcome: null, model: null, effort: null, totalTokens: null, inputTokens: null, outputTokens: null, cachedInputTokens: null, reasoningTokens: null,
       lastInputTokens: null, contextWindow: null, lastTool: null, turnStartedAt: null,
-      ...(tool === 'codex' ? { model: 'Demo coding model', effort: 'high', totalTokens: 187000, inputTokens: 150000, outputTokens: 37000, cachedInputTokens: 90000, reasoningTokens: 12000, lastInputTokens: 42000, contextWindow: 256000, lastTool: 'read', turnStartedAt: n - 45000 } : {}) });
+      ...(tool === 'codex' ? { model: L('Demo coding model', 'Демо-модель для кода'), effort: 'high', totalTokens: 187000, inputTokens: 150000, outputTokens: 37000, cachedInputTokens: 90000, reasoningTokens: 12000, lastInputTokens: 42000, contextWindow: 256000, lastTool: 'read', turnStartedAt: n - 45000 } : {}) });
     const pr = (repo, number, title, ci = null, review = null, draft = false, author = null) => ({ repo, number, title, ci, review, draft, author, updated: n - (number % 9 + 1) * 3600e3 });
     return {
-      sessions: [s(1, 'claude', 'api-gateway', 'busy', 4), s(2, 'claude', 'docs-site', 'waiting', 2, 'approve a file edit'), s(3, 'codex', 'mobile-app', 'busy', 11),
+      sessions: [s(1, 'claude', 'api-gateway', 'busy', 4), s(2, 'claude', 'docs-site', 'waiting', 2, L('approve a file edit', 'подтвердить правку файла')), s(3, 'codex', 'mobile-app', 'busy', 11),
         s(4, 'claude', 'infra', 'shell', 1), s(5, 'claude', 'blog-engine', 'idle', 38), s(6, 'codex', 'data-pipeline', 'idle', 74), s(7, 'claude', 'design-system', 'idle', 125)],
       github: { user: 'octocat', notifications: 7, error: null, updatedAt: n - 90e3,
-        reviewRequests: [pr('acme/api', 412, 'Rate limiter for public endpoints', null, null, false, 'hubot'), pr('acme/web', 1288, 'Dark mode for the dashboard', null, null, false, 'monalisa'),
-          pr('acme/infra', 77, 'Move staging to a new region', null, null, false, 'hubot')],
-        myPrs: [pr('acme/api', 409, 'Cache user sessions in Redis', 'SUCCESS', 'APPROVED'), pr('acme/web', 1281, 'Faster image uploads', 'PENDING'),
-          pr('acme/cli', 53, 'New "deploy" command', 'FAILURE', 'CHANGES_REQUESTED'), pr('acme/docs', 210, 'Getting started rewrite', null, null, true)] },
+        reviewRequests: [pr('acme/api', 412, L('Rate limiter for public endpoints', 'Ограничение запросов для публичных API'), null, null, false, 'hubot'), pr('acme/web', 1288, L('Dark mode for the dashboard', 'Тёмная тема для дашборда'), null, null, false, 'monalisa'),
+          pr('acme/infra', 77, L('Move staging to a new region', 'Перенос staging в новый регион'), null, null, false, 'hubot')],
+        myPrs: [pr('acme/api', 409, L('Cache user sessions in Redis', 'Кэш пользовательских сессий в Redis'), 'SUCCESS', 'APPROVED'), pr('acme/web', 1281, L('Faster image uploads', 'Быстрая загрузка картинок'), 'PENDING'),
+          pr('acme/cli', 53, L('New "deploy" command', 'Новая команда «deploy»'), 'FAILURE', 'CHANGES_REQUESTED'), pr('acme/docs', 210, L('Getting started rewrite', 'Новое руководство для начинающих'), null, null, true)] },
     };
   }
 
@@ -308,7 +312,7 @@
     ['explorer', 'Windows Explorer', 3, 0.9, 380], ['obs64', 'OBS Studio', 1, 0.8, 520], ['slack', 'Slack', 5, 0.6, 700], ['steam', 'Steam', 3, 0.4, 340],
     ['onedrive', 'Microsoft OneDrive', 1, 0.3, 120], ['python', 'Python', 2, 0.3, 160], ['figma', 'Figma', 3, 0.2, 640]];
   const DEMO_APPS = ['Calculator', 'Calendar', 'Figma', 'Finder', 'Mail', 'Maps', 'Music', 'Notes', 'OBS', 'Photos', 'Safari', 'Slack',
-    'Spotify', 'System Settings', 'Terminal', 'Visual Studio Code', 'Xcode', 'Zoom']
+    'Spotify', 'System Settings', L('Terminal', 'Терминал'), 'Visual Studio Code', 'Xcode', 'Zoom']
     .map((name, i) => ({ id: 'demo-app-' + i, name, hue: (i * 47) % 360 }));
   const procs = () => ({ total: 312, groupCount: 141, groups: PROCS.map(([name, title, count, cpu, memMb]) =>
     ({ name, title, count, cpu: Math.round(cpu * rnd(0.8, 1.2) * 10) / 10, memMb, locked: name === 'explorer', hasIcon: false })) });
@@ -330,12 +334,12 @@
   const DEMO_PHOTOS = [['ph1', '#f97316', '#7c3aed'], ['ph2', '#0ea5e9', '#22c55e'], ['ph3', '#ec4899', '#facc15'], ['ph4', '#14b8a6', '#1e3a8a']];
   // headlines as the agent sends them: no links, the phone opens one by its id
   const DEMO_FEEDS = () => [
-    ['f1', 'A tiny e-ink weather station that runs for a year on one charge', 'Hackaday', 18],
-    ['f2', 'Rust 2.0 roadmap: what changes for async code', 'Tech news', 47],
-    ['f3', 'Why old phones make great desk dashboards', 'Blog', 95],
-    ['f4', 'The James Webb telescope finds water in a young planetary system', 'Science', 160],
-    ['f5', 'Ten keyboard shortcuts that save an hour a week', 'Tech news', 240],
-    ['f6', 'Inside the factory that still makes film cameras', 'Hackaday', 420],
+    ['f1', L('A tiny e-ink weather station that runs for a year on one charge', 'Крошечная метеостанция на e-ink работает год от одной зарядки'), 'Hackaday', 18],
+    ['f2', L('Rust 2.0 roadmap: what changes for async code', 'План Rust 2.0: что изменится в асинхронном коде'), L('Tech news', 'Технологии'), 47],
+    ['f3', L('Why old phones make great desk dashboards', 'Почему старый телефон — отличная настольная панель'), L('Blog', 'Блог'), 95],
+    ['f4', L('The James Webb telescope finds water in a young planetary system', 'Телескоп «Джеймс Уэбб» нашёл воду в молодой планетной системе'), L('Science', 'Наука'), 160],
+    ['f5', L('Ten keyboard shortcuts that save an hour a week', 'Десять сочетаний клавиш, которые экономят час в неделю'), L('Tech news', 'Технологии'), 240],
+    ['f6', L('Inside the factory that still makes film cameras', 'Как устроена фабрика, где до сих пор делают плёночные камеры'), 'Hackaday', 420],
   ].map(([id, title, source, min]) => ({ id, title, source, published: now() - min * 60_000, openable: true }));
   // "pageId/widgetId", or "pageId/stackId:cardId" for a Smart Stack card (PanelWidgets.Find)
   const panelWidget = (c, key, type) => (c.pages || []).filter((p) => p.enabled !== false).flatMap((p) => (p.widgets || []).flatMap((w) =>
@@ -353,20 +357,20 @@
   const deck = {
     platform: 'windows', hardwareLoading: false, mediaError: null, ducking: false, sleep: [],
     audio: { available: true, error: null, defaults:{'output:0':'speaker','output:1':'speaker','output:2':'speaker','input:0':'mic','input:1':'mic','input:2':'mic'}, devices: [
-      { id: 'speaker', name: 'Desk speakers', direction: 'output', default: true, volume: 42, muted: false, peak: .45, channels: 2, canControl: true, channelVolumes:[42,42] },
-      { id: 'headphones', name: 'Headphones', direction: 'output', default: false, volume: 60, muted: false, peak: .2, channels: 2, canControl: true, channelVolumes:[60,60] },
-      { id: 'mic', name: 'Desk microphone', direction: 'input', default: true, volume: 75, muted: true, peak: .15, channels: 1, canControl: true, channelVolumes: null },
+      { id: 'speaker', name: L('Desk speakers', 'Колонки'), direction: 'output', default: true, volume: 42, muted: false, peak: .45, channels: 2, canControl: true, channelVolumes:[42,42] },
+      { id: 'headphones', name: L('Headphones', 'Наушники'), direction: 'output', default: false, volume: 60, muted: false, peak: .2, channels: 2, canControl: true, channelVolumes:[60,60] },
+      { id: 'mic', name: L('Desk microphone', 'Настольный микрофон'), direction: 'input', default: true, volume: 75, muted: true, peak: .15, channels: 1, canControl: true, channelVolumes: null },
     ], sessions: [
       { id: 'spotify', name: 'Spotify', pid: 101, deviceId: 'speaker', volume: 65, muted: false, peak: .55 },
-      { id: 'browser', name: 'Browser', pid: 102, deviceId: 'speaker', volume: 30, muted: false, peak: .25 },
+      { id: 'browser', name: L('Browser', 'Браузер'), pid: 102, deviceId: 'speaker', volume: 30, muted: false, peak: .25 },
     ] },
     media: [
-      { id: 'spotify', name: 'Spotify', title: 'Midnight Circuit', playing: true, position: 61000, duration: 214000, canSeek: true, canShuffle: true, canRepeat: true, shuffle: false, repeat: 'None' },
-      { id: 'browser', name: 'Browser', title: 'Engineering session', playing: false, position: 10000, duration: 600000, canSeek: true, canShuffle: false, canRepeat: false, shuffle: false, repeat: 'None' },
+      { id: 'spotify', name: 'Spotify', title: L('Midnight Circuit', 'Полуночный трамвай'), playing: true, position: 61000, duration: 214000, canSeek: true, canShuffle: true, canRepeat: true, shuffle: false, repeat: 'None' },
+      { id: 'browser', name: L('Browser', 'Браузер'), title: 'Engineering session', playing: false, position: 10000, duration: 600000, canSeek: true, canShuffle: false, canRepeat: false, shuffle: false, repeat: 'None' },
     ],
-    monitors: [{ id: 'display', name: 'Desk display', brightness: 60, width: 2560, height: 1440, hz: 144 }],
-    powerPlans: [{ id: 'balanced', name: 'Balanced', kind: 'power-plan', state: 'Active', available: true }, { id: 'performance', name: 'High performance', kind: 'power-plan', state: 'Available', available: true },
-      { id: 'saver', name: 'Power saver', kind: 'power-plan', state: 'Available', available: true }], midi: [],
+    monitors: [{ id: 'display', name: L('Desk display', 'Монитор'), brightness: 60, width: 2560, height: 1440, hz: 144 }],
+    powerPlans: [{ id: 'balanced', name: L('Balanced', 'Сбалансированная'), kind: 'power-plan', state: 'Active', available: true }, { id: 'performance', name: L('High performance', 'Высокая производительность'), kind: 'power-plan', state: 'Available', available: true },
+      { id: 'saver', name: L('Power saver', 'Экономия энергии'), kind: 'power-plan', state: 'Available', available: true }], midi: [],
   };
   const actionState = {}; // what a configured control last did: "Running", "Finished", "Stopped"…
   async function deckState() {
@@ -383,9 +387,9 @@
   }
   const deckLeases = new Map();
   // one made-up OBS behind both the OBS widget (/api/obs) and the Control Deck's OBS widgets (/api/controls/obs)
-  const deckObsExtra = { inputs: [{ id: 'Desktop Audio', name: 'Desktop Audio', volume: 70, muted: false }, { id: 'Mic/Aux', name: 'Mic/Aux', volume: 80, muted: false }],
-    sources: { Desk: [{ id: 1, name: 'Webcam', enabled: true }, { id: 2, name: 'Screen capture', enabled: true }, { id: 3, name: 'Lower third', enabled: false }],
-      Camera: [{ id: 4, name: 'Webcam', enabled: true }], 'Screen share': [{ id: 5, name: 'Screen capture', enabled: true }], BRB: [{ id: 6, name: 'Be right back card', enabled: true }] },
+  const deckObsExtra = { inputs: [{ id: L('Desktop Audio', 'Звук рабочего стола'), name: L('Desktop Audio', 'Звук рабочего стола'), volume: 70, muted: false }, { id: 'Mic/Aux', name: 'Mic/Aux', volume: 80, muted: false }],
+    sources: { Desk: [{ id: 1, name: L('Webcam', 'Веб-камера'), enabled: true }, { id: 2, name: L('Screen capture', 'Захват экрана'), enabled: true }, { id: 3, name: L('Lower third', 'Плашка с именем'), enabled: false }],
+      Camera: [{ id: 4, name: L('Webcam', 'Веб-камера'), enabled: true }], 'Screen share': [{ id: 5, name: L('Screen capture', 'Захват экрана'), enabled: true }], BRB: [{ id: 6, name: L('Be right back card', 'Заставка «Скоро вернусь»'), enabled: true }] },
     transitions: [{ transitionName: 'Fade', transitionKind: 'fade_transition' }, { transitionName: 'Cut', transitionKind: 'cut_transition' }], transition: 'Fade', duration: 300, replayActive: false, cameraActive: false };
   function deckObsState() {
     const o = obsState().snapshot, x = deckObsExtra;
@@ -543,8 +547,8 @@
       return json({ enabled: true, control: widgets(c).some((w) => w.type === 'discord' && w.options?.control === true), snapshot: {
         connected: true, error: null, user: 'demo', muted: dc.muted, deafened: dc.deaf, channelId: dc.in, channelName: dc.in ? 'Game night' : null, channelKind: dc.in ? 'voice' : null,
         members: dc.in ? [{ id: '1', name: 'demo', muted: dc.muted, deafened: dc.deaf }, { id: '2', name: 'Ada', muted: false, deafened: false }, { id: '3', name: 'Linus', muted: true, deafened: false }] : [],
-        channels: [{ id: 'c1', name: 'Game night', guild: 'Friends' }, { id: 'c2', name: 'Stand-up', guild: 'Work' }],
-        notifications: [{ ts: now() - 60000, title: 'Ada', body: 'are you joining?' }] } });
+        channels: [{ id: 'c1', name: L('Game night', 'Игровой вечер'), guild: L('Friends', 'Друзья') }, { id: 'c2', name: L('Stand-up', 'Планёрка'), guild: L('Work', 'Работа') }],
+        notifications: [{ ts: now() - 60000, title: 'Ada', body: L('are you joining?', 'ты подключаешься?') }] } });
     }
     if (path.startsWith('/api/discord/') && method === 'POST') {
       if (!allows(await config(), (t) => t === 'discord')) return json({ error: "controlling Discord is turned off in the widget's settings" }, 400);
@@ -565,7 +569,7 @@
       { name: 'Xbox Wireless Controller', level: 40, kind: 'controller', charging: null },
     ] });
     // photo frame: like the agent, ids from an enabled page's widget, then one image by id (generated pictures here)
-    if (path === '/api/photos') { const c = await config(); return json(shownWidgets(c).some((w) => w.type === 'photos') ? { ids: DEMO_PHOTOS.map((p) => p[0]), error: null, scanning: false } : { ids: [], error: 'Add a Photo frame widget to a page to show photos', scanning: false }); }
+    if (path === '/api/photos') { const c = await config(); return json(shownWidgets(c).some((w) => w.type === 'photos') ? { ids: DEMO_PHOTOS.map((p) => p[0]), error: null, scanning: false } : { ids: [], error: L('Add a Photo frame widget to a page to show photos', 'Добавьте на страницу виджет «Фоторамка», чтобы показывать фото'), scanning: false }); }
     if (path.startsWith('/api/photos/')) {
       const p = DEMO_PHOTOS.find((x) => x[0] === decodeURIComponent(path.slice(12)));
       if (!p || !shownWidgets(await config()).some((w) => w.type === 'photos')) return json({ error: 'Unknown photo' }, 404);
@@ -706,7 +710,7 @@
         if (!c || typeof c !== 'object') return json({ error: 'the settings are not valid JSON' }, 400);
         (c.pages || []).forEach((p, i) => { p.id ||= `page-${i + 1}`; p.title ||= 'Page'; const seen = {}; (p.widgets || []).forEach((w) => { if (!w.id) { const n = (seen[w.type] = (seen[w.type] || 0) + 1); w.id = `${w.type}-${Date.now() % 100000}-${n}`; } }); });
         (c.shortcuts || []).forEach((s, i) => { s.id ||= `shortcut-${i + 1}`; });
-        store.set('pb-demo-config', c);
+        store.set(CONFIG_KEY, c);
         store.set('pb-demo-version', cfgVersion() + 1);
         return json({ version: cfgVersion() });
       }

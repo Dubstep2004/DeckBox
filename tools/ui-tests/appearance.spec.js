@@ -194,7 +194,7 @@ test('desktop settings font and font size controls preview and persist',async({p
   await editor.getByRole('button',{name:'Show live appearance preview',exact:true}).click();
   const frame=page.frameLocator('iframe[title="Live appearance preview"]');
   await expect.poll(()=>css(frame.locator('.w-note'),'fontFamily')).toMatch(/Mono|monospace/i);
-  await expect.poll(async()=>parseFloat(await css(frame.locator('.w-audio-mixer .w-title'),'fontSize'))).toBeCloseTo(22,0);
+  await expect.poll(async()=>parseFloat(await css(frame.locator('.w-audio-mixer .w-title'),'fontSize'))).toBeCloseTo(21,0);
   await page.locator('#save').click();await expect(page.locator('#save')).toBeDisabled();
   await page.goto('/settings/#pages');
   await page.locator('.wb').first().click();
@@ -207,7 +207,7 @@ test('desktop settings font and font size controls preview and persist',async({p
   await expect.poll(()=>css(page.locator('.w-note'),'fontFamily')).toMatch(/Georgia|serif/i);
   expect(parseFloat(await css(page.locator('.w-note .note-t'),'fontSize'))).toBeCloseTo(baseNote*0.8,0);
   expect(await css(page.locator('.w-audio-mixer'),'fontFamily')).toMatch(/Mono|monospace/i);
-  expect(parseFloat(await css(page.locator('.w-audio-mixer .w-title'),'fontSize'))).toBeCloseTo(22,0);
+  expect(parseFloat(await css(page.locator('.w-audio-mixer .w-title'),'fontSize'))).toBeCloseTo(21,0);
 });
 
 test('compact 4-limit quota percentage text scales with widget fontScale',async({page})=>{

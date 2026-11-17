@@ -91,6 +91,17 @@ public class RenameMigrationTests
         Assert.EndsWith("/SHA256SUMS-1.0.0.txt", r.Sums);
     }
 
+    [Theory]
+    [InlineData("""{"display":{"theme":"midnight","accent":"#2dd4bf"}}""", "#d4af37")]
+    [InlineData("""{"display":{"theme":"amoled","accent":"#ff0066"}}""", "#ff0066")]
+    [InlineData("{}", "#d4af37")]
+    public void EveryConfigGetsTheProDesignAndKeepsAChosenAccent(string json, string accent)
+    {
+        var c = Load(json);
+        Assert.Equal("pro", c.Display.Theme);
+        Assert.Equal(accent, c.Display.Accent);
+    }
+
     [Fact]
     public void NothingToMigrateWithoutALegacyConfig()
     {

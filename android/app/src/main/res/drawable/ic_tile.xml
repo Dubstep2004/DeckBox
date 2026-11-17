@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Quick Settings tile: a phone on its side with a grid of widgets. Single colour; the system tints it. -->
+<!-- Quick Settings tile: the DeckBox keys. Single colour; the system tints it. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,5 +8,5 @@
     <path
         android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M3,5h18a2,2 0,0 1,2 2v10a2,2 0,0 1,-2 2H3a2,2 0,0 1,-2 -2V7a2,2 0,0 1,2 -2zM3,7v10h18V7zM5,9h6v3H5zM13,9h6v3h-6zM5,13h6v2H5zM13,13h6v2h-6z" />
+        android:pathData="M4.359999999999999,2.0h4.45a2.36,2.36 0,0 1,2.36,2.36v4.45a2.36,2.36 0,0 1,-2.36,2.36h-4.45a2.36,2.36 0,0 1,-2.36,-2.36v-4.45a2.36,2.36 0,0 1,2.36,-2.36zM4.5600000000000005,3.56h4.05a1,1 0,0 1,1,1v4.05a1,1 0,0 1,-1,1h-4.05a1,1 0,0 1,-1,-1v-4.05a1,1 0,0 1,1,-1zM4.359999999999999,12.83h4.45a2.36,2.36 0,0 1,2.36,2.36v4.45a2.36,2.36 0,0 1,-2.36,2.36h-4.45a2.36,2.36 0,0 1,-2.36,-2.36v-4.45a2.36,2.36 0,0 1,2.36,-2.36zM4.5600000000000005,14.39h4.05a1,1 0,0 1,1,1v4.05a1,1 0,0 1,-1,1h-4.05a1,1 0,0 1,-1,-1v-4.05a1,1 0,0 1,1,-1zM15.19,12.83h4.45a2.36,2.36 0,0 1,2.36,2.36v4.45a2.36,2.36 0,0 1,-2.36,2.36h-4.45a2.36,2.36 0,0 1,-2.36,-2.36v-4.45a2.36,2.36 0,0 1,2.36,-2.36zM15.39,14.39h4.05a1,1 0,0 1,1,1v4.05a1,1 0,0 1,-1,1h-4.05a1,1 0,0 1,-1,-1v-4.05a1,1 0,0 1,1,-1zM14.91,2.0h5.01a2.08,2.08 0,0 1,2.08,2.08v5.01a2.08,2.08 0,0 1,-2.08,2.08h-5.01a2.08,2.08 0,0 1,-2.08,-2.08v-5.01a2.08,2.08 0,0 1,2.08,-2.08z" />
 </vector>

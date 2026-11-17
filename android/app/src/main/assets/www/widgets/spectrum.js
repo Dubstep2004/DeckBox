@@ -72,7 +72,7 @@ W.spectrum = {
     mountedBars.add(me);
     const bars =Math.max(4, Math.min(48, Math.round(+o.bars || 24)));
     const style = PALETTES[o.style] ? o.style : (o.style === 'single' ? 'single' : 'classic');
-    const color = /^#[0-9a-f]{6}$/i.test(o.color || '') ? o.color : '#2dd4bf';
+    const color = /^#[0-9a-f]{6}$/i.test(o.color || '') ? o.color : '#d4af37';
     const stops = style === 'single' ? [[0, color], [1, color]] : PALETTES[style];
     const segmented = o.segments !== false, peaks = o.peaks !== false;
     const fall = FALL[o.falloff] || FALL.normal;

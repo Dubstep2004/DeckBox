@@ -7,25 +7,25 @@
 <link rel="icon" href="/favicon.ico">
 <style>
 :root {
-  --bg: #f4f5f7; --panel: #ffffff; --panel-2: #f8f9fb; --line: #e3e6eb; --text: #14171c; --muted: #6b7280;
-  --accent: #0f9d8a; --accent-ink: #ffffff; --danger: #dc2626; --ok: #16a34a; --warn: #d97706;
-  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #0c0e12; --panel: #14171d; --panel-2: #1a1e25; --line: #262b34; --text: #e8ecf1; --muted: #8a94a3;
-    --accent: #2dd4bf; --accent-ink: #062b26; --shadow: none; color-scheme: dark; }
+  /* DeckBox PRO: graphite and gold, one dark design */
+  --bg: #0b0b0d; --panel: #141417; --panel-2: #1b1b1f; --line: #2a2822; --text: #f1ece1; --muted: #9d9686;
+  --accent: #d4af37; --accent-hi: #f2d675; --accent-ink: #17130a; --danger: #f05252; --ok: #4ade80; --warn: #f59e0b;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+input[type=range], input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
+body { margin: 0; background: radial-gradient(1200px 500px at 85% -10%, rgba(212,175,55,.08), transparent 60%), var(--bg); background-attachment: fixed; color: var(--text); font: 14px/1.5 "Inter", "Segoe UI", system-ui, sans-serif; }
 button, input, select, textarea { font: inherit; color: inherit; }
 header {
   position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 14px;
   padding: 12px 24px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
-header img { width: 28px; height: 28px; }
-header h1 { font-size: 17px; margin: 0; font-weight: 650; }
+header img { width: 30px; height: 30px; border-radius: 8px; }
+header h1 { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: .02em; }
+header h1 .pro { margin-left: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .14em; padding: 2px 7px; border-radius: 5px; vertical-align: 3px;
+  color: var(--accent-ink); background: linear-gradient(135deg, var(--accent-hi), var(--accent) 60%, #a8841f); }
 header .ver { color: var(--muted); font-size: 12px; }
 .pill { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--line); display: inline-flex; gap: 6px; align-items: center; }
 .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
@@ -33,7 +33,7 @@ header .ver { color: var(--muted); font-size: 12px; }
 .spacer { flex: 1; }
 .btn { border: 1px solid var(--line); background: var(--panel); padding: 7px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
 .btn:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+.btn.primary { background: linear-gradient(180deg, var(--accent-hi), var(--accent) 70%); color: var(--accent-ink); border-color: transparent; font-weight: 700; box-shadow: 0 4px 14px rgba(212,175,55,.22); }
 .btn.primary:disabled { opacity: .45; cursor: default; }
 .btn.danger { color: var(--danger); }
 .btn.sm { padding: 4px 9px; font-size: 12.5px; border-radius: 7px; }
@@ -46,13 +46,13 @@ header .ver { color: var(--muted); font-size: 12px; }
 nav { position: sticky; top: 76px; align-self: start; display: flex; flex-direction: column; gap: 2px; }
 nav a { padding: 8px 12px; border-radius: 8px; color: var(--text); text-decoration: none; }
 nav a:hover { background: var(--panel-2); }
-nav a.on { background: var(--panel); box-shadow: var(--shadow); font-weight: 600; border: 1px solid var(--line); }
+nav a.on { background: var(--panel); font-weight: 650; border: 1px solid var(--line); border-left: 3px solid var(--accent); color: var(--accent-hi); }
 section { display: none; }
 section.on { display: block; }
 h2 { font-size: 20px; margin: 0 0 4px; }
 .lead { color: var(--muted); margin: 0 0 18px; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 14px; }
-.card h3 { margin: 0 0 12px; font-size: 15px; }
+.card { background: linear-gradient(180deg, rgba(255,244,214,.035), rgba(255,244,214,0) 120px), var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: inset 0 1px 0 rgba(242,214,117,.16), var(--shadow); padding: 16px 18px; margin-bottom: 14px; }
+.card h3 { margin: 0 0 12px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-hi); }
 .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; min-width: 0; }
 .field label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
@@ -325,7 +325,7 @@ dd { margin: 0; word-break: break-all; }
 <body>
 <header id="hdr">
   <img src="/favicon.ico" alt="">
-  <h1>DeckBox</h1><span class="ver" id="ver"></span>
+  <h1>DeckBox<span class="pro">PRO</span></h1><span class="ver" id="ver"></span>
   <span class="pill" id="phone"><i></i><span data-i18n="s.phoneStatus">Phone…</span></span>
   <div class="spacer"></div>
   <select id="langSel" data-i18n-title="lang.label" title="Language" style="padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);font-size:12.5px;max-width:160px"></select>
@@ -513,8 +513,6 @@ dd { margin: 0; word-break: break-all; }
         <div class="row" style="gap:16px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
           <div class="field" style="margin:0"><label data-i18n="lang.label">Language</label>
             <select data-bind="display.language" id="displayLangSel"></select></div>
-          <div class="field" style="margin:0"><label data-i18n="s.display.theme">Theme</label>
-            <select data-bind="display.theme"><option value="default" data-i18n="s.display.theme.default">Default</option><option value="amoled" data-i18n="s.display.theme.amoled">AMOLED black</option><option value="midnight" data-i18n="s.display.theme.midnight">Midnight blue</option><option value="warm" data-i18n="s.display.theme.warm">Warm</option><option value="graphite" data-i18n="s.display.theme.graphite">Graphite</option></select></div>
           <div class="field" style="margin:0"><label data-i18n="s.display.accent">Accent colour</label><input type="color" data-bind="display.accent" style="width:56px;height:36px;padding:2px"></div>
           <label class="check" style="margin-bottom:8px"><input type="checkbox" data-bind="display.artTint"> <span data-i18n="s.display.artTint">Tint the background with the album art</span></label>
         </div>
@@ -534,7 +532,7 @@ dd { margin: 0; word-break: break-all; }
 
       <div class="card">
         <h3 data-i18n="s.oled.title">OLED burn-in protection</h3>
-        <p class="hint" style="margin:0 0 12px">For OLED screens that show the same page for hours. The AMOLED black theme and the night screen help too.</p>
+        <p class="hint" style="margin:0 0 12px">For OLED screens that show the same page for hours. The night screen helps too.</p>
         <label class="check"><input type="checkbox" data-bind="display.pixelShift"> <span data-i18n="s.oled.pixelShift">Move the panel by a few pixels every 2 minutes, and the night clock around the screen</span></label>
         <div class="field" style="max-width:420px;margin-top:8px"><label data-i18n="s.oled.idleDim">Dim the panel after (minutes without a touch, 0 = never)</label><input type="number" min="0" max="1440" data-bind="display.idleDimMin" data-type="int">
           <span class="hint">A touch brightens it again without pressing anything; so do a page switch, a notification and a permission prompt.</span></div>
@@ -706,6 +704,7 @@ dd { margin: 0; word-break: break-all; }
 <div class="modal" id="modal" hidden><div class="modal-box"><div id="modalBody"></div><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="modalClose" data-i18n="s.cancel">Cancel</button></div></div></div>
 
 <script src="../panel/i18n.js"></script>
+<script src="../panel/i18n-ru-dom.js"></script>
 <script src="../panel/appearance.js"></script>
 <script>
 'use strict';
@@ -2610,6 +2609,7 @@ function applyLanguageUi(langPref) {
   if ($('langSel')) $('langSel').value = I18n.getPref();
   if ($('displayLangSel')) $('displayLangSel').value = I18n.getPref();
   I18n.applyDom();
+  window.DeckBoxRuDom?.refresh();
 }
 
 function bindLanguage() {
@@ -2752,7 +2752,7 @@ function fillDefaults() {
   cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, repo: 'Dubstep2004/DeckBox' }; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
   cfg.codexBar ??= { providers: ['claude', 'codex', 'antigravity'], rotate: true, pageSize: 2, rotateInterval: 8 };
   for (const [k, v] of Object.entries({ language: 'auto', hour12: false, idleReturnSec: 90, switchCountdownSec: 3, touchGraceSec: 20, minDwellSec: 15, holdMaxMin: 30, keepAwake: true,
-    showSeconds: true, vibrate: true, volumeKeys: true, artTint: true, proximityWake: true, orientation: 'landscape', theme: 'default', accent: '#2dd4bf' })) cfg.display[k] ??= v;
+    showSeconds: true, vibrate: true, volumeKeys: true, artTint: true, proximityWake: true, orientation: 'landscape', theme: 'pro', accent: '#d4af37' })) cfg.display[k] ??= v;
   cfg.charge ??= { enabled: false, min: 50, max: 80, method: 'ha' };
 }
 

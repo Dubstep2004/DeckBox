@@ -134,10 +134,10 @@ public sealed class DisplayConfig
     public bool VolumeKeys { get; set; } = true;
     /// <summary>landscape, portrait or auto (follow the phone). In portrait the widgets are arranged automatically.</summary>
     public string Orientation { get; set; } = "landscape";
-    /// <summary>default, amoled, midnight, warm or graphite.</summary>
-    public string Theme { get; set; } = "default";
-    /// <summary>Accent colour (background glow, page dots), e.g. "#2dd4bf".</summary>
-    public string Accent { get; set; } = "#2dd4bf";
+    /// <summary>Always "pro": DeckBox PRO is the only design (older theme names are mapped to it).</summary>
+    public string Theme { get; set; } = "pro";
+    /// <summary>Accent colour (background glow, page dots), e.g. "#d4af37" (the PRO gold).</summary>
+    public string Accent { get; set; } = "#d4af37";
     /// <summary>Tint the background with the album art's colour while music plays.</summary>
     public bool ArtTint { get; set; } = true;
     /// <summary>Screen brightness follows the room (the phone's light sensor).</summary>
@@ -497,6 +497,10 @@ public sealed partial class ConfigStore(string path)
         // a language the panel does not have falls back to following the phone / browser
         var lang = (c.Display.Language ?? "").Trim().ToLowerInvariant();
         c.Display.Language = DisplayConfig.Languages.Contains(lang) ? lang : "auto";
+        // DeckBox PRO replaced the old themes; the old default teal accent becomes the PRO gold, a colour the user chose stays
+        c.Display.Theme = "pro";
+        if (string.IsNullOrWhiteSpace(c.Display.Accent) || string.Equals(c.Display.Accent.Trim(), "#2dd4bf", StringComparison.OrdinalIgnoreCase))
+            c.Display.Accent = "#d4af37";
         c.Display.SwitchCountdownSec = Math.Clamp(c.Display.SwitchCountdownSec, 0, 30);
         c.Display.TouchGraceSec = Math.Clamp(c.Display.TouchGraceSec, 0, 600);
         c.Display.MinDwellSec = Math.Clamp(c.Display.MinDwellSec, 0, 600);

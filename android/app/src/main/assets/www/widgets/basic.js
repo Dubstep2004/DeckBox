@@ -2,6 +2,9 @@ import { $, API, D, LEVEL_COLOR, LOCALE, mediaHtml, METRICS, Q_STYLE, S_ORDER, a
 import { W } from '../registry.js';
 import { invalidateDeckState } from './controls.js';
 
+// metric names (CPU, NETWORK…) follow the panel language through the catalog dictionary
+const metricLabel = (m) => (window.DeckBoxI18n?.tc ? window.DeckBoxI18n.tc(m.label) : m.label);
+
 function bindProcessLink(box, sortTarget) {
   if (!hasProcessesPage()) return;
   box.style.cursor = 'pointer';
@@ -225,7 +228,7 @@ W.stat = {
     const c = color(m.color);
     box.style.setProperty('--c', c);
     const canvas = h('canvas');
-    const lbl = h('div', 't-label', m.label);
+    const lbl = h('div', 't-label', metricLabel(m));
     const val = h('b', null, '—'), unit = h('small'), sub = h('div', 't-sub', ' ');
     box.append(canvas, lbl, h('div', 't-val', val, unit), sub);
     if (o.metric === 'cpu' || o.metric === 'ram') bindProcessLink(box, o.metric === 'cpu' ? 'cpu' : 'mem');
@@ -237,7 +240,7 @@ W.stat = {
         val.textContent = v;
         unit.textContent = u;
         const pctVal = m.pct?.(s);
-        lbl.textContent = pctVal != null && m.label === 'RAM' ? `RAM (${Math.round(pctVal)}%)` : m.label;
+        lbl.textContent = pctVal != null && m.label === 'RAM' ? `${metricLabel(m)} (${Math.round(pctVal)}%)` : metricLabel(m);
         sub.textContent = m.sub?.(s) || ' ';
         chart(canvas, [{ data: hist[m.hist || o.metric] || hist.cpu, color: c, max: m.max(s) }]);
       },
@@ -251,7 +254,7 @@ W.gauge = {
     const m = METRICS[o.metric] || METRICS.cpu;
     box.style.setProperty('--q', color(m.color));
     const dial = h('div', 'g-dial'), pct = h('div', 'g-val'), sub = h('div', 'g-sub');
-    box.append(dial, h('div', 'g-label', m.label), sub);
+    box.append(dial, h('div', 'g-label', metricLabel(m)), sub);
     dial.append(pct);
     if (o.metric === 'cpu' || o.metric === 'ram') bindProcessLink(box, o.metric === 'cpu' ? 'cpu' : 'mem');
     let svg = null;
@@ -301,7 +304,7 @@ W.chart = {
           main.replaceChildren(...keys.map((k) => {
             const mm = METRICS[k];
             const [v, u] = metricText(mm, s);
-            const e = h('span', 'multi', (k === 'down' ? '↓ ' : k === 'up' ? '↑ ' : mm.label + ' '), h('b', null, v + ' ' + u));
+            const e = h('span', 'multi', (k === 'down' ? '↓ ' : k === 'up' ? '↑ ' : metricLabel(mm) + ' '), h('b', null, v + ' ' + u));
             e.style.color = color(mm.color);
             return e;
           }));

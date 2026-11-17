@@ -194,12 +194,15 @@ export function hour12() {
 export const fmtClock = (H, M) => (hour12() ? `${H % 12 || 12}:${pad(M)} ${H < 12 ? 'AM' : 'PM'}` : `${pad(H)}:${pad(M)}`);
 export const fmtHM = (d) => fmtClock(d.getHours(), d.getMinutes());
 export const fmtTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + pad(s % 60); };
+// units in the panel language (Russian: ГБ, МБ/с…); other languages keep the international symbols
+const UNIT_RU = { 'GB/s': 'ГБ/с', 'MB/s': 'МБ/с', 'KB/s': 'КБ/с', 'B/s': 'Б/с', GB: 'ГБ', MB: 'МБ', ms: 'мс', W: 'Вт' };
+export const unitL = (u) => (u && I18n?.getLang?.() === 'ru' && UNIT_RU[u]) || u;
 export function fmtRate(bps) {
   if (bps == null) return ['—', ''];
-  if (bps >= 1e9) return [(bps / 1e9).toFixed(1), 'GB/s'];
-  if (bps >= 1e6) return [(bps / 1e6).toFixed(bps >= 1e8 ? 0 : 1), 'MB/s'];
-  if (bps >= 1e3) return [(bps / 1e3).toFixed(0), 'KB/s'];
-  return [Math.round(bps).toString(), 'B/s'];
+  if (bps >= 1e9) return [(bps / 1e9).toFixed(1), unitL('GB/s')];
+  if (bps >= 1e6) return [(bps / 1e6).toFixed(bps >= 1e8 ? 0 : 1), unitL('MB/s')];
+  if (bps >= 1e3) return [(bps / 1e3).toFixed(0), unitL('KB/s')];
+  return [Math.round(bps).toString(), unitL('B/s')];
 }
 export const rateStr = (b) => fmtRate(b).join(' ');
 export function fmtDur(ms) {
@@ -219,7 +222,7 @@ export function shortDur(ms) {
 }
 export const ago = (ts) => { const d = Date.now() - ts; return d < 60_000 ? t('time.justNow') : t('time.ago', { dur: shortDur(d) }); };
 export const r1 = (v) => (v == null ? '—' : (Math.round(v * 10) / 10).toString());
-export const fmtMem = (mb) => (mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : Math.round(mb) + ' MB');
+export const fmtMem = (mb) => (mb >= 1024 ? (mb / 1024).toFixed(1) + ' ' + unitL('GB') : Math.round(mb) + ' ' + unitL('MB'));
 export const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 export const color = (c) => (c && c.startsWith('--') ? cssVar(c) : c);
 
@@ -328,7 +331,7 @@ export const METRICS = {
       return shortGpu(g.name) || 'Active';
     }, title: (s) => gpuOf(s)?.name },
   ram: { label: 'RAM', name: 'Memory', color: '--ram', unit: 'GB', max: (s) => s.pc?.ramTotalGb || 1, val: (s) => s.pc?.ramUsedGb, fmt: r1,
-    pct: (s) => (s.pc ? (s.pc.ramUsedGb / s.pc.ramTotalGb) * 100 : null), sub: (s) => (s.pc && s.pc.ramTotalGb ? `${r1(s.pc.ramUsedGb)} / ${Math.round(s.pc.ramTotalGb)} GB` : '') },
+    pct: (s) => (s.pc ? (s.pc.ramUsedGb / s.pc.ramTotalGb) * 100 : null), sub: (s) => (s.pc && s.pc.ramTotalGb ? `${r1(s.pc.ramUsedGb)} / ${Math.round(s.pc.ramTotalGb)} ${unitL('GB')}` : '') },
   vram: { label: 'VRAM', name: 'Video memory', color: '--gpu', unit: '%', max: () => 100,
     val: (s) => { const m = gpuMem(gpuOf(s)); return m ? (m.used / m.total) * 100 : null; },
     sub: (s) => { const m = gpuMem(gpuOf(s)); return m ? memText(m) : 'No GPU data'; } },
@@ -371,7 +374,7 @@ export const METRICS = {
 export function metricText(m, s) {
   const v = m.val(s);
   if (m.rate) return fmtRate(v);
-  const unit = (typeof m.unit === 'function' ? m.unit(s) : m.unit) || '';
+  const unit = unitL((typeof m.unit === 'function' ? m.unit(s) : m.unit) || '');
   if (v == null) return ['—', unit];
   return [m.fmt ? m.fmt(v) : String(Math.round(v)), unit];
 }
@@ -537,7 +540,7 @@ export const setMediaState = (m) => {
   emit('state');
 };
 // The background glow: the accent colour (Settings › Display), or the album art's colour while music plays.
-export let DEFAULT_AMBIENT = '45, 212, 191';
+export let DEFAULT_AMBIENT = '212, 175, 55';
 export let artTint = true;
 export let currentArtColor = null;
 export const setArtColor = (c) => { currentArtColor = c; setAmbient(c); };
@@ -1772,10 +1775,10 @@ export function applyDisplay() {
   LOCALE = I18n ? I18n.getLocale() : 'en-GB';
   I18n?.applyDom();
   // theme and accent apply in the preview and the browser too
-  document.body.dataset.theme = ['amoled', 'midnight', 'warm', 'graphite'].includes(d.theme) ? d.theme : 'default';
+  document.body.dataset.theme = 'pro'; // DeckBox PRO is the only design
   const accent = hexToRgb(d.accent);
   const before = DEFAULT_AMBIENT;
-  DEFAULT_AMBIENT = accent || '45, 212, 191';
+  DEFAULT_AMBIENT = accent || '212, 175, 55';
   document.documentElement.style.setProperty('--accent', `rgb(${DEFAULT_AMBIENT})`);
   artTint = d.artTint !== false;
   if (before !== DEFAULT_AMBIENT || !artTint) setAmbient(artTint ? currentArtColor : null);

@@ -5633,6 +5633,16 @@
       "s.wh.copyKey": "Скопировать ключ"
   });
   CATALOG.ru = {
+      // metric names on the tiles, gauges and charts
+      'NETWORK': 'Сеть',
+      'DOWNLOAD': 'Загрузка',
+      'UPLOAD': 'Отдача',
+      'PING': 'Пинг',
+      'GPU TEMP': 'Темп. ГП',
+      'HOT SPOT': 'Гор. точка ГП',
+      'GPU POWER': 'Мощность ГП',
+      'GPU CLOCK': 'Частота ГП',
+      'CPU TEMP': 'Темп. ЦП',
       "Clock": "Часы",
       "Big clock and date; optional status line and current weather.": "Большие часы и дата; по желанию строка состояния и текущая погода.",
       "Time": "Время",

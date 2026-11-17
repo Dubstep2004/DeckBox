@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- DeckBox PRO launcher icon (foreground): four deck keys, one lit in gold with a play mark. Source: docs/brand/deckbox-icon.svg -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- screen -->
-    <path
-        android:pathData="M35,36h38a5,5 0,0 1,5 5v22a5,5 0,0 1,-5 5h-38a5,5 0,0 1,-5 -5v-22a5,5 0,0 1,5 -5z"
-        android:strokeWidth="3"
-        android:strokeColor="#E8ECF1"
-        android:fillColor="#00000000" />
-    <!-- bars -->
-    <path android:pathData="M38,61v-6h5v6z" android:fillColor="#2DD4BF" />
-    <path android:pathData="M46,61v-13h5v13z" android:fillColor="#76B900" />
-    <path android:pathData="M54,61v-9h5v9z" android:fillColor="#A78BFA" />
-    <!-- clock dot -->
-    <path android:pathData="M64,47a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z" android:fillColor="#F59E0B" />
-    <!-- stand -->
-    <path android:pathData="M51,68h6v5h-6z M43,73h22v3h-22z" android:fillColor="#E8ECF1" />
+    <group android:scaleX="0.155" android:scaleY="0.155" android:translateX="14.32" android:translateY="14.32">
+        <path android:fillType="evenOdd" android:pathData="M146,112h64a34,34 0,0 1,34,34v64a34,34 0,0 1,-34,34h-64a34,34 0,0 1,-34,-34v-64a34,34 0,0 1,34,-34zM146,128h64a18,18 0,0 1,18,18v64a18,18 0,0 1,-18,18h-64a18,18 0,0 1,-18,-18v-64a18,18 0,0 1,18,-18zM146,268h64a34,34 0,0 1,34,34v64a34,34 0,0 1,-34,34h-64a34,34 0,0 1,-34,-34v-64a34,34 0,0 1,34,-34zM146,284h64a18,18 0,0 1,18,18v64a18,18 0,0 1,-18,18h-64a18,18 0,0 1,-18,-18v-64a18,18 0,0 1,18,-18zM302,268h64a34,34 0,0 1,34,34v64a34,34 0,0 1,-34,34h-64a34,34 0,0 1,-34,-34v-64a34,34 0,0 1,34,-34zM302,284h64a18,18 0,0 1,18,18v64a18,18 0,0 1,-18,18h-64a18,18 0,0 1,-18,-18v-64a18,18 0,0 1,18,-18z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="112" android:startY="112" android:endX="400" android:endY="400">
+                    <item android:offset="0" android:color="#FFF6DE8D" />
+                    <item android:offset="0.55" android:color="#FFD4AF37" />
+                    <item android:offset="1" android:color="#FF9C7A1C" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M298,112h72a30,30 0,0 1,30,30v72a30,30 0,0 1,-30,30h-72a30,30 0,0 1,-30,-30v-72a30,30 0,0 1,30,-30z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="268" android:startY="112" android:endX="400" android:endY="244">
+                    <item android:offset="0" android:color="#FFF6DE8D" />
+                    <item android:offset="0.55" android:color="#FFD4AF37" />
+                    <item android:offset="1" android:color="#FF9C7A1C" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FF0F0F12" android:strokeColor="#FF0F0F12" android:strokeWidth="8" android:strokeLineJoin="round" android:pathData="M316,146L362,178L316,210z" />
+    </group>
 </vector>
