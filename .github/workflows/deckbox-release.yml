@@ -87,10 +87,13 @@ jobs:
         run: |
           tag="v$V"
           files=("installer/DeckBox-Setup-$V.exe" "installer/DeckBox-$V.apk" "installer/DeckBoxAgent-$V-win-x64.zip" "installer/SHA256SUMS-$V.txt")
+          # the description comes from this version's section of CHANGELOG.md (✨ Новое, ⚡ Улучшено, 🛠 Исправлено, 🗑 Удалено)
+          python3 tools/release-notes.py "$V" > "$RUNNER_TEMP/notes.md"
+          title="DeckBox PRO $V$(sed -n "s/^## $V — \(.*\)$/ — \1/p" CHANGELOG.md | head -n1)"
           if gh release view "$tag" > /dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber
+            gh release edit "$tag" --title "$title" --notes-file "$RUNNER_TEMP/notes.md"
           else
-            gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "DeckBox $V" --latest \
-              --notes "Скачайте DeckBox-Setup-$V.exe и запустите. Уже установленный DeckBox обновится сам (Настройки › Общие › Обновления). DeckBox-$V.apk — приложение для телефона отдельно."
+            gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "$title" --latest --notes-file "$RUNNER_TEMP/notes.md"
           fi
           echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"

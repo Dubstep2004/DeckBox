@@ -1,0 +1,30 @@
+name: DeckBox release notes
+
+# Rewrites the title and description of every published release from its section of CHANGELOG.md
+# (tools/release-notes.py). Run it by hand after editing the changelog: Actions › DeckBox release notes › Run workflow.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['CHANGELOG.md', 'tools/release-notes.py']
+
+permissions:
+  contents: write
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update the release descriptions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for v in $(python3 tools/release-notes.py --list); do
+            tag="v$v"
+            if ! gh release view "$tag" > /dev/null 2>&1; then echo "no release $tag yet"; continue; fi
+            python3 tools/release-notes.py "$v" > "$RUNNER_TEMP/notes-$v.md"
+            title="DeckBox PRO $v$(sed -n "s/^## $v — \(.*\)$/ — \1/p" CHANGELOG.md | head -n1)"
+            gh release edit "$tag" --title "$title" --notes-file "$RUNNER_TEMP/notes-$v.md"
+            echo "updated $tag: $title" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
