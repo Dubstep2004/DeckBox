@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PhoneBox demo server: serves the web demo (tools/pages) straight from the sources, so the real panel and settings page
+DeckBox demo server: serves the web demo (tools/pages) straight from the sources, so the real panel and settings page
 run in a desktop browser with made-up data; no phone, agent or Windows needed. Handy for working on the UI and for
 screenshots. The made-up data lives in tools/pages/demo.js (the same as on the live demo); this server adds the
 webhook API, so curl can push values, notifications and page switches into the open browser tabs.
@@ -69,7 +69,7 @@ def static(path):
     if path in ('/', '/index.html'): return 'text/html', site.landing_html().encode()
     if path == '/demo.js': return 'text/javascript', (PAGES / 'demo.js').read_bytes()
     if path in ('/widgets.json', '/templates.json'): return 'application/json', (site.AGENT / path[1:]).read_bytes()
-    if path == '/favicon.ico': return 'image/x-icon', (site.AGENT / 'phonebox.ico').read_bytes()
+    if path == '/favicon.ico': return 'image/x-icon', (site.AGENT / 'deckbox.ico').read_bytes()
     if path in ('/panel/', '/panel/index.html'): return 'text/html', site.panel_html(relay=True).encode()
     if path in ('/settings/', '/settings/index.html'): return 'text/html', site.settings_html(relay=True).encode()
     if path.startswith('/panel/'):
@@ -133,6 +133,6 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     ThreadingHTTPServer.daemon_threads = True
     srv = ThreadingHTTPServer(('127.0.0.1', PORT), Handler)
-    print(f'PhoneBox demo: http://127.0.0.1:{PORT}/  ·  panel /panel/  ·  settings /settings/  ·  webhooks: curl -X POST http://127.0.0.1:{PORT}/api/notify -d hello')
+    print(f'DeckBox demo: http://127.0.0.1:{PORT}/  ·  panel /panel/  ·  settings /settings/  ·  webhooks: curl -X POST http://127.0.0.1:{PORT}/api/notify -d hello')
     try: srv.serve_forever()
     except KeyboardInterrupt: pass

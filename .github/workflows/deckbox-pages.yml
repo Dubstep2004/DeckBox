@@ -1,0 +1,34 @@
+name: DeckBox pages
+
+# Publishes https://dubstep2004.github.io/DeckBox/: the live web demo and the Wi-Fi pairing page (/pair/) that the
+# pairing QR code opens. One-time setup: Settings › Pages › Build and deployment › Source: GitHub Actions.
+on:
+  push:
+    branches: [main]
+    paths: ['android/app/src/main/assets/www/**', 'agent/DeckBox.Agent/settings.html', 'agent/DeckBox.Agent/*.json', 'agent/DeckBox.Agent/DeckBox.Agent.csproj', 'tools/pages/**', '.github/workflows/deckbox-pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the site
+        run: python3 tools/pages/build.py _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,6 +1,6 @@
-# Contributing to PhoneBox
+# Contributing to DeckBox
 
-Thanks for helping. PhoneBox runs on someone's computer all day, can start programs and talks to a phone over the
+Thanks for helping. DeckBox runs on someone's computer all day, can start programs and talks to a phone over the
 network, so reviews focus on what a change lets the phone (or anyone else) do, and on what leaves the machine. This
 page lists what reviews keep asking for; following it gets a pull request merged much faster.
 
@@ -16,7 +16,7 @@ page lists what reviews keep asking for; following it gets a pull request merged
 ## The security model, in short
 
 - The agent listens on `127.0.0.1` (the phone reaches it through `adb reverse`). The optional Wi-Fi port serves only
-  the paths on the allow-list in `agent/PhoneBox.Agent/Lan.cs`, over TLS pinned to the paired certificate, with the
+  the paths on the allow-list in `agent/DeckBox.Agent/Lan.cs`, over TLS pinned to the paired certificate, with the
   paired key. Settings, pairing and tests stay local. **Adding a path to that allow-list is a security decision**:
   say in the pull request why the phone needs it.
 - **The phone sends ids, never commands, paths or URLs.** Shortcuts, command widgets, apps and calendars are defined
@@ -34,7 +34,7 @@ page lists what reviews keep asking for; following it gets a pull request merged
 
 ## Privacy
 
-- PhoneBox has no telemetry, accounts or servers of its own, and that stays so.
+- DeckBox has no telemetry, accounts or servers of its own, and that stays so.
 - **Every new outbound connection** (a public API, a cloud provider, a download) needs a row in
   [PRIVACY.md](PRIVACY.md): the host, what is sent, and how to turn it off. Sending the user's data (audio, text,
   location, files) somewhere must be opt-in and say so where it is switched on.
@@ -45,7 +45,7 @@ page lists what reviews keep asking for; following it gets a pull request merged
 - **A new setting** goes in `Config.cs` (with a default and normalization of bad values), in all three
   `config.default*.json` files, and in the settings page. Decide whether the phone needs it; if not, keep it out of
   `ToPublic()`.
-- **A new widget** needs its entry in `agent/PhoneBox.Agent/widgets.json`, the widget in
+- **A new widget** needs its entry in `agent/DeckBox.Agent/widgets.json`, the widget in
   `android/app/src/main/assets/www/widgets/`, an icon in `WIDGET_ICONS`, the README count (`tools/check-release.py`
   checks it) and, if it calls the agent, a mock in `tools/pages/demo.js` so the web demo and the UI tests can render
   it. Outside the app (no native bridge) it must show an empty state, not throw.
@@ -62,7 +62,7 @@ page lists what reviews keep asking for; following it gets a pull request merged
 Run what CI runs, and say in the pull request what you ran and what you tried by hand:
 
 ```sh
-dotnet test agent/PhoneBox.Agent.Tests
+dotnet test agent/DeckBox.Agent.Tests
 cd tools/ui-tests && npm ci && npx playwright install chromium && npx playwright test
 python tools/check-release.py
 cd android && ./gradlew lintDebug assembleDebug     # when the Android app changes

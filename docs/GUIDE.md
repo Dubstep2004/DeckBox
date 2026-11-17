@@ -1,6 +1,6 @@
 # User guide
 
-[Back to PhoneBox](../README.md) · [Installation and connections](SETUP.md) · [Development](DEVELOPMENT.md)
+[Back to DeckBox](../README.md) · [Installation and connections](SETUP.md) · [Development](DEVELOPMENT.md)
 
 [Appearance](#appearance) · [Control Deck](#control-deck) · [Pages & templates](#pages--templates) · [Widgets](#widgets) · [Layout editor & settings](#layout-editor--settings) · [Claude Code permission prompts](#claude-code-permission-prompts) · [Webhooks](#webhooks) · [Rules](#rules) · [Security & privacy](#security--privacy)
 
@@ -91,7 +91,7 @@ The feed proxy is not available over Wi-Fi. See [PRIVACY.md](../PRIVACY.md) for 
 RTSP address (`rtsp://user:password@192.168.1.20:554/…`; the camera's manual or app has the exact path), then pick it
 in the widget. The agent pulls the stream with [ffmpeg](https://ffmpeg.org), which you install: `winget install
 Gyan.FFmpeg` on Windows, `brew install ffmpeg` on macOS, your distribution's `ffmpeg` package on Linux. Restart
-PhoneBox afterwards so it finds ffmpeg in PATH, or enter ffmpeg's full path in the same card. A camera runs only while
+DeckBox afterwards so it finds ffmpeg in PATH, or enter ffmpeg's full path in the same card. A camera runs only while
 a Camera widget for it is on the phone's screen, at 5 frames a second by default; pick 1 to 10 next to the camera (smoother costs more CPU on the PC and more data to the phone), and expect a short delay. Choose
 **UDP** for a camera that doesn't stream over TCP. At most 4 cameras play at the same time.
 
@@ -106,7 +106,7 @@ An optional cost overview shows the last 30 days of spend and tokens; it is off 
 Local Claude, Codex and Antigravity sources keep refreshing when CodexBar is absent, fails, or reports stale data. General settings
 provide defaults; a widget's own options override them, including an empty provider selection.
 Install a compatible CLI from [CodexBar](https://github.com/steipete/CodexBar) if available for your system.
-PhoneBox uses native local sources when no compatible CLI is installed.
+DeckBox uses native local sources when no compatible CLI is installed.
 
 **Native Antigravity quotas** use a running app/hub's advertised HTTP port and CSRF token, or a signed-in
 `agy` CLI (1.1.11 or later). The CLI fallback runs `agy -p /usage --output-format json`, without a model prompt,
@@ -140,13 +140,13 @@ Double-click the tray icon on Windows (or open <http://127.0.0.1:8765>):
   room goes dark, wave to wake it); [OLED burn-in protection (unreleased)](#appearance); [page switching](#rules) (home page, countdown, back home after);
   kiosk options (screen pinning, the panel as the phone's home screen so it starts after a reboot, keep the phone
   awake on the charger; no root needed); on macOS, optionally follow the computer lock (sleep the phone on lock,
-  wake it and open PhoneBox on unlock, with an ADB connection; phones secured by a PIN or password must be unlocked
+  wake it and open DeckBox on unlock, with an ADB connection; phones secured by a PIN or password must be unlocked
   manually). Lock sync needs the agent to run in the macOS GUI session; [battery care](#rules);
   [Claude Code permission prompts](#claude-code-permission-prompts);
   phones (several at once, each with its own pages); Wi-Fi & Tailscale; updates.
 - **Advanced**: the raw JSON.
 
-Settings live in `%APPDATA%\PhoneBox\config.json` (Linux: `~/.config/PhoneBox`, macOS: `~/Library/Application Support/PhoneBox`);
+Settings live in `%APPDATA%\DeckBox\config.json` (Linux: `~/.config/DeckBox`, macOS: `~/Library/Application Support/DeckBox`);
 the phone picks up changes within a few seconds.
 Use UTF-8 when editing this file externally. Saved page and shortcut icons use JSON Unicode escapes to survive
 ANSI-based editors; the settings editor displays the actual symbols. On startup, known double-encoded forms of
@@ -156,8 +156,8 @@ the four affected default icons are repaired, with the original file kept in `co
 
 When Claude Code asks for permission (run a command, edit a file, use an MCP tool…), the phone shows the request —
 project, tool and the command or file — with **Allow** and **Deny**. Turn it on in **Settings › General › Claude Code
-permission prompts** and press *Install hook*: PhoneBox adds a `PermissionRequest` hook to `~/.claude/settings.json`
-(and keeps a backup next to it as `settings.json.phonebox.bak`). If the phone is not connected or nobody answers in
+permission prompts** and press *Install hook*: DeckBox adds a `PermissionRequest` hook to `~/.claude/settings.json`
+(and keeps a backup next to it as `settings.json.deckbox.bak`). If the phone is not connected or nobody answers in
 time, the hook returns no decision and Claude Code asks in the terminal as usual. Optionally only when you have been
 away from the keyboard for a minute.
 
@@ -237,7 +237,7 @@ away → Ambient, evenings → Calm, doorbell, quota warning, review requested, 
 too warm) and has a Test button for each rule.
 
 **Battery care** (Settings › General) keeps the phone's battery between two levels, 50–80 % by default, so a panel
-that is always plugged in lasts longer. Phones cannot stop charging without root, so PhoneBox switches the power
+that is always plugged in lasts longer. Phones cannot stop charging without root, so DeckBox switches the power
 where it comes from: a smart plug in Home Assistant, or two shortcuts (for example `uhubctl` for a USB hub with
 switchable ports). The panel keeps running over Wi-Fi while the USB power is off.
 
@@ -258,17 +258,17 @@ switchable ports). The panel keeps running over Wi-Fi while the USB power is off
 - **Claude Code permission prompts** are opt-in. The hook only posts the request to the agent on `127.0.0.1`; the
   phone can only answer allow or deny for that one request.
 - **Claude quota:** read with the OAuth token Claude Code stores in `~/.claude/.credentials.json`, sent only to
-  `api.anthropic.com/api/oauth/usage` (the endpoint behind Claude Code's `/usage`). The token is read-only: PhoneBox
+  `api.anthropic.com/api/oauth/usage` (the endpoint behind Claude Code's `/usage`). The token is read-only: DeckBox
   never refreshes it, so it can't interfere with Claude Code. This endpoint is undocumented and may change.
-  It is rate limited per account and shared with Claude Code, so PhoneBox asks at most every 3 minutes, and waits
+  It is rate limited per account and shared with Claude Code, so DeckBox asks at most every 3 minutes, and waits
   longer after errors and as long as a `429` asks for, across restarts too. An expired or refused token is not sent:
-  PhoneBox waits until Claude Code renews it.
+  DeckBox waits until Claude Code renews it.
 - **Codex quota and sessions** are read from local files in `~/.codex/sessions`; Claude Code sessions from
   `~/.claude/sessions`.
 - **Native Antigravity quota:** the agent reads the running Antigravity server's port and CSRF token from its
   process arguments and queries its loopback quota/status API, or invokes the signed-in CLI's structured usage
   command. Only measured quota fields reach the panel; CLI conversation identifiers and token counters are omitted.
-  PhoneBox does not manage Google OAuth credentials; the CLI uses its own authentication. CLI auto-updates are
+  DeckBox does not manage Google OAuth credentials; the CLI uses its own authentication. CLI auto-updates are
   disabled for these probes.
 - **No telemetry**: no accounts, no analytics, no crash reports. The [privacy policy](../PRIVACY.md) lists every
   connection the agent and the app make (update check, weather, the widgets that use public APIs) and how to turn

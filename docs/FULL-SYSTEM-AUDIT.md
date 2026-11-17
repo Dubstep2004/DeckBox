@@ -10,7 +10,7 @@ they do not certify every external integration or every possible hardware config
 
 ### Toolchain
 
-- .NET 10 and xUnit: `agent/PhoneBox.Agent/PhoneBox.Agent.csproj` and the adjacent test project.
+- .NET 10 and xUnit: `agent/DeckBox.Agent/DeckBox.Agent.csproj` and the adjacent test project.
 - Kotlin/Android Gradle, minimum API 28: `android/app/build.gradle.kts`.
 - Playwright 1.65: `tools/ui-tests/package.json`; real panel/settings code with simulated integration data.
 - Existing release, installer and native API checks: `tools/` and `.github/workflows/`.
@@ -20,7 +20,7 @@ they do not certify every external integration or every possible hardware config
 
 #### F1 — input-handling — Medium — nonnumeric payload TTL causes an exception
 
-- Location: `PushStore.Set` in `agent/PhoneBox.Agent/PushStore.cs`.
+- Location: `PushStore.Set` in `agent/DeckBox.Agent/PushStore.cs`.
 - Root cause: `JsonElement.TryGetInt32` throws for strings, booleans, arrays and null; it only tolerates
   failed numeric conversion when the element is actually a number.
 - Before: four unchanged regression cases threw `InvalidOperationException` on these payloads.
@@ -28,11 +28,11 @@ they do not certify every external integration or every possible hardware config
   ordinary JSON data otherwise. An explicit request TTL continues to take precedence.
 - After: all four type cases pass, including numeric and explicit-TTL controls; live isolated HTTP
   POST/readback also passes. No credentials or real user configuration were used.
-- Regression: `agent/PhoneBox.Agent.Tests/PushInputTests.cs`.
+- Regression: `agent/DeckBox.Agent.Tests/PushInputTests.cs`.
 
 #### F2 — input-handling — Medium — chunked multibyte bodies bypass the byte limit
 
-- Location: `PushStore.ReadBody` in `agent/PhoneBox.Agent/PushStore.cs`.
+- Location: `PushStore.ReadBody` in `agent/DeckBox.Agent/PushStore.cs`.
 - Root cause: when Content-Length was absent, the fallback counted decoded characters instead of bytes.
   A 90,000-byte UTF-8 request with 30,000 characters passed the documented 65,536-byte limit.
 - Before: multibyte oversize case failed; ASCII and in-limit multibyte controls passed.
@@ -40,7 +40,7 @@ they do not certify every external integration or every possible hardware config
   fragmented reads and uses request cancellation while receiving the body.
 - After: boundary tests pass at 65,536/65,537 ASCII bytes and below/above the UTF-8 limit. A real chunked
   HTTP POST returns 400 and does not create a pushed value.
-- Regression: `agent/PhoneBox.Agent.Tests/PushInputTests.cs`.
+- Regression: `agent/DeckBox.Agent.Tests/PushInputTests.cs`.
 
 ### Coverage and validation
 
@@ -54,16 +54,16 @@ they do not certify every external integration or every possible hardware config
 | Windows native audio | Own silent process session changed to 35 and restored; loopback format validated | Other sessions and all device volume/mute values unchanged |
 | Desktop build | Both Windows and portable Release targets compile with zero warnings/errors | Other native architectures are checked by hosted CI/release jobs |
 | Android | `lintDebug testDebugUnitTest assembleDebug assembleRelease` | Unit-test target reports NO-SOURCE; no Kotlin unit cases exist |
-| Installed BISON | App process alive; available app-PID AndroidRuntime/PhoneBoxWeb error buffer empty | Not a physical gesture or USB-unplug endurance test |
+| Installed BISON | App process alive; available app-PID AndroidRuntime/DeckBoxWeb error buffer empty | Not a physical gesture or USB-unplug endurance test |
 | Installers | Windows regression script and 3 Unix installer tests in Ubuntu WSL | Unix system-service commands are deliberately isolated |
 | Dependencies | npm audit reports 0; NuGet reports no known vulnerable packages | Advisory sources and date limited; not a complete security assessment |
 | Delivery | Metadata and diff checks; standard build/Pages/release workflows retained | Publication and installed artifact evidence reported separately |
 
 Commands and local results:
 
-- `dotnet test agent/PhoneBox.Agent.Tests --nologo`: 264 baseline; 272 after fixes, no skips.
+- `dotnet test agent/DeckBox.Agent.Tests --nologo`: 264 baseline; 272 after fixes, no skips.
 - Focused `PushInputTests`: 5 failed / 3 passed before; 8 passed after, three consecutive runs.
-- `dotnet build agent/PhoneBox.Agent -c Release --nologo`: both TFMs, zero warnings/errors.
+- `dotnet build agent/DeckBox.Agent -c Release --nologo`: both TFMs, zero warnings/errors.
 - `npm test` in `tools/ui-tests`: 50 passed.
 - Android lint/debug/release build: passed; `testDebugUnitTest`: NO-SOURCE.
 - `pwsh tools/test-install-apk.ps1`: passed, including incompatible-signature data preservation.

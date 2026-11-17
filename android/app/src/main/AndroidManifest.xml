@@ -32,18 +32,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <!-- Pairing without USB: the QR code on the computer's settings page. Android 12+ opens unverified https
-                 links in the browser; that page then offers phonebox://pair (the second filter). -->
+                 links in the browser; that page then offers deckbox://pair (the second filter). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="ersinkoc.github.io" android:pathPrefix="/phonebox/pair" />
+                <data android:scheme="https" android:host="dubstep2004.github.io" android:pathPrefix="/DeckBox/pair" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="phonebox" android:host="pair" />
+                <data android:scheme="deckbox" android:host="pair" />
             </intent-filter>
         </activity>
 
@@ -61,7 +61,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Quick Settings tile (Edit tiles › PhoneBox): opens the panel. Android 7.0+ only shows tiles. -->
+        <!-- Quick Settings tile (Edit tiles › DeckBox): opens the panel. Android 7.0+ only shows tiles. -->
         <service
             android:name=".PanelTile"
             android:exported="true"

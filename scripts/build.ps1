@@ -1,21 +1,21 @@
 <#
 .SYNOPSIS
   Builds release artifacts into dist\:
-    PhoneBox-<version>.apk               Android panel (release-signed if a key is configured)
-    PhoneBoxAgent-<version>-<rid>.zip    agent for win-x64, linux-x64, linux-arm64, osx-arm64, osx-x64 (self-contained: no .NET runtime needed)
+    DeckBox-<version>.apk               Android panel (release-signed if a key is configured)
+    DeckBoxAgent-<version>-<rid>.zip    agent for win-x64, linux-x64, linux-arm64, osx-arm64, osx-x64 (self-contained: no .NET runtime needed)
 #>
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force $dist | Out-Null
 
-$version = ([xml](Get-Content (Join-Path $root 'agent\PhoneBox.Agent\PhoneBox.Agent.csproj'))).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+$version = ([xml](Get-Content (Join-Path $root 'agent\DeckBox.Agent\DeckBox.Agent.csproj'))).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
 
 Write-Host "==> Android APK ($version)"
 Push-Location (Join-Path $root 'android')
 try { .\gradlew.bat assembleRelease --console=plain -q } finally { Pop-Location }
 if ($LASTEXITCODE) { throw 'Android release build failed' }
-Copy-Item (Join-Path $root 'android\app\build\outputs\apk\release\app-release.apk') (Join-Path $dist "PhoneBox-$version.apk") -Force
+Copy-Item (Join-Path $root 'android\app\build\outputs\apk\release\app-release.apk') (Join-Path $dist "DeckBox-$version.apk") -Force
 
 # Self-contained single-file builds for every supported system (no .NET runtime needed), as in release.yml.
 # Zip files lose the Unix executable bit; install.sh and the agent's updater set it again.
@@ -26,11 +26,11 @@ $targets = [ordered]@{
 }
 foreach ($rid in $targets.Keys) {
     Write-Host "==> Agent $rid ($version)"
-    $out = Join-Path ([IO.Path]::GetTempPath()) ("phonebox-agent-$version-$rid-" + [guid]::NewGuid().ToString('N'))
+    $out = Join-Path ([IO.Path]::GetTempPath()) ("deckbox-agent-$version-$rid-" + [guid]::NewGuid().ToString('N'))
     try {
-        dotnet publish (Join-Path $root 'agent\PhoneBox.Agent') -c Release -f $targets[$rid] -r $rid --self-contained true -p:PublishSingleFile=true -o $out --nologo -v q --disable-build-servers
+        dotnet publish (Join-Path $root 'agent\DeckBox.Agent') -c Release -f $targets[$rid] -r $rid --self-contained true -p:PublishSingleFile=true -o $out --nologo -v q --disable-build-servers
         if ($LASTEXITCODE) { throw "publish failed for $rid" }
-        $zip = Join-Path $dist "PhoneBoxAgent-$version-$rid.zip"
+        $zip = Join-Path $dist "DeckBoxAgent-$version-$rid.zip"
         Compress-Archive -Path "$out\*" -DestinationPath $zip -Force
     } finally {
         Remove-Item -LiteralPath $out -Recurse -Force -ErrorAction SilentlyContinue

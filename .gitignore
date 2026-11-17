@@ -53,3 +53,5 @@ tools/ui-tests/test-results/
 # Installer output
 installer/*.exe
 installer/*.apk
+installer/*.zip
+installer/SHA256SUMS-*.txt

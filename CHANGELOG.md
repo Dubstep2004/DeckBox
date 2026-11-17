@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased
+## DeckBox 1.0.0
+
+DeckBox is the renamed fork of [PhoneBox](https://github.com/ersinkoc/phonebox). Entries below are PhoneBox history (its versions up to 0.9.18).
+
+- The name is DeckBox everywhere: `DeckBoxAgent.exe`, settings in `%APPDATA%\DeckBox` (`~/.config/DeckBox`), the phone
+  app `io.github.dubstep2004.deckbox`, the code and the docs.
+- PhoneBox settings are copied into the DeckBox folder on the first start (the old folder is left as it was).
+- The installer stops and removes an installed PhoneBox, and replaces the old phone app.
+- Updates come from the DeckBox releases: the agent (DeckBoxAgent-<v>-win-x64.zip), the phone app (DeckBox-<v>.apk)
+  and SHA256SUMS-<v>.txt are published with every release. Settings that still point at the PhoneBox repository are
+  switched to DeckBox.
+- Wi-Fi pairing links use https://dubstep2004.github.io/DeckBox/pair/; phones paired over Wi-Fi pair once more.
+- Complete Russian translation, Windows installer in Russian.
+
+## Unreleased (PhoneBox)
 
 **Panel**
 - Camera widget: smoother. 5 pictures a second by default, and 1 to 10 per camera in Settings › General › Cameras;

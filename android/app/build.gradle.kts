@@ -4,31 +4,31 @@ plugins {
 }
 
 // Release signing: values come from ~/.gradle/gradle.properties or environment variables
-// (PHONEBOX_STORE_FILE, PHONEBOX_STORE_PASSWORD, PHONEBOX_KEY_ALIAS, PHONEBOX_KEY_PASSWORD).
+// (DECKBOX_STORE_FILE, DECKBOX_STORE_PASSWORD, DECKBOX_KEY_ALIAS, DECKBOX_KEY_PASSWORD).
 // Without them, release builds fall back to the debug key so the project still builds anywhere.
 fun signingValue(name: String): String? =
     (project.findProperty(name) as String?) ?: System.getenv(name)
 
 android {
-    namespace = "net.oxog.phonebox.deskpanel"
+    namespace = "io.github.dubstep2004.deckbox"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "net.oxog.phonebox.deskpanel"
+        applicationId = "io.github.dubstep2004.deckbox"
         minSdk = 24
         targetSdk = 35
-        versionCode = 39
-        versionName = "0.9.18"
+        versionCode = 40
+        versionName = "1.0.0"
     }
 
     signingConfigs {
-        val storeFile = signingValue("PHONEBOX_STORE_FILE")
+        val storeFile = signingValue("DECKBOX_STORE_FILE")
         if (storeFile != null && file(storeFile).exists()) {
             create("release") {
                 this.storeFile = file(storeFile)
-                storePassword = signingValue("PHONEBOX_STORE_PASSWORD")
-                keyAlias = signingValue("PHONEBOX_KEY_ALIAS")
-                keyPassword = signingValue("PHONEBOX_KEY_PASSWORD")
+                storePassword = signingValue("DECKBOX_STORE_PASSWORD")
+                keyAlias = signingValue("DECKBOX_KEY_ALIAS")
+                keyPassword = signingValue("DECKBOX_KEY_PASSWORD")
             }
         }
     }

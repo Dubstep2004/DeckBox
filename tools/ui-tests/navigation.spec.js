@@ -28,7 +28,7 @@ async function stepUntil(page, fn, max = 10_000) {
   for (let t = 0; t < max; t += 250) { if (await fn()) return; await page.clock.fastForward(250); }
   expect(await fn()).toBe(true);
 }
-const emit = (page, kind, data) => page.evaluate(([k, d]) => window.PhoneBoxDemo.emit(k, d), [kind, data]);
+const emit = (page, kind, data) => page.evaluate(([k, d]) => window.DeckBoxDemo.emit(k, d), [kind, data]);
 // the demo's agent never lists this rule as active, like a rule that has ended
 const holdThree = (page) => emit(page, 'goto', { page: 'three', rule: 'r1', name: 'R1', hold: true, countdown: 0, priority: 5 });
 

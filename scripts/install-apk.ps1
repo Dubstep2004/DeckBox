@@ -1,4 +1,4 @@
-function Install-PhoneBoxApk {
+function Install-DeckBoxApk {
     param([Parameter(Mandatory)][string]$Adb, [Parameter(Mandatory)][string]$ApkPath, [Parameter(Mandatory)][string]$Serial)
     $target = @('-s', $Serial)
     # Windows PowerShell 5.1 turns a native program's stderr lines into errors under -ErrorAction Stop (adb prints

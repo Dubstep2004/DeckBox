@@ -5,13 +5,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WWW = ROOT / 'android' / 'app' / 'src' / 'main' / 'assets' / 'www'
-AGENT = ROOT / 'agent' / 'PhoneBox.Agent'
+AGENT = ROOT / 'agent' / 'DeckBox.Agent'
 PAGES = Path(__file__).resolve().parent
 
 
 def version():
     """The agent's version: the demo reports it as the installed one, and the landing page shows it."""
-    return re.search(r'<Version>([^<]+)</Version>', (AGENT / 'PhoneBox.Agent.csproj').read_text(encoding='utf-8'))[1]
+    return re.search(r'<Version>([^<]+)</Version>', (AGENT / 'DeckBox.Agent.csproj').read_text(encoding='utf-8'))[1]
 
 
 def demo_tag(panel=False, relay=False):
@@ -53,7 +53,7 @@ def build(out):
     shutil.copy(PAGES / 'demo.js', out / 'demo.js')
     (out / 'index.html').write_text(landing_html(), encoding='utf-8')
     for name in ('widgets.json', 'templates.json'): shutil.copy(AGENT / name, out / name)
-    shutil.copy(AGENT / 'phonebox.ico', out / 'favicon.ico')
+    shutil.copy(AGENT / 'deckbox.ico', out / 'favicon.ico')
     shutil.copytree(WWW, out / 'panel', dirs_exist_ok=True, ignore=shutil.ignore_patterns('index.html'))
     (out / 'panel' / 'index.html').write_text(panel_html(), encoding='utf-8')
     (out / 'settings' / 'index.html').write_text(settings_html(), encoding='utf-8')

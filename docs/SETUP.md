@@ -1,12 +1,12 @@
 # Installation and connections
 
-[Back to PhoneBox](../README.md) · [User guide](GUIDE.md) · [Development](DEVELOPMENT.md)
+[Back to DeckBox](../README.md) · [User guide](GUIDE.md) · [Development](DEVELOPMENT.md)
 
 [Quick start](#quick-start) · [Wi-Fi & Tailscale](#wi-fi--tailscale) · [Updates](#updates) · [FAQ & troubleshooting](#faq--troubleshooting)
 
 ## Quick start
 
-### 1. Install PhoneBox on the computer
+### 1. Install DeckBox on the computer
 
 **Windows 10/11**: open PowerShell (a normal window, not *Run as administrator*) and paste:
 
@@ -34,18 +34,18 @@ Setup installs the [latest release](https://github.com/ersinkoc/phonebox/release
 
    | | Program | Settings (kept on reinstall) |
    |---|---|---|
-   | Windows | `%LOCALAPPDATA%\PhoneBox\app` | `%APPDATA%\PhoneBox` |
-   | Linux | `~/.local/share/PhoneBox/app` | `~/.config/PhoneBox` |
-   | macOS | `~/Library/Application Support/PhoneBox/app` | `~/Library/Application Support/PhoneBox` |
+   | Windows | `%LOCALAPPDATA%\DeckBox\app` | `%APPDATA%\DeckBox` |
+   | Linux | `~/.local/share/DeckBox/app` | `~/.config/DeckBox` |
+   | macOS | `~/Library/Application Support/DeckBox/app` | `~/Library/Application Support/DeckBox` |
 
-   Then it asks whether to start PhoneBox at login: a Startup-folder shortcut on Windows, a systemd user service
+   Then it asks whether to start DeckBox at login: a Startup-folder shortcut on Windows, a systemd user service
    on Linux, a launchd agent on macOS.
 6. **Puts the app on the phone over USB**, if you want. It shows how to turn on USB debugging and waits for the phone.
 7. **Starts the agent** and opens its settings at <http://127.0.0.1:8765>.
 
 The agent installs for your user. System package managers may request administrator rights for missing dependencies;
 on Linux, setup asks before using `sudo`. Run it again
-any time to update or repair PhoneBox; settings and pairings are kept. Read [`setup.ps1`](../setup.ps1) or
+any time to update or repair DeckBox; settings and pairings are kept. Read [`setup.ps1`](../setup.ps1) or
 [`setup.sh`](../setup.sh) before you run it if you like. With `-DryRun` / `--dry-run` it downloads and checks everything
 and changes nothing.
 
@@ -56,7 +56,7 @@ and changes nothing.
 | `-Yes` | `--yes` | Take the default answer to every question (unattended) |
 | `-NoPhone` | `--no-phone` | Do not install the app over USB (for a Wi-Fi-only phone) |
 | `-Serial <id>` | `--serial <id>` | The phone to use when several are connected (`adb devices`) |
-| `-NoAutostart` | `--no-autostart` | Do not start PhoneBox at login |
+| `-NoAutostart` | `--no-autostart` | Do not start DeckBox at login |
 | `-NoStart` | `--no-start` | Install only |
 | — | `--no-extras` | Do not offer the optional helpers |
 | `-Version 0.9.8` | `--version 0.9.8` | Install that release instead of the latest |
@@ -79,7 +79,7 @@ curl -fsSL https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.sh | b
 - **The Windows agent is not code-signed yet.** The [SignPath Foundation](../README.md#code-signing-policy) application is pending.
   Windows SmartScreen or an antivirus may warn about a new, unsigned program, and some antivirus engines have flagged
   it ([#69](https://github.com/ersinkoc/phonebox/issues/69)). Setup only installs a file that matches the release
-  checksum. If your antivirus removes `PhoneBoxAgent.exe`, setup says so; restore it from quarantine or report it.
+  checksum. If your antivirus removes `DeckBoxAgent.exe`, setup says so; restore it from quarantine or report it.
 - **Smart App Control** (Windows 11) blocks programs that are neither signed nor known to Microsoft. The agent is
   not code-signed yet (signing through SignPath Foundation is pending, [#56](https://github.com/ersinkoc/phonebox/issues/56)),
   so with Smart App Control on, Windows refuses to start it: "An Application Control policy has blocked this file"
@@ -90,8 +90,8 @@ curl -fsSL https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.sh | b
 - **USB debugging gives a computer you allow control over the phone.** Allow only your own computers. You can
   withdraw them on the phone under *Developer options › Revoke USB debugging authorisations*.
 - **Wi-Fi is off until you turn it on.** Until then the agent listens only on this computer (`127.0.0.1:8765`).
-  When you turn it on, Windows asks to let PhoneBox through the firewall: allow *Private* networks only. On Linux
-  with ufw or firewalld, open TCP port 8766 for your local network. Every connection PhoneBox makes is listed in
+  When you turn it on, Windows asks to let DeckBox through the firewall: allow *Private* networks only. On Linux
+  with ufw or firewalld, open TCP port 8766 for your local network. Every connection DeckBox makes is listed in
   the [privacy policy](../PRIVACY.md).
 - **Linux USB permissions**: if `adb devices` shows `no permissions`, adb also needs udev rules. Install
   `android-sdk-platform-tools-common` on Debian/Ubuntu or `android-udev` on Arch. Some systems also need the
@@ -100,8 +100,8 @@ curl -fsSL https://raw.githubusercontent.com/ersinkoc/phonebox/main/setup.sh | b
   it may control Music or Spotify (for Now Playing), or accept incoming connections (with Wi-Fi on).
 - **Windows USB drivers**: if the phone never appears, Windows may need its USB driver. Google phones use the
   Google USB Driver; other brands have one on their support site.
-- **Scoop users**: setup stops if PhoneBox is installed with Scoop, so two copies don't fight over the same port.
-  Keep using `scoop update phonebox`, or `scoop uninstall phonebox` first and then run setup.
+- **Scoop users**: setup stops if DeckBox is installed with Scoop, so two copies don't fight over the same port.
+  Keep using `scoop update deckbox`, or `scoop uninstall deckbox` first and then run setup.
 - **Windows on ARM** and **musl Linux** (Alpine) have no release build yet.
 
 </details>
@@ -131,23 +131,23 @@ The settings are at <http://127.0.0.1:8765>, on Windows also from the tray icon.
 - **Scoop** (Windows), which can then put the app on the phone from *Settings › General › Install the phone app*:
 
   ```powershell
-  scoop bucket add phonebox https://github.com/ersinkoc/phonebox
-  scoop install main/adb phonebox/phonebox
+  scoop bucket add deckbox https://github.com/ersinkoc/phonebox
+  scoop install main/adb deckbox/deckbox
   ```
 
-- **winget**: a package (`ersinkoc.PhoneBox`) is prepared in [`packaging/winget`](../packaging/winget) for
-  winget-pkgs. Once it is accepted, `winget install ersinkoc.PhoneBox` will install it.
+- **winget**: a package (`ersinkoc.DeckBox`) is prepared in [`packaging/winget`](../packaging/winget) for
+  winget-pkgs. Once it is accepted, `winget install ersinkoc.DeckBox` will install it.
 - **From source** (for development): needs the [.NET 10 SDK](https://dotnet.microsoft.com/download) and `adb`. To build
   the phone app it also needs **JDK 17** and **Android SDK Platform 35** (for example through Android Studio), with
   `JAVA_HOME` set and `ANDROID_HOME` or `android/local.properties` (`sdk.dir`) pointing at the SDK.
 
   ```powershell
-  git clone https://github.com/ersinkoc/phonebox; cd phonebox
+  git clone https://github.com/ersinkoc/phonebox; cd deckbox
   .\scripts\install.ps1 -Apk -Autostart   # add -Serial <id> with several devices; -BuildApk always rebuilds the app
   ```
 
   ```sh
-  git clone https://github.com/ersinkoc/phonebox && cd phonebox
+  git clone https://github.com/ersinkoc/phonebox && cd deckbox
   ./scripts/install.sh --apk --autostart  # systemd user service (Linux) or launchd agent (macOS)
   ```
 
@@ -183,7 +183,7 @@ deletes the settings, and `-Apk` / `--apk` removes the app from the connected ph
 | Tray icon | ✓ | — (settings in the browser) | — |
 | Start at login | Startup folder | systemd user service | launchd agent |
 
-On macOS, `nowplaying-cli` supplies system media metadata and cover art. The agent labels matching Safari or Chrome tabs as YouTube or YouTube Music. The progress bar advances from the last position supplied by macOS; Safari may report an outdated starting position. Volume follows the selected system output. When macOS does not expose its volume, an optional `m1ddc` installation can read it from a compatible display; display volume is read only in PhoneBox. Unsupported outputs show `n/a`. Apple silicon GPU usage comes from IORegistry when macOS exposes it; temperature, power and VRAM figures may remain unavailable.
+On macOS, `nowplaying-cli` supplies system media metadata and cover art. The agent labels matching Safari or Chrome tabs as YouTube or YouTube Music. The progress bar advances from the last position supplied by macOS; Safari may report an outdated starting position. Volume follows the selected system output. When macOS does not expose its volume, an optional `m1ddc` installation can read it from a compatible display; display volume is read only in DeckBox. Unsupported outputs show `n/a`. Apple silicon GPU usage comes from IORegistry when macOS exposes it; temperature, power and VRAM figures may remain unavailable.
 
 </details>
 
@@ -196,19 +196,19 @@ both: the card is the main GPU, the GPU details widget can show either.
 
 #### LibreHardwareMonitor on Windows
 
-PhoneBox reads LibreHardwareMonitor's sensor list from `http://127.0.0.1:8085/data.json` whenever it is there; there
-is nothing to turn on in PhoneBox.
+DeckBox reads LibreHardwareMonitor's sensor list from `http://127.0.0.1:8085/data.json` whenever it is there; there
+is nothing to turn on in DeckBox.
 
 1. Download the latest release from
    [LibreHardwareMonitor's releases](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases), unzip it
    to a folder of its own and start `LibreHardwareMonitor.exe` **as administrator** (CPU temperatures and several GPU
    sensors need it).
-2. In its menu choose **Options › Remote Web Server › Run**. The port stays **8085** (PhoneBox only looks there).
+2. In its menu choose **Options › Remote Web Server › Run**. The port stays **8085** (DeckBox only looks there).
 3. Check it in a browser on the PC: <http://127.0.0.1:8085/data.json> should show a long JSON text. Within a few
    seconds the CPU temperature and the extra GPU values appear on the phone.
 4. To keep it running: **Options › Start Minimized**, **Minimize To Tray** and **Run On Windows Startup**.
 
-The web server answers on every network the PC is on. If Windows Firewall asks, PhoneBox only needs it on this
+The web server answers on every network the PC is on. If Windows Firewall asks, DeckBox only needs it on this
 computer, so you can leave the network access unchecked. Menu names are those of recent LibreHardwareMonitor versions
 and may differ slightly in older ones.
 
@@ -218,7 +218,7 @@ Turn on **Settings › General › Wi-Fi & Tailscale** and restart the agent whe
 of two ways:
 
 - **Without a cable:** click **Pair a phone over Wi-Fi**. The window shows a QR code that downloads the app and one
-  that pairs. Scan the second with the phone's camera, open the link and tap **Open in PhoneBox**; the phone asks you
+  that pairs. Scan the second with the phone's camera, open the link and tap **Open in DeckBox**; the phone asks you
   to confirm a code that the window also shows. No developer options, USB debugging or adb needed. The QR code holds
   the PC's addresses, its certificate fingerprint and a one-time code (5 minutes, single use), never the key itself.
   A phone paired this way only uses Wi-Fi: plugging it into the PC does not wake it or open the panel, there is no
@@ -284,5 +284,5 @@ key as the installed app — if you built the app yourself, keep using your own 
 
 <details><summary><b>Can I use it without root?</b></summary>
 
-Yes. PhoneBox needs no root on the phone and no admin rights on the PC.
+Yes. DeckBox needs no root on the phone and no admin rights on the PC.
 </details>

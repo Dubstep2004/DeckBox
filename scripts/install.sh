@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PhoneBox installer for Linux and macOS.
+# DeckBox installer for Linux and macOS.
 #
 #   ./scripts/install.sh                 # build and install the agent, then start it
 #   ./scripts/install.sh --autostart     # ... and start it at login (systemd user service / launchd agent)
@@ -50,8 +50,8 @@ fi
 echo "==> Building the agent ($rid)"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-dotnet publish "$root/agent/PhoneBox.Agent" -c Release -f net10.0 -r "$rid" --self-contained false -o "$tmp" --nologo -v q
-app="$("$tmp/PhoneBoxAgent" --print-install-dir)"
+dotnet publish "$root/agent/DeckBox.Agent" -c Release -f net10.0 -r "$rid" --self-contained false -o "$tmp" --nologo -v q
+app="$("$tmp/DeckBoxAgent" --print-install-dir)"
 
 systemd_quote() {
   printf '"%s"' "$(printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/%/%%/g')"
@@ -70,21 +70,21 @@ if [ "$autostart" = 1 ] && [ "$os" = linux ]; then
 fi
 
 echo "==> Stopping a running agent"
-if [ "$os" = linux ] && command -v systemctl >/dev/null; then systemctl --user stop phonebox.service 2>/dev/null || true; fi
-if [ "$os" = osx ]; then launchctl unload "$HOME/Library/LaunchAgents/net.oxog.phonebox.agent.plist" 2>/dev/null || true; fi
-pkill -x PhoneBoxAgent 2>/dev/null || true
+if [ "$os" = linux ] && command -v systemctl >/dev/null; then systemctl --user stop deckbox.service 2>/dev/null || true; fi
+if [ "$os" = osx ]; then launchctl unload "$HOME/Library/LaunchAgents/io.github.dubstep2004.deckbox.agent.plist" 2>/dev/null || true; fi
+pkill -x DeckBoxAgent 2>/dev/null || true
 sleep 0.5
 
 echo "==> Installing to $app"
 mkdir -p "$app"
 cp -R "$tmp/." "$app/"
-chmod +x "$app/PhoneBoxAgent"
-if [ "$os" = osx ]; then codesign --force --deep --sign - "$app/PhoneBoxAgent" >/dev/null 2>&1 || true; fi # macOS refuses unsigned binaries it has quarantined
+chmod +x "$app/DeckBoxAgent"
+if [ "$os" = osx ]; then codesign --force --deep --sign - "$app/DeckBoxAgent" >/dev/null 2>&1 || true; fi # macOS refuses unsigned binaries it has quarantined
 
 if [ "$autostart" = 1 ]; then
   if [ "$os" = linux ]; then
     echo "==> Adding a systemd user service (starts at login)"
-    unit="$HOME/.config/systemd/user/phonebox.service"
+    unit="$HOME/.config/systemd/user/deckbox.service"
     mkdir -p "$(dirname "$unit")"
     env_lines=""
     for name in DOTNET_ROOT XDG_DATA_HOME XDG_CONFIG_HOME; do
@@ -95,11 +95,11 @@ if [ "$autostart" = 1 ]; then
     done
     cat > "$unit" <<EOF
 [Unit]
-Description=PhoneBox agent (desk panel for an Android phone)
+Description=DeckBox agent (desk panel for an Android phone)
 After=graphical-session.target
 
 [Service]
-ExecStart=$(systemd_quote "$app/PhoneBoxAgent")
+ExecStart=$(systemd_quote "$app/DeckBoxAgent")
 Restart=on-failure
 RestartSec=5
 ${env_lines}
@@ -108,17 +108,17 @@ ${env_lines}
 WantedBy=default.target
 EOF
     systemctl --user daemon-reload
-    systemctl --user enable --now phonebox.service
+    systemctl --user enable --now deckbox.service
   else
     echo "==> Adding a launchd agent (starts at login)"
-    plist="$HOME/Library/LaunchAgents/net.oxog.phonebox.agent.plist"
+    plist="$HOME/Library/LaunchAgents/io.github.dubstep2004.deckbox.agent.plist"
     mkdir -p "$(dirname "$plist")"
     cat > "$plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>Label</key><string>net.oxog.phonebox.agent</string>
-  <key>ProgramArguments</key><array><string>$(xml_escape "$app/PhoneBoxAgent")</string></array>
+  <key>Label</key><string>io.github.dubstep2004.deckbox.agent</string>
+  <key>ProgramArguments</key><array><string>$(xml_escape "$app/DeckBoxAgent")</string></array>
   <key>EnvironmentVariables</key><dict>
     <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>DOTNET_ROOT</key><string>$(xml_escape "$DOTNET_ROOT")</string>
@@ -131,7 +131,7 @@ EOF
   fi
 else
   echo "==> Starting the agent"
-  nohup "$app/PhoneBoxAgent" >/dev/null 2>&1 &
+  nohup "$app/DeckBoxAgent" >/dev/null 2>&1 &
 fi
 
 if [ "$apk" = 1 ]; then
@@ -140,7 +140,7 @@ if [ "$apk" = 1 ]; then
   built="$root/android/app/build/outputs/apk/release/app-release.apk"
   sources="$root/android/app/src"
   apkfile=""
-  for candidate in "$root"/dist/PhoneBox-*.apk "$built"; do
+  for candidate in "$root"/dist/DeckBox-*.apk "$built"; do
     if [ -f "$candidate" ] && { [ -z "$apkfile" ] || [ "$candidate" -nt "$apkfile" ]; }; then
       apkfile="$candidate"
     fi
@@ -154,11 +154,11 @@ if [ "$apk" = 1 ]; then
   # Bash 3.2 treats an empty array as unset under nounset (the macOS system shell).
   if [ -n "$serial" ]; then
     "$adb" -s "$serial" install -r "$apkfile"
-    "$adb" -s "$serial" shell am start -n net.oxog.phonebox.deskpanel/.MainActivity >/dev/null
+    "$adb" -s "$serial" shell am start -n io.github.dubstep2004.deckbox/.MainActivity >/dev/null
   else
     "$adb" install -r "$apkfile"
-    "$adb" shell am start -n net.oxog.phonebox.deskpanel/.MainActivity >/dev/null
+    "$adb" shell am start -n io.github.dubstep2004.deckbox/.MainActivity >/dev/null
   fi
 fi
 
-echo "PhoneBox is running. Settings: http://127.0.0.1:8765"
+echo "DeckBox is running. Settings: http://127.0.0.1:8765"

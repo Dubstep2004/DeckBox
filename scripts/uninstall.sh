@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Removes the PhoneBox agent on Linux / macOS.
+# Removes the DeckBox agent on Linux / macOS.
 #   ./scripts/uninstall.sh            # agent + autostart entry (settings are kept)
 #   ./scripts/uninstall.sh --purge    # ... and the settings, logs and pushed data
 #   ./scripts/uninstall.sh --apk      # ... and the panel app on the connected phone
@@ -19,22 +19,22 @@ for a in "$@"; do
 done
 
 if [ "$(uname -s)" = Darwin ]; then
-  plist="$HOME/Library/LaunchAgents/net.oxog.phonebox.agent.plist"
+  plist="$HOME/Library/LaunchAgents/io.github.dubstep2004.deckbox.agent.plist"
   launchctl unload "$plist" 2>/dev/null || true
   rm -f "$plist"
-  base="$HOME/Library/Application Support/PhoneBox"
+  base="$HOME/Library/Application Support/DeckBox"
   conf="$base"
 else
   if command -v systemctl >/dev/null; then
-    systemctl --user disable --now phonebox.service 2>/dev/null || true
-    rm -f "$HOME/.config/systemd/user/phonebox.service"
+    systemctl --user disable --now deckbox.service 2>/dev/null || true
+    rm -f "$HOME/.config/systemd/user/deckbox.service"
     systemctl --user daemon-reload 2>/dev/null || true
   fi
-  base="${XDG_DATA_HOME:-$HOME/.local/share}/PhoneBox"
-  conf="${XDG_CONFIG_HOME:-$HOME/.config}/PhoneBox"
+  base="${XDG_DATA_HOME:-$HOME/.local/share}/DeckBox"
+  conf="${XDG_CONFIG_HOME:-$HOME/.config}/DeckBox"
 fi
-pkill -x PhoneBoxAgent 2>/dev/null || true
+pkill -x DeckBoxAgent 2>/dev/null || true
 rm -rf "$base/app" "$base/updates"
 if [ "$purge" = 1 ]; then rm -rf "$base" "$conf"; fi
-if [ "$apk" = 1 ] && command -v adb >/dev/null; then adb uninstall net.oxog.phonebox.deskpanel || true; fi
-echo "PhoneBox removed."
+if [ "$apk" = 1 ] && command -v adb >/dev/null; then adb uninstall io.github.dubstep2004.deckbox || true; fi
+echo "DeckBox removed."

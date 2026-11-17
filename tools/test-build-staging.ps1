@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
-$fixture = Join-Path ([IO.Path]::GetTempPath()) ('phonebox-build-test-' + [guid]::NewGuid().ToString('N'))
+$fixture = Join-Path ([IO.Path]::GetTempPath()) ('deckbox-build-test-' + [guid]::NewGuid().ToString('N'))
 $scriptPath = Join-Path $fixture 'scripts/build.ps1'
-$project = Join-Path $fixture 'agent/PhoneBox.Agent/PhoneBox.Agent.csproj'
+$project = Join-Path $fixture 'agent/DeckBox.Agent/DeckBox.Agent.csproj'
 $wrapper = Join-Path $fixture 'android/gradlew.bat'
 $apk = Join-Path $fixture 'android/app/build/outputs/apk/release/app-release.apk'
 foreach ($path in @($scriptPath, $project, $apk)) {
@@ -34,7 +34,7 @@ try {
         try { & $scriptPath | Out-Null } catch { $message = $_.Exception.Message }
         if (-not $failing) {
             if ($message) { throw $message }
-            $zips = @(Get-ChildItem -LiteralPath (Join-Path $fixture 'dist') -Filter 'PhoneBoxAgent-*.zip')
+            $zips = @(Get-ChildItem -LiteralPath (Join-Path $fixture 'dist') -Filter 'DeckBoxAgent-*.zip')
             if ($zips.Count -ne 5) { throw 'Expected agent archives for five platforms' }
         } elseif ($message -notmatch '^publish failed for ') {
             throw "Expected a publish failure, got: $message"

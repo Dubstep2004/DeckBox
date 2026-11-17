@@ -54,7 +54,7 @@ async function tour(browser) {
   });
   await prep.close();
 
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phonebox-tour-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'deckbox-tour-'));
   const ctx = await browser.newContext({ viewport: { width: 780, height: 360 }, recordVideo: { dir, size: { width: 780, height: 360 } } });
   await ctx.addInitScript((s) => { for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, storage);
   const page = await ctx.newPage();
@@ -63,14 +63,14 @@ async function tour(browser) {
   await page.goto(PANEL);
   await wait(3.5);                                                                  // Home
   for (const s of [2.6, 2.8, 2.8]) { await next(page, 1); await wait(s); }          // Dashboard, AI quotas, Sessions
-  await demo(() => window.PhoneBoxDemo.emit('notify', { title: 'Build #143', text: 'main passed in 2m 48s', level: 'ok' }));
+  await demo(() => window.DeckBoxDemo.emit('notify', { title: 'Build #143', text: 'main passed in 2m 48s', level: 'ok' }));
   await wait(3.2);
-  await demo(() => window.PhoneBoxDemo.ask({ tool: 'Run a command', detail: 'git push origin main --force-with-lease', description: 'Push the rebased branch', project: 'api-gateway' }));
+  await demo(() => window.DeckBoxDemo.ask({ tool: 'Run a command', detail: 'git push origin main --force-with-lease', description: 'Push the rebased branch', project: 'api-gateway' }));
   await wait(3.2);
   await page.getByRole('button', { name: 'Allow' }).click();
   await wait(1.6);
   await next(page, 1); await wait(2.4);                                             // System
-  await demo(() => window.PhoneBoxDemo.emit('goto', { page: 'music', rule: 'music', name: 'Spotify is playing', hold: false, priority: 2, countdown: 3 }));
+  await demo(() => window.DeckBoxDemo.emit('goto', { page: 'music', rule: 'music', name: 'Spotify is playing', hold: false, priority: 2, countdown: 3 }));
   await wait(6.5);                                                                  // countdown, then Music
   for (const s of [2.6, 2.4, 2.4, 2.4, 2.4]) { await next(page, 1); await wait(s); } // Status, Ambient, World, Daily, Markets
   await demo(() => window.openOverview()); await wait(2.4);

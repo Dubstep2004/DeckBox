@@ -5,7 +5,9 @@ title DeckBox - установка приложения на телефон
 set "DIR=%~dp0"
 set "ADB=%DIR%platform-tools\adb.exe"
 set "APK=%DIR%DeckBox.apk"
-set "PKG=net.oxog.phonebox.deskpanel"
+set "PKG=io.github.dubstep2004.deckbox"
+rem the phone app before the rename (PhoneBox and DeckBox 0.9.18)
+set "OLDPKG=net.oxog.phonebox.deskpanel"
 
 echo.
 echo  DeckBox: установка приложения на телефон
@@ -37,7 +39,13 @@ pause
 exit /b 1
 
 :found
-echo  Телефон найден. Устанавливаю приложение...
+echo  Телефон найден.
+"%ADB%" shell pm list packages %OLDPKG% 2>nul | findstr /c:"package:%OLDPKG%" >nul
+if not errorlevel 1 (
+  echo  Удаляю старое приложение PhoneBox / DeckBox 0.9.18. Настройки панели хранятся на компьютере и не пропадут.
+  "%ADB%" uninstall %OLDPKG% >nul 2>&1
+)
+echo  Устанавливаю приложение...
 "%ADB%" install -r "%APK%" > "%TEMP%\deckbox-adb.txt" 2>&1
 findstr /c:"Success" "%TEMP%\deckbox-adb.txt" >nul && goto ok
 findstr /c:"INSTALL_FAILED_UPDATE_INCOMPATIBLE" /c:"signatures do not match" "%TEMP%\deckbox-adb.txt" >nul && goto conflict
@@ -45,7 +53,7 @@ goto failed
 
 :conflict
 echo.
-echo  На телефоне уже стоит PhoneBox или DeckBox с другой подписью.
+echo  На телефоне уже стоит DeckBox с другой подписью.
 echo  Его нужно удалить, чтобы поставить новое приложение. Настройки панели хранятся на компьютере и не пропадут.
 choice /c YN /m " Удалить старое приложение и установить DeckBox? (Y - да, N - нет)"
 if errorlevel 2 goto failed

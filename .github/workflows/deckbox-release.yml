@@ -1,10 +1,11 @@
 name: DeckBox release
 
-# Builds DeckBox-Setup-<version>.exe and DeckBox-<version>.apk and attaches them to the GitHub release
-# v<version> (created if missing; files with the same name are replaced).
+# Builds the release files (installer, phone app, agent package for the built-in updater, checksums) and attaches
+# them to the GitHub release v<version> (created if missing; files with the same name are replaced). The agents
+# installed by DeckBox check this repository's latest release and update themselves and the phone app from it.
 #
 # Runs when a v* tag is pushed, or by hand: Actions › DeckBox release › Run workflow.
-# The version comes from <Version> in agent/PhoneBox.Agent/PhoneBox.Agent.csproj.
+# The version comes from <Version> in agent/DeckBox.Agent/DeckBox.Agent.csproj.
 #
 # Repository secrets (Settings › Secrets and variables › Actions), so every APK has the same signature:
 #   DECKBOX_KEYSTORE_BASE64   base64 of deckbox-release.jks
@@ -41,7 +42,7 @@ jobs:
       - name: Android SDK and NSIS
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q nsis
+          sudo apt-get install -y -q nsis zip
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" > /dev/null
 
@@ -56,19 +57,19 @@ jobs:
           fi
           echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/deckbox.jks"
           {
-            echo "PHONEBOX_STORE_FILE=$RUNNER_TEMP/deckbox.jks"
-            echo "PHONEBOX_STORE_PASSWORD=$PASSWORD"
-            echo "PHONEBOX_KEY_ALIAS=deckbox"
-            echo "PHONEBOX_KEY_PASSWORD=$PASSWORD"
+            echo "DECKBOX_STORE_FILE=$RUNNER_TEMP/deckbox.jks"
+            echo "DECKBOX_STORE_PASSWORD=$PASSWORD"
+            echo "DECKBOX_KEY_ALIAS=deckbox"
+            echo "DECKBOX_KEY_PASSWORD=$PASSWORD"
           } >> "$GITHUB_ENV"
 
       - name: Version
         id: v
         run: |
-          v=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' agent/PhoneBox.Agent/PhoneBox.Agent.csproj | head -n1)
+          v=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' agent/DeckBox.Agent/DeckBox.Agent.csproj | head -n1)
           echo "version=$v" >> "$GITHUB_OUTPUT"
           if [ "${GITHUB_REF_TYPE}" = tag ] && [ "${GITHUB_REF_NAME}" != "v$v" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match the version $v in PhoneBox.Agent.csproj"
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match the version $v in DeckBox.Agent.csproj"
             exit 1
           fi
 
@@ -85,11 +86,11 @@ jobs:
           V: ${{ steps.v.outputs.version }}
         run: |
           tag="v$V"
-          files=("installer/DeckBox-Setup-$V.exe" "installer/DeckBox-$V.apk")
+          files=("installer/DeckBox-Setup-$V.exe" "installer/DeckBox-$V.apk" "installer/DeckBoxAgent-$V-win-x64.zip" "installer/SHA256SUMS-$V.txt")
           if gh release view "$tag" > /dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber
           else
-            gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "DeckBox $V" \
-              --notes "Скачайте DeckBox-Setup-$V.exe и запустите. DeckBox-$V.apk — приложение для телефона отдельно."
+            gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "DeckBox $V" --latest \
+              --notes "Скачайте DeckBox-Setup-$V.exe и запустите. Уже установленный DeckBox обновится сам (Настройки › Общие › Обновления). DeckBox-$V.apk — приложение для телефона отдельно."
           fi
           echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"

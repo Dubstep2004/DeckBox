@@ -5297,7 +5297,7 @@
       'World clocks, forecast and calendar.': 'Đồng hồ thế giới, dự báo và lịch.',
       'Your automation rules: which ones hold right now, and a button to pause them all for an hour.': 'Các quy tắc tự động hóa của bạn: quy tắc nào đang giữ, và nút tạm dừng tất cả trong một giờ.',
       'Your next calendar event, big, with a countdown; during an event, how much of it is left.': 'Sự kiện lịch kế tiếp, cỡ lớn, kèm đếm ngược; khi đang diễn ra, còn bao lâu.',
-      'Your own HTML, CSS and JavaScript in a sandbox, fed with the PC\'s data through window.phonebox.': 'HTML, CSS và JavaScript của bạn trong sandbox, nhận dữ liệu từ PC qua window.phonebox.',
+      'Your own HTML, CSS and JavaScript in a sandbox, fed with the PC\'s data through window.deckbox.': 'HTML, CSS và JavaScript của bạn trong sandbox, nhận dữ liệu từ PC qua window.deckbox.',
       'Your own quotes, one per line (\'text — author\'); empty = built-in': 'Trích dẫn của bạn, mỗi dòng một câu (\'nội dung — tác giả\'); trống = dùng sẵn có',
       'Your rules and what they push: on-air sign, webhook values and the notification inbox.': 'Các quy tắc của bạn và những gì chúng đẩy: biển on-air, giá trị webhook và hộp thông báo.',
       '…or while this pushed value is on (empty = none)': '…hoặc trong khi giá trị đẩy này bật (trống = không)',
@@ -5308,7 +5308,7 @@
       'Console': 'Bảng điều khiển',
       'Smart Stack': 'Smart Stack',
       'Key (POST /api/push/<key>)': 'Khóa (POST /api/push/<key>)',
-      "HTML (with <style> and <script>; phonebox.on('state', fn) gets the data)": "HTML (kèm <style> và <script>; phonebox.on('state', fn) nhận dữ liệu)",
+      "HTML (with <style> and <script>; deckbox.on('state', fn) gets the data)": "HTML (kèm <style> và <script>; deckbox.on('state', fn) nhận dữ liệu)",
       'Pomodoro': 'Pomodoro',
       'Ping': 'Ping',
       'GPU': 'GPU',
@@ -5423,6 +5423,51 @@
     }
     if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
   }
+
+  // DeckBox: the Updates card (English is the fallback for the other languages)
+  Object.assign(STRINGS.en, {
+    's.updates.hintChecks': 'Checks the DeckBox releases on GitHub every 6 hours:',
+    's.updates.hintHow': 'The phone app is installed over USB without a prompt on the phone; the agent replaces its own files and restarts.',
+    's.upd.agent': 'Agent',
+    's.upd.phoneApp': 'Phone app',
+    's.upd.latest': 'Latest release',
+    's.upd.lastCheck': 'Last check',
+    's.upd.upToDate': 'up to date',
+    's.upd.needsUsb': 'needs USB',
+    's.upd.notSeen': 'not seen yet',
+    's.upd.notYet': 'not yet',
+    's.upd.checking': 'checking…',
+    's.upd.notInstalled': 'not the installed copy, updates itself only from %LOCALAPPDATA%\\DeckBox\\app',
+  });
+  Object.assign(STRINGS.ru, {
+    's.updates.hintChecks': 'Каждые 6 часов проверяет релизы DeckBox на GitHub:',
+    's.updates.hintHow': 'Приложение на телефон ставится по USB без запроса на телефоне; агент заменяет свои файлы и перезапускается.',
+    's.upd.agent': 'Агент',
+    's.upd.phoneApp': 'Приложение на телефоне',
+    's.upd.latest': 'Последний релиз',
+    's.upd.lastCheck': 'Последняя проверка',
+    's.upd.upToDate': 'последняя версия',
+    's.upd.needsUsb': 'нужен USB',
+    's.upd.notSeen': 'ещё не подключалось',
+    's.upd.notYet': 'ещё не было',
+    's.upd.checking': 'проверяю…',
+    's.upd.notInstalled': 'это не установленная копия, сама обновляется только из %LOCALAPPDATA%\\DeckBox\\app',
+  });
+
+  Object.assign(STRINGS.vi, {
+    's.updates.hintChecks': 'Kiểm tra các bản phát hành DeckBox trên GitHub mỗi 6 giờ:',
+    's.updates.hintHow': 'Ứng dụng điện thoại được cài qua USB mà không cần xác nhận trên điện thoại; agent tự thay tệp của mình và khởi động lại.',
+    's.upd.agent': 'Agent',
+    's.upd.phoneApp': 'Ứng dụng điện thoại',
+    's.upd.latest': 'Bản phát hành mới nhất',
+    's.upd.lastCheck': 'Lần kiểm tra cuối',
+    's.upd.upToDate': 'mới nhất',
+    's.upd.needsUsb': 'cần USB',
+    's.upd.notSeen': 'chưa thấy',
+    's.upd.notYet': 'chưa',
+    's.upd.checking': 'đang kiểm tra…',
+    's.upd.notInstalled': 'không phải bản đã cài, chỉ tự cập nhật từ %LOCALAPPDATA%\\DeckBox\\app',
+  });
 
   // Russian: settings strings and widget catalog that were missing
   Object.assign(STRINGS.ru, {
@@ -5742,9 +5787,9 @@
       "Command on Linux / macOS (empty = the same)": "Команда для Linux / macOS (пусто = та же)",
       "Every (seconds)": "Каждые (секунд)",
       "Custom HTML": "Свой HTML",
-      "Your own HTML, CSS and JavaScript in a sandbox, fed with the PC's data through window.phonebox.": "Ваш собственный HTML, CSS и JavaScript в песочнице, с данными ПК через window.phonebox.",
+      "Your own HTML, CSS and JavaScript in a sandbox, fed with the PC's data through window.deckbox.": "Ваш собственный HTML, CSS и JavaScript в песочнице, с данными ПК через window.deckbox.",
       "Web & data": "Веб и данные",
-      "HTML (with <style> and <script>; phonebox.on('state', fn) gets the data)": "HTML (с <style> и <script>; phonebox.on('state', fn) получает данные)",
+      "HTML (with <style> and <script>; deckbox.on('state', fn) gets the data)": "HTML (с <style> и <script>; deckbox.on('state', fn) получает данные)",
       "No card background": "Без фона карточки",
       "AI quotas": "Квоты ИИ",
       "AI service usage limits with burn-rate forecast.": "Лимиты использования ИИ-сервисов с прогнозом расхода.",
@@ -6065,7 +6110,7 @@
   active = resolveLang(pref);
   try { document.documentElement.lang = active; } catch (_) {}
 
-  window.PhoneBoxI18n = Object.freeze({
+  window.DeckBoxI18n = Object.freeze({
     LANGUAGES,
     STRINGS,
     CATALOG,

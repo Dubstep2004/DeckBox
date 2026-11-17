@@ -8,12 +8,12 @@ SetCompressor /SOLID lzma
   !define VERSION "0.0.0"
 !endif
 !define NAME "DeckBox"
-!define EXE "PhoneBoxAgent.exe"
+!define EXE "DeckBoxAgent.exe"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\DeckBox"
 
 Name "${NAME}"
 OutFile "DeckBox-Setup-${VERSION}.exe"
-InstallDir "$LOCALAPPDATA\PhoneBox\app"
+InstallDir "$LOCALAPPDATA\DeckBox\app"
 RequestExecutionLevel user
 BrandingText "DeckBox ${VERSION}"
 
@@ -56,7 +56,13 @@ Section "DeckBox (программа для компьютера)" SecMain
   DetailPrint "Останавливаю запущенный агент..."
   nsExec::Exec 'taskkill /F /IM ${EXE}'
   Pop $0
+  ; DeckBox used to be called PhoneBox: stop and remove the old program. Its settings folder (%APPDATA%\PhoneBox)
+  ; stays; DeckBox copies it into %APPDATA%\DeckBox on the first start, so pages, shortcuts and rules are kept.
+  nsExec::Exec 'taskkill /F /IM PhoneBoxAgent.exe'
+  Pop $0
   Sleep 1500
+  Delete "$SMSTARTUP\PhoneBox.lnk"
+  RMDir /r "$LOCALAPPDATA\PhoneBox\app"
   ; a clean folder: earlier installs from source left many framework files here; settings live elsewhere
   RMDir /r "$INSTDIR"
   SetOutPath "$INSTDIR"
@@ -92,7 +98,7 @@ SectionEnd
 Section "Запускать вместе с Windows" SecAutostart
   ; the same shortcut name the tray menu's "Start with Windows" item uses
   Delete "$SMSTARTUP\DeskAgent.lnk"
-  CreateShortCut "$SMSTARTUP\PhoneBox.lnk" "$INSTDIR\${EXE}" "" "$INSTDIR\deckbox.ico"
+  CreateShortCut "$SMSTARTUP\DeckBox.lnk" "$INSTDIR\${EXE}" "" "$INSTDIR\deckbox.ico"
 SectionEnd
 
 Section "Установить приложение на телефон (USB)" SecPhone
@@ -112,11 +118,13 @@ Section "Uninstall"
   Sleep 1500
   nsExec::Exec '"$INSTDIR\platform-tools\adb.exe" kill-server'
   Pop $0
-  Delete "$SMSTARTUP\PhoneBox.lnk"
+  Delete "$SMSTARTUP\DeckBox.lnk"
   RMDir /r "$SMPROGRAMS\DeckBox"
   DeleteRegKey HKCU "${UNINST_KEY}"
   RMDir /r "$INSTDIR"
   MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Удалить также настройки DeckBox (страницы, ярлыки, сопряжение с телефоном)?" IDNO done
+    RMDir /r "$APPDATA\DeckBox"
+    RMDir /r "$LOCALAPPDATA\DeckBox"
     RMDir /r "$APPDATA\PhoneBox"
     RMDir /r "$LOCALAPPDATA\PhoneBox"
   done:

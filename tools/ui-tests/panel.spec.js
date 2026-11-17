@@ -1,5 +1,5 @@
 // UI tests of the panel and the settings page, against the web demo. They only use what a person sees and does
-// (DOM, keys, clicks) plus the demo's PhoneBoxDemo helper, never the panel's internals.
+// (DOM, keys, clicks) plus the demo's DeckBoxDemo helper, never the panel's internals.
 const { test, expect } = require('@playwright/test');
 
 /** Fails the test on any console error or uncaught exception (outside services being down does not count). */
@@ -104,7 +104,7 @@ test('keys flip pages and the overview jumps to a page', async ({ page }) => {
 test('a webhook notification shows a toast', async ({ page }) => {
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
-  await page.evaluate(() => window.PhoneBoxDemo.emit('notify', { title: 'Build #7', text: 'main passed', level: 'ok' }));
+  await page.evaluate(() => window.DeckBoxDemo.emit('notify', { title: 'Build #7', text: 'main passed', level: 'ok' }));
   await expect(page.locator('#toast')).toContainText('main passed');
 });
 
@@ -112,12 +112,12 @@ test('an event the agent queued while it restarted is still delivered', async ({
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
   await page.evaluate(() => {
-    window.PhoneBoxDemo.emit('notify', { title: 'One', text: 'first', level: 'ok' });
-    window.PhoneBoxDemo.emit('notify', { title: 'Two', text: 'second', level: 'ok' });
+    window.DeckBoxDemo.emit('notify', { title: 'One', text: 'first', level: 'ok' });
+    window.DeckBoxDemo.emit('notify', { title: 'Two', text: 'second', level: 'ok' });
   });
   await expect(page.locator('#toast')).toContainText('second');
   // the agent restarted: its event counter starts over below the phone's (PushStore keeps events in memory)
-  await page.evaluate(() => { window.PhoneBoxDemo.restart(); window.PhoneBoxDemo.emit('notify', { title: 'After', text: 'post-restart', level: 'ok' }); });
+  await page.evaluate(() => { window.DeckBoxDemo.restart(); window.DeckBoxDemo.emit('notify', { title: 'After', text: 'post-restart', level: 'ok' }); });
   await expect(page.locator('#toast')).toContainText('post-restart');
 });
 
@@ -133,8 +133,8 @@ test('the stream path also replays events the agent queued while it restarted', 
   await page.waitForTimeout(1200); // a few streamed states: the panel now tracks seq 5
   await page.evaluate(() => {
     // the agent restarted: its counter starts over below the phone's, and an event is already queued
-    window.PhoneBoxDemo.restart();
-    window.PhoneBoxDemo.emit('notify', { title: 'Backlog', text: 'backlog event', level: 'ok' });
+    window.DeckBoxDemo.restart();
+    window.DeckBoxDemo.emit('notify', { title: 'Backlog', text: 'backlog event', level: 'ok' });
     window.__evSeq = 1; // streamed states now report the restarted counter
   });
   await page.waitForTimeout(700); // a streamed state has armed the replay
@@ -154,8 +154,8 @@ test('a follow-up replay merges its events with the ones still held', async ({ p
   });
   await page.waitForTimeout(1200);
   await page.evaluate(() => {
-    window.PhoneBoxDemo.restart();
-    window.PhoneBoxDemo.emit('notify', { title: 'Backlog', text: 'backlog event', level: 'ok' });
+    window.DeckBoxDemo.restart();
+    window.DeckBoxDemo.emit('notify', { title: 'Backlog', text: 'backlog event', level: 'ok' });
   });
   // freeze the first ?ev=0 answer at a snapshot taken before the flood: it cannot contain the flooded events
   // (the demo answers fetch() inside the page, so the interception wraps window.fetch rather than the network)
@@ -178,7 +178,7 @@ test('a follow-up replay merges its events with the ones still held', async ({ p
     window.onAgentStream('state', JSON.stringify({ ts: Date.now(), evSeq: 1 })); // arms the replay in this same task
     // events 2–102 arrive live and are in the agent's backlog too; the agent only retains the last 50 (53–102),
     // so the follow-up replay returns the newer half while seqs 3–52 stay held in the buffer (2 was pushed out)
-    const push = (kind, data) => window.onAgentStream('event', JSON.stringify(window.PhoneBoxDemo.emit(kind, data)));
+    const push = (kind, data) => window.onAgentStream('event', JSON.stringify(window.DeckBoxDemo.emit(kind, data)));
     for (let i = 0; i < 50; i++) push('back', {});
     push('back', { rule: 'r1' });                            // seq 52 — held: must run before the goto below
     push('goto', { page: 3, rule: 'r1' });                   // seq 53 — first event the follow-up replay returns
@@ -205,8 +205,8 @@ test('events sent before the first state of a reopened stream wait for it', asyn
     // the stream reopened against a restarted agent: it can send an event before its first state identifies the run
     window.onAgentStream('close');
     window.onAgentStream('open');
-    window.PhoneBoxDemo.restart();
-    const early = window.PhoneBoxDemo.emit('notify', { title: 'Early', text: 'before the first state', level: 'ok' });
+    window.DeckBoxDemo.restart();
+    const early = window.DeckBoxDemo.emit('notify', { title: 'Early', text: 'before the first state', level: 'ok' });
     window.onAgentStream('event', JSON.stringify(early)); // seq 1 arrives while the panel still tracks seq 5
     window.__evSeq = 1;
     window.onAgentStream('state', JSON.stringify({ ts: Date.now(), evSeq: 1 })); // the first state arms the replay
@@ -222,7 +222,7 @@ test('events sent before the first state of a reopened stream wait for it', asyn
 test('a webhook switches pages after a countdown', async ({ page }) => {
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
-  await page.evaluate(() => window.PhoneBoxDemo.emit('goto', { page: 3 }));
+  await page.evaluate(() => window.DeckBoxDemo.emit('goto', { page: 3 }));
   await expect(page.locator('#navCard')).toHaveClass(/on/);
   await expect(page.locator('#nvLine')).toContainText('Switching to');
   expect(await activeDot(page)).toBe(0);                     // not yet: it counts down first
@@ -233,7 +233,7 @@ test('a webhook switches pages after a countdown', async ({ page }) => {
 test('Stay cancels a rule page switch', async ({ page }) => {
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
-  await page.evaluate(() => window.PhoneBoxDemo.emit('goto', { page: 2, rule: 'music', name: 'Music', hold: true, countdown: 5 }));
+  await page.evaluate(() => window.DeckBoxDemo.emit('goto', { page: 2, rule: 'music', name: 'Music', hold: true, countdown: 5 }));
   await expect(page.locator('#nvName')).toHaveText('Music');
   await page.locator('#nvStay').click();
   await expect(page.locator('#navCard')).not.toHaveClass(/on/);
@@ -245,7 +245,7 @@ test('a rule waits while the panel is in use and then goes on request', async ({
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
   await page.mouse.click(5, 300);                             // somebody is using the panel
-  await page.evaluate(() => window.PhoneBoxDemo.emit('goto', { page: 4, rule: 'claude', name: 'Claude needs me', hold: true }));
+  await page.evaluate(() => window.DeckBoxDemo.emit('goto', { page: 4, rule: 'claude', name: 'Claude needs me', hold: true }));
   await expect(page.locator('#navChip')).toHaveClass(/on/);
   await expect(page.locator('#ncText')).toContainText('Claude needs me');
   await expect(page.locator('#navCard')).not.toHaveClass(/on/);
@@ -259,28 +259,28 @@ test('rules firing one after another do not bounce the screen', async ({ page })
   await expect(page.locator('.w').first()).toBeVisible();
   // a rule that ends before its turn is dropped
   await page.evaluate(() => {
-    window.PhoneBoxDemo.emit('goto', { page: 2, rule: 'flappy', hold: true, countdown: 2 });
-    window.PhoneBoxDemo.emit('back', { rule: 'flappy' });
+    window.DeckBoxDemo.emit('goto', { page: 2, rule: 'flappy', hold: true, countdown: 2 });
+    window.DeckBoxDemo.emit('back', { rule: 'flappy' });
   });
   await page.waitForTimeout(2500);
   expect(await activeDot(page)).toBe(0);
   // the higher of two rules goes first; the lower one waits for the minimum time between switches
   await page.evaluate(() => {
-    window.PhoneBoxDemo.emit('goto', { page: 2, rule: 'low', name: 'Low', priority: 2, hold: true, countdown: 0 });
-    window.PhoneBoxDemo.emit('goto', { page: 5, rule: 'high', name: 'High', priority: 8, hold: true, countdown: 0 });
+    window.DeckBoxDemo.emit('goto', { page: 2, rule: 'low', name: 'Low', priority: 2, hold: true, countdown: 0 });
+    window.DeckBoxDemo.emit('goto', { page: 5, rule: 'high', name: 'High', priority: 8, hold: true, countdown: 0 });
   });
   await expect.poll(() => activeDot(page)).toBe(4);
   await page.waitForTimeout(1500);
   expect(await activeDot(page)).toBe(4);                      // the lower rule does not take the page over
   // the high rule ends: the low one (still on) gets its turn instead of going back and forth
-  await page.evaluate(() => window.PhoneBoxDemo.emit('back', { rule: 'high' }));
+  await page.evaluate(() => window.DeckBoxDemo.emit('back', { rule: 'high' }));
   await expect.poll(() => activeDot(page), { timeout: 20000 }).toBe(1);
 });
 
 test('a Claude Code permission prompt can be answered', async ({ page }) => {
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
-  await page.evaluate(() => window.PhoneBoxDemo.ask());
+  await page.evaluate(() => window.DeckBoxDemo.ask());
   const prompt = page.locator('#approval');
   await expect(prompt).toBeVisible();
   await prompt.getByRole('button', { name: 'Allow' }).click();
@@ -297,7 +297,7 @@ test('the page dots and the Allow / Deny buttons can sit at the top (#181)', asy
   await expect(page.locator('body')).toHaveClass(/controls-top/);
   const dots = await page.locator('#dots').boundingBox();
   expect(dots.y).toBeLessThan(40);
-  await page.evaluate(() => window.PhoneBoxDemo.ask());
+  await page.evaluate(() => window.DeckBoxDemo.ask());
   const prompt = page.locator('#approval');
   await expect(prompt).toBeVisible();
   const allow = await prompt.getByRole('button', { name: 'Allow' }).boundingBox();
@@ -310,7 +310,7 @@ test('the page dots and the Allow / Deny buttons can sit at the top (#181)', asy
 test('a question from Claude is shown with its choices and left for the terminal', async ({ page }) => {
   await page.goto('/panel/');
   await expect(page.locator('.w').first()).toBeVisible();
-  await page.evaluate(() => window.PhoneBoxDemo.ask({ kind: 'question', tool: 'Claude has a question', project: 'api-gateway',
+  await page.evaluate(() => window.DeckBoxDemo.ask({ kind: 'question', tool: 'Claude has a question', project: 'api-gateway',
     detail: 'Framework: Which framework?\n  • React — Component library\n  • Vue — Progressive framework' }));
   const prompt = page.locator('#approval');
   await expect(prompt).toBeVisible();
@@ -534,10 +534,10 @@ test('the pairing page hands a checked link to the app and clears it from the ad
   await expect(page.locator('#check')).toHaveText('ABAB ABAB');
   const href = await page.locator('#open').getAttribute('href');
   expect(href).toBe(`intent://pair?v=1&pc=Desk%20PC&fp=${fp}&port=8766&h=192.168.1.10%2C100.64.0.7&c=${'A'.repeat(22)}`
-    + '#Intent;scheme=phonebox;package=net.oxog.phonebox.deskpanel;S.browser_fallback_url=https%3A%2F%2Fgithub.com%2Fersinkoc%2Fphonebox%2Freleases%2Flatest;end');
+    + '#Intent;scheme=deckbox;package=io.github.dubstep2004.deckbox;S.browser_fallback_url=https%3A%2F%2Fgithub.com%2FDubstep2004%2FDeckBox%2Freleases%2Flatest;end');
   // the button stays pinned to the app's package; the plain link is a separate choice for browsers that open a store (#175)
   await expect(page.locator('#plainWrap')).toBeVisible();
-  expect(await page.locator('#plain').getAttribute('href')).toBe(`phonebox://pair?v=1&pc=Desk%20PC&fp=${fp}&port=8766&h=192.168.1.10%2C100.64.0.7&c=${'A'.repeat(22)}`);
+  expect(await page.locator('#plain').getAttribute('href')).toBe(`deckbox://pair?v=1&pc=Desk%20PC&fp=${fp}&port=8766&h=192.168.1.10%2C100.64.0.7&c=${'A'.repeat(22)}`);
   expect(new URL(page.url()).hash).toBe('');
   await page.goto('about:blank'); // a hash-only change would not run the page again
   await page.goto(`/pair/#v=1&pc=x&fp=${fp}&port=8766&h=8.8.8.8&c=${'A'.repeat(22)}`); // not a local address
@@ -567,7 +567,7 @@ test('interface chrome uses inline SVG icons instead of emoji', async ({ page })
   }
   await expect(page.locator('#webviewWarn svg.ico')).toHaveCount(2); // warning mark + close
   // Toasts pick up a kind icon next to their message.
-  await page.evaluate(() => window.PhoneBoxDemo.emit('notify', { title: 'Build', text: 'done' }));
+  await page.evaluate(() => window.DeckBoxDemo.emit('notify', { title: 'Build', text: 'done' }));
   await expect(page.locator('#toast svg.ico')).toBeVisible();
   expect(errors).toEqual([]);
 });

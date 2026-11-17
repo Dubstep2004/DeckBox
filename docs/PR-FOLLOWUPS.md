@@ -1,6 +1,6 @@
 # Pull request integration status
 
-This records the reviewed scope after PhoneBox 0.7.0. An adapted contribution is credited in the changelog;
+This records the reviewed scope after DeckBox 0.7.0. An adapted contribution is credited in the changelog;
 it does not mean the original branch can be merged unchanged over newer fixes.
 
 ## Dependency updates

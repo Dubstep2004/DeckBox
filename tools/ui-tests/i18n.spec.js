@@ -49,7 +49,7 @@ test('a small agenda shows relative times in the panel language', async ({ page 
     });
   });
   await show(page, [{ id: 'ag', type: 'agenda', x: 0, y: 0, w: 12, h: 1, options: {} }]);
-  await page.evaluate(() => window.PhoneBoxDemo.emit('refresh'));
+  await page.evaluate(() => window.DeckBoxDemo.emit('refresh'));
   const sub = page.locator('.ag-big-s').first();
   await expect(sub).toHaveText(/^in \d+ Min/); // German "in 35 Min · 12:35", not "Heute · 12:35"
   await expect(sub).not.toHaveText(/Heute/);
@@ -67,7 +67,7 @@ test('the breathe widget greets in the panel language before the first tap', asy
 test('every translated key is really translated, and the rest fall back to English', async ({ page }) => {
   await page.goto('/panel/');
   const result = await page.evaluate(() => {
-    const I18n = window.PhoneBoxI18n;
+    const I18n = window.DeckBoxI18n;
     const S = I18n.STRINGS;
     const en = S.en;
     // Panel keys (everything outside s.*) are the strings the phone shows, and they are translated in all twelve
@@ -100,7 +100,7 @@ test('every translated key is really translated, and the rest fall back to Engli
 test('the Vietnamese panel dictionary is complete', async ({ page }) => {
   await page.goto('/panel/');
   const gaps = await page.evaluate(() => {
-    const S = window.PhoneBoxI18n.STRINGS;
+    const S = window.DeckBoxI18n.STRINGS;
     return Object.keys(S.en).filter((k) => !(k in S.vi));
   });
   expect(gaps).toEqual([]);
@@ -109,7 +109,7 @@ test('the Vietnamese panel dictionary is complete', async ({ page }) => {
 test('the widget catalog translates by its English text', async ({ page }) => {
   await page.goto('/panel/');
   const out = await page.evaluate(() => {
-    const I18n = window.PhoneBoxI18n;
+    const I18n = window.DeckBoxI18n;
     I18n.setLang('vi');
     return {
       name: I18n.tc('Clock'),

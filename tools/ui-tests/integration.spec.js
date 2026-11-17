@@ -212,7 +212,7 @@ for (const hour12 of [false, true]) {
 test('clock times follow display.hour12 ("auto") via Android.is24Hour bridge and react to system changes', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ baseURL, viewport: { width: 780, height: 360 }, timezoneId: 'UTC' });
   await ctx.addInitScript(() => {
-    window.__phoneboxKey = 'pb-key-test';
+    window.__deckboxKey = 'pb-key-test';
     window.__phone24h = false;
     window.Android = {
       battery: () => '{}',
@@ -250,7 +250,7 @@ test('clock times follow display.hour12 ("auto") via Android.is24Hour bridge and
   // Calls without a matching panel bridge key fail closed to 24-hour.
   await page.evaluate(() => {
     window.__phone24h = false;
-    window.__phoneboxKey = 'wrong-key';
+    window.__deckboxKey = 'wrong-key';
     document.dispatchEvent(new Event('visibilitychange'));
   });
   await expect(page.locator('.clock .hh')).toHaveText('14');
@@ -433,7 +433,7 @@ test('a failed weather fetch and fallback leaves the widget unavailable, not loa
 test('the Computers widget lists paired computers and switches between them', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ baseURL, viewport: { width: 780, height: 360 } });
   await ctx.addInitScript(() => {
-    window.__phoneboxKey = 'pb-key-test';
+    window.__deckboxKey = 'pb-key-test';
     window.__route = 'wifi';
     window.__selected = [];
     window.Android = {

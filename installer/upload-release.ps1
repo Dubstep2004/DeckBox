@@ -4,7 +4,7 @@
   Запуск (PowerShell):
     Set-ExecutionPolicy -Scope Process Bypass
     .\upload-release.ps1                       # ищет DeckBox-Setup-*.exe в Загрузках и рядом со скриптом
-    .\upload-release.ps1 -File C:\путь\DeckBox-Setup-0.9.18.exe
+    .\upload-release.ps1 -File C:\путь\DeckBox-Setup-1.0.0.exe
 
   Нужен GitHub CLI (gh): если его нет, скрипт поставит его через winget.
   При первом запуске откроется браузер для входа в GitHub.
@@ -40,7 +40,7 @@ if (-not $File -or -not (Test-Path $File)) {
 $File = (Resolve-Path $File).Path
 if (-not $Tag) {
     if ((Split-Path $File -Leaf) -match 'DeckBox-Setup-(\d+\.\d+\.\d+)') { $Tag = "v$($Matches[1])" }
-    else { throw 'Не удалось понять версию из имени файла. Укажите тег: -Tag v0.9.18' }
+    else { throw 'Не удалось понять версию из имени файла. Укажите тег: -Tag v1.0.0' }
 }
 Write-Host "Файл:   $File"
 Write-Host "Релиз:  $Repo $Tag"

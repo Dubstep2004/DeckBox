@@ -1,6 +1,6 @@
 # Development guide
 
-[Back to PhoneBox](../README.md) · [Installation and connections](SETUP.md) · [User guide](GUIDE.md)
+[Back to DeckBox](../README.md) · [Installation and connections](SETUP.md) · [User guide](GUIDE.md)
 
 [How it works](#how-it-works) · [Development](#development)
 
@@ -13,7 +13,7 @@ flowchart LR
     UI -->|weather, rates, HN| Web(("Public APIs"))
   end
   subgraph PC["Windows / Linux / macOS"]
-    Agent["PhoneBox agent<br/>(.NET 10)"]
+    Agent["DeckBox agent<br/>(.NET 10)"]
     Agent --- Mon["System, GPU, media, volume,<br/>processes, sessions, quotas, GitHub"]
     Agent --- Set["Settings page &<br/>layout editor"]
   end
@@ -50,7 +50,7 @@ The server stays running in this terminal. Open <http://127.0.0.1:8790/panel/> o
 
 ```sh
 python tools/check-release.py
-dotnet test agent/PhoneBox.Agent.Tests
+dotnet test agent/DeckBox.Agent.Tests
 ```
 
 Browser tests need Node.js 22 and Chromium:
@@ -82,11 +82,11 @@ cd android
 Run the Windows agent from the repository root:
 
 ```powershell
-dotnet run --project agent/PhoneBox.Agent -f net10.0-windows10.0.19041.0
+dotnet run --project agent/DeckBox.Agent -f net10.0-windows10.0.19041.0
 ```
 
 
-On Linux or macOS, run the agent with `dotnet run --project agent/PhoneBox.Agent -f net10.0` and build the APK
+On Linux or macOS, run the agent with `dotnet run --project agent/DeckBox.Agent -f net10.0` and build the APK
 with `cd android && ./gradlew assembleDebug`. On Windows, the explicit `-f` selects one of the project's two
 target frameworks. Set `ANDROID_HOME` or `android/local.properties` (`sdk.dir`) to the Android SDK location.
 
@@ -115,21 +115,21 @@ repository root to regenerate the application icon.
 The panel is plain ES modules: [`main.js`](../android/app/src/main/assets/www/main.js) (core, pages, navigation, data
 from the agent) and the widgets in [`widgets/`](../android/app/src/main/assets/www/widgets). A widget is a
 `{ needs, create(box, ctx) → { update(kind) } }` entry in the `W` registry, plus its styles in `style.css` and its catalogue entry
-(name, size, options) in [`widgets.json`](../agent/PhoneBox.Agent/widgets.json), which drives the settings editor.
-Templates live in [`templates.json`](../agent/PhoneBox.Agent/templates.json).
+(name, size, options) in [`widgets.json`](../agent/DeckBox.Agent/widgets.json), which drives the settings editor.
+Templates live in [`templates.json`](../agent/DeckBox.Agent/templates.json).
 
 ### Isolated agent runs
 
 To check a development agent beside an installed one, run it with an isolated settings file and port, for example
-`PhoneBoxAgent.exe --config "D:\test folder\config.json" --port 18765`. Settings and browser checks use
+`DeckBoxAgent.exe --config "D:\test folder\config.json" --port 18765`. Settings and browser checks use
 `http://127.0.0.1:18765/`; restarts preserve these arguments. The ordinary port remains 8765. Set `deviceSerial`
 explicitly in the test settings (an unmatched serial disables USB attachment) and turn off automatic updates.
 USB clients still use phone port 8765; do not assign the same phone to two agents at once.
 
 ### Release signing
 
-Release APKs are signed with your own key when `PHONEBOX_STORE_FILE`, `PHONEBOX_STORE_PASSWORD`, `PHONEBOX_KEY_ALIAS`
-and `PHONEBOX_KEY_PASSWORD` are set (in `~/.gradle/gradle.properties` or the environment); otherwise the debug key
+Release APKs are signed with your own key when `DECKBOX_STORE_FILE`, `DECKBOX_STORE_PASSWORD`, `DECKBOX_KEY_ALIAS`
+and `DECKBOX_KEY_PASSWORD` are set (in `~/.gradle/gradle.properties` or the environment); otherwise the debug key
 is used. Debug builds make the WebView debuggable through `chrome://inspect`. To publish a release: bump the
-version in `PhoneBox.Agent.csproj` and `android/app/build.gradle.kts`, commit, then run `.\scripts\release.ps1`.
+version in `DeckBox.Agent.csproj` and `android/app/build.gradle.kts`, commit, then run `.\scripts\release.ps1`.
 The script dispatches the gated GitHub release workflow; see [the release checklist](RELEASING.md).

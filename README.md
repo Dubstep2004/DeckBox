@@ -1,4 +1,4 @@
-<p align="center"><img src="agent/PhoneBox.Agent/phonebox.ico" width="72" alt="Значок DeckBox"></p>
+<p align="center"><img src="agent/DeckBox.Agent/deckbox.ico" width="72" alt="Значок DeckBox"></p>
 
 <h1 align="center">DeckBox</h1>
 
@@ -14,6 +14,8 @@ DeckBox состоит из двух частей: **приложения для
 DeckBox основан на проекте [PhoneBox](https://github.com/ersinkoc/phonebox) (автор — ersinkoc, лицензия MIT). Отличия от оригинала:
 
 - полный русский перевод интерфейса и каталога виджетов;
+- своё название везде: программа `DeckBoxAgent.exe`, приложение на телефоне, папки настроек;
+- установщик для Windows на русском;
 - автообновление с репозитория PhoneBox выключено, чтобы оно не заменило DeckBox.
 
 ## Возможности
@@ -86,15 +88,15 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 ## Где хранятся настройки
 
-- Windows: `%APPDATA%\PhoneBox\config.json`
-- Linux: `~/.config/PhoneBox`
-- macOS: `~/Library/Application Support/PhoneBox`
+- Windows: `%APPDATA%\DeckBox\config.json`
+- Linux: `~/.config/DeckBox`
+- macOS: `~/Library/Application Support/DeckBox`
 
-Имена папок остались от PhoneBox, чтобы не терялись настройки и сопряжение с телефоном.
+Переход с PhoneBox: при первом запуске DeckBox сам копирует старые настройки из папки `PhoneBox`, поэтому страницы, ярлыки и правила сохраняются. Старое приложение на телефоне установщик удаляет и ставит вместо него DeckBox. По USB телефон подключится сам, а для Wi-Fi его нужно один раз сопрячь заново.
 
 ## Документация
 
-Подробные руководства (на английском):
+Подробные руководства (на английском; разделы о `setup.ps1` / `setup.sh` относятся к оригинальному PhoneBox, для DeckBox используйте установщик):
 
 | Руководство | Содержание |
 |---|---|
