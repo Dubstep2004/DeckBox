@@ -52,6 +52,7 @@ class MainActivity : Activity(), SensorEventListener {
     private val dictation by lazy { Dictation(this) { script -> web.evaluateJavascript(script, null) } }
     private lateinit var link: AgentLink
     private lateinit var stream: AgentStream
+    private lateinit var updater: AppUpdater
     @Volatile private var volumeKeysFlipPages = true
     private val sensors by lazy { getSystemService(SensorManager::class.java) }
     private var lastLux = -1f
@@ -69,6 +70,8 @@ class MainActivity : Activity(), SensorEventListener {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         link = AgentLink(this)
+        current = this
+        updater = AppUpdater(applicationContext, link, ::reportUpdate)
         stream = AgentStream(link) { event, data ->
             val js = "window.onAgentStream && window.onAgentStream(${JSONObject.quote(event)}, ${JSONObject.quote(data)})"
             runOnUiThread { web.evaluateJavascript(js, null) }
@@ -354,6 +357,10 @@ class MainActivity : Activity(), SensorEventListener {
                 .toString()
         }
 
+        /** Downloads the new app from the computer and opens Android's installer (progress: "deckbox-update" events). */
+        @JavascriptInterface
+        fun installUpdate(key: String) { if (ok(key)) updater.start() }
+
         /** "usb", "wifi" or "none": how the last agent request was delivered. */
         @JavascriptInterface
         fun transport(key: String): String = if (ok(key)) link.route.name.lowercase() else ""
@@ -447,6 +454,14 @@ class MainActivity : Activity(), SensorEventListener {
     }
 
     companion object {
+        @Volatile private var current: MainActivity? = null
+
+        /** Update progress for the panel (see AppUpdater), from any thread. */
+        fun reportUpdate(json: String) {
+            val a = current ?: return
+            val js = "window.dispatchEvent(new CustomEvent('deckbox-update',{detail:$json}))"
+            a.runOnUiThread { a.web.evaluateJavascript(js, null) }
+        }
         private const val ASSET_HOST = "appassets.androidplatform.net"
         private val NO_STORE = mapOf("Cache-Control" to "no-store")
         private const val PANEL_HEADER = "X-DeckBox-Panel"

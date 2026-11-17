@@ -298,12 +298,26 @@ app.MapGet("/api/lan", (ConfigStore cfg) => Results.Json(new
     fingerprint = lanCert is null ? null : Lan.Fingerprint(lanCert),
 }));
 
-app.MapGet("/api/update", (UpdateService upd, ConfigStore cfg) => Results.Json(new { status = upd.Status(), auto = cfg.Get().Updates.Auto, installed = UpdateService.RunningInstalled }));
+app.MapGet("/api/update", (UpdateService upd, ConfigStore cfg) => Results.Json(new { status = upd.Status(), auto = cfg.Get().Updates.Auto, ask = cfg.Get().Updates.Ask, installed = UpdateService.RunningInstalled }));
 // Settings › General: install the phone app on a phone that does not have it yet (local only).
 app.MapPost("/api/phone/install", async (UpdateService upd) =>
     await upd.InstallAppAsync() is { } error ? Results.BadRequest(new { error }) : Results.Ok(new { ok = true }));
 app.MapPost("/api/update/check", async (UpdateService upd) => { await upd.CheckAsync(); return Results.Json(upd.Status()); });
-app.MapPost("/api/update/apply", (UpdateService upd) => { _ = Task.Run(() => upd.ApplyAsync()); return Results.Accepted(); });
+// ?phone=0: the phone app installs itself (update card on the phone), so only the agent is updated here
+app.MapPost("/api/update/apply", (UpdateService upd, HttpRequest req) =>
+{
+    var phone = req.Query["phone"] != "0";
+    _ = Task.Run(() => upd.ApplyAsync(phone: phone));
+    return Results.Accepted();
+});
+// The phone installs the new app itself (over Wi-Fi too): the agent hands over the APK it checked against SHA256SUMS.
+app.MapGet("/api/update/apk", async (UpdateService upd, CancellationToken ct) =>
+{
+    string? apk;
+    try { apk = await upd.AppPackageAsync(ct); }
+    catch (Exception ex) when (ex is not OperationCanceledException) { return Results.Problem(ex.Message, statusCode: 502); }
+    return apk is null ? Results.NotFound() : Results.File(apk, "application/vnd.android.package-archive", Path.GetFileName(apk));
+});
 
 app.MapPost("/api/restart", (IHostApplicationLifetime life) =>
 {
@@ -439,7 +453,8 @@ object State(IServiceProvider sp, long? ev)
     var push = sp.GetRequiredService<PushStore>();
     return new
     {
-        update = upd.Status() is { } u && (u.AppUpdate || u.AgentUpdate) ? new { latest = u.Latest, app = u.AppUpdate, agent = u.AgentUpdate } : null,
+        update = upd.Status() is { } u && (u.AppUpdate || u.AgentUpdate) ? new { latest = u.Latest, app = u.AppUpdate, agent = u.AgentUpdate, name = u.Name, notes = u.Notes, state = u.State, error = u.Error, url = u.ReleaseUrl } : null,
+        agentVersion = AppPaths.Version,
         ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         host = Environment.MachineName,
         cfgVersion = sp.GetRequiredService<ConfigStore>().Version,

@@ -3,6 +3,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- "Обновить" on the update card: the app installs its own new version (Android asks once to confirm) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <!-- Dictation widget only: asked for the first time its microphone button is tapped -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -60,6 +63,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
+
+        <receiver android:name=".AppUpdater$InstallResult" android:exported="false" />
+        <!-- after "Обновить" the new version opens the panel again by itself -->
+        <receiver android:name=".AppUpdater$Replaced" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
 
         <!-- Quick Settings tile (Edit tiles › DeckBox): opens the panel. Android 7.0+ only shows tiles. -->
         <service

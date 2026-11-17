@@ -188,6 +188,11 @@ public sealed class UpdateConfig
 {
     /// <summary>Install new GitHub releases automatically (phone app over USB, agent in place).</summary>
     public bool Auto { get; set; } = true;
+    /// <summary>
+    /// Show what is new and wait for "Обновить" in the panel or the settings ("Позже" puts it off) instead of installing
+    /// on its own. On by default; off brings back the silent automatic updates.
+    /// </summary>
+    public bool Ask { get; set; } = true;
     public string Repo { get; set; } = "Dubstep2004/DeckBox";
 }
 

@@ -644,6 +644,7 @@ dd { margin: 0; word-break: break-all; }
       <div class="card">
         <h3 data-i18n="s.updates.title">Updates</h3>
         <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="updates.auto"><span></span></label> <span data-i18n="s.updates.auto">Install new releases automatically</span></div>
+        <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="updates.ask"><span></span></label> <span>Спрашивать перед обновлением: показать, что нового, с кнопками «Обновить» и «Позже»</span></div>
         <p class="hint" style="margin:0 0 12px"><span data-i18n="s.updates.hintChecks">Checks the DeckBox releases on GitHub every 6 hours:</span>
           <a id="updRepo" target="_blank" rel="noopener"></a>. <span data-i18n="s.updates.hintHow">The phone app is installed over USB without a prompt
           on the phone; the agent replaces its own files and restarts.</span></p>
@@ -2746,7 +2747,7 @@ async function loadInfo() {
 // The form reads every section it binds and renders, so a config without one — an older export, or a
 // hand-trimmed paste in Apply JSON — gets the same defaults a fresh load does before anything renders.
 function fillDefaults() {
-  cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, repo: 'Dubstep2004/DeckBox' }; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
+  cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, ask: true, repo: 'Dubstep2004/DeckBox' }; cfg.updates.ask ??= true; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
   cfg.codexBar ??= { providers: ['claude', 'codex', 'antigravity'], rotate: true, pageSize: 2, rotateInterval: 8 };
   for (const [k, v] of Object.entries({ language: 'auto', hour12: false, idleReturnSec: 90, switchCountdownSec: 3, touchGraceSec: 20, minDwellSec: 15, holdMaxMin: 30, keepAwake: true,
     showSeconds: true, vibrate: true, volumeKeys: true, artTint: true, proximityWake: true, orientation: 'landscape', theme: 'pro', accent: '#d4af37' })) cfg.display[k] ??= v;
@@ -2815,7 +2816,31 @@ function renderUpdate(u) {
     ...line(t('s.upd.latest'), latest),
     ...line(t('s.upd.lastCheck'), s.lastCheck ? new Date(s.lastCheck).toLocaleString(window.DeckBoxI18n?.getLocale?.()) : t('s.upd.notYet')));
   $('updApply').hidden = !(s.agentUpdate || s.appUpdate);
+  if (s.agentUpdate || s.appUpdate) showUpdateOnce(s);
   $('updState').textContent = s.error ? s.error : s.state !== 'idle' ? s.state + '…' : '';
+}
+// «Вышла новая версия»: the same card as on the phone, once per version (and not after «Позже»)
+let updShown = null;
+async function showUpdateOnce(s, force = false) {
+  let m;
+  try { m = await import('../panel/update-card.js'); } catch (_) { return; }
+  if (!force && (updShown === s.latest || m.snoozed(s.latest))) return;
+  updShown = s.latest;
+  m.showUpdateCard({ latest: s.latest, name: s.name, notes: s.notes }, {
+    versions: [['Компьютер', s.agentVersion], ['Приложение', s.appVersion]],
+    apply: async () => {
+      const before = s.error || null;
+      await fetch('/api/update/apply', { method: 'POST' });
+      const poll = setInterval(async () => {
+        try {
+          const st = (await (await fetch('/api/update')).json()).status;
+          if (st.error && st.error !== before) { m.setUpdateProgress({ stage: 'error', error: st.error }); clearInterval(poll); }
+          else if (!st.agentUpdate && !st.appUpdate) { m.setUpdateProgress({ stage: 'done' }); clearInterval(poll); loadInfo(); }
+          else if (st.state !== 'idle') m.setUpdateProgress({ stage: st.state });
+        } catch (_) { m.setUpdateProgress({ stage: 'restarting' }); }
+      }, 2000);
+    },
+  });
 }
 $('updCheck').onclick = async () => {
   $('updState').textContent = t('s.upd.checking');

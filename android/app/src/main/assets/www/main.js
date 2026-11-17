@@ -2,6 +2,7 @@
 // they import what they need from here, so this module must not run code that needs them while it loads
 // (the start section at the end runs after every module has loaded).
 import { W } from './registry.js';
+import { showUpdateCard, setUpdateProgress, snoozed, updateCardOpen } from './update-card.js';
 import './appearance.js';
 import { cached } from './widgets/helpers.js';
 import './widgets/basic.js';
@@ -35,7 +36,7 @@ export const $ = (id) => document.getElementById(id);
 // The native bridge (window.Android) is in every frame, sandboxed widgets included, so each call carries a key that only
 // the panel's own frames receive (MainActivity.bridgeKey). This wrapper adds it.
 const BRIDGE = ['battery', 'buzz', 'haptic', 'is24Hour', 'pcs', 'selectPc', 'forgetPc', 'setBrightness', 'setHomeScreen', 'setOrientation',
-  'setPinned', 'setVolumeKeys', 'transport', 'sensors', 'version', 'canListen', 'listen', 'stopListening', 'cancelListening'];
+  'setPinned', 'setVolumeKeys', 'transport', 'sensors', 'version', 'canListen', 'listen', 'stopListening', 'cancelListening', 'installUpdate'];
 export const bridge = typeof Android === 'undefined' ? null : Object.fromEntries(BRIDGE.filter((m) => typeof Android[m] === 'function')
   .map((m) => [m, (...args) => Android[m](window.__deckboxKey || '', ...args)]));
 // Live preview inside the agent's layout editor: the layout comes from the editor (unsaved), not from the agent.
@@ -493,7 +494,11 @@ export function renderStatus(el) {
   const waiting = (D.work?.sessions || []).filter((s) => s.status === 'waiting').length;
   if (waiting) kids.push(h('span', 'sep', '·'), h('span', 'smini', t('status.waitingCount', { n: waiting })));
   const u = D.state?.update;
-  if (u) kids.push(h('span', 'sep', '·'), h('span', 'upd', u.app && via !== 'usb' ? t('status.updateUsb', { version: u.latest }) : t('status.updateAvailable', { version: u.latest })));
+  if (u) {
+    const b = h('span', 'upd', t('status.updateAvailable', { version: u.latest }));
+    b.onclick = (e) => { e.stopPropagation(); openUpdate(true); };
+    kids.push(h('span', 'sep', '·'), b);
+  }
   el.replaceChildren(...kids);
   // Too long for the widget: drop the quota summaries, the most dispensable part.
   while (el.scrollWidth > el.clientWidth + 1 && el.querySelector('.qm')) [...el.querySelectorAll('.qm')].pop().remove();
@@ -1490,6 +1495,11 @@ export function openOverview() {
   renderRulesBtn();
   // several paired computers: switch between them here (a USB cable always wins)
   const pcs = pairedPcs();
+  const av = appVersion(), gv = D.state?.agentVersion, nu = D.state?.update;
+  const ovv = $('ovVer');
+  ovv.textContent = ['DeckBox PRO', av && 'приложение ' + av, gv && 'компьютер ' + gv].filter(Boolean).join(' · ') + (nu ? ` · ⬆ ${nu.latest}` : '');
+  ovv.classList.toggle('new', !!nu);
+  ovv.onclick = nu ? (e) => { e.stopPropagation(); openUpdate(true); } : null;
   $('ovPcs').replaceChildren(...(pcs.length > 1 ? pcs.map((pc) => {
     const b = h('button', 'ov-pc' + (pc.active ? ' on' : ''), '🖥️ ' + (pc.name || t('panel.computer')));
     b.addEventListener('click', (e) => { e.stopPropagation(); switchPc(pc); });
@@ -1855,9 +1865,45 @@ export function setOnline(on) {
   if (changed) emit('state');
 }
 
+// ---------------------------------------------------------------- «Вышла новая версия»
+/** The phone app's own version (null in a desktop browser). */
+export function appVersion() { try { return bridge?.version?.() || null; } catch (_) { return null; } }
+
+let updateShownFor = null;
+let updateSelf = false; // the app is installing itself: the agent's own progress must not overwrite it
+let updateViaAgent = false; // «Обновить» went to the agent: its state is the progress
+
+/** Opens the card for state.update; on its own only once per version and not after «Позже». */
+export function openUpdate(force = false) {
+  const u = D.state?.update;
+  if (!u || PREVIEW) return;
+  if (!force && (updateShownFor === u.latest || snoozed(u.latest) || updateCardOpen())) return;
+  updateShownFor = u.latest;
+  showUpdateCard(u, {
+    versions: [['Компьютер', D.state?.agentVersion], ['Приложение', appVersion()]],
+    apply: async () => {
+      // the phone app installs itself from the computer (USB or Wi-Fi); the agent is updated once the download is in
+      if (u.app && bridge?.installUpdate) { updateSelf = true; bridge.installUpdate(); return; }
+      updateViaAgent = true;
+      await api('/update/apply', 'POST', 8000);
+    },
+  });
+}
+
+window.addEventListener('deckbox-update', (e) => {
+  const p = e.detail || {};
+  setUpdateProgress(p);
+  if (p.stage === 'install' && D.state?.update?.agent) api('/update/apply?phone=0', 'POST', 8000).catch(() => {});
+  if (p.stage === 'error') updateSelf = false;
+});
+
 export function applyState(s, replayGen = null) {
   lastStateAt = Date.now();
   D.state = s;
+  if (s.update) {
+    openUpdate();
+    if (updateViaAgent && s.update.state && s.update.state !== 'idle') setUpdateProgress({ stage: s.update.state });
+  } else if (updateViaAgent && updateCardOpen()) { updateViaAgent = false; setUpdateProgress({ stage: 'done' }); }
   media = s.media ? { ...s.media, at: performance.now() } : null;
   setOnline(true);
   if (s.cfgVersion !== undefined && cfgVersion !== null && s.cfgVersion !== cfgVersion) loadConfig();

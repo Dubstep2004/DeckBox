@@ -34,7 +34,7 @@ import javax.net.ssl.X509TrustManager
  */
 class AgentLink(private val context: Context) {
 
-    class Reply(val code: Int, val contentType: String?, val body: InputStream)
+    class Reply(val code: Int, val contentType: String?, val body: InputStream, val length: Long = -1)
 
     enum class Route { USB, WIFI, NONE }
 
@@ -128,6 +128,10 @@ class AgentLink(private val context: Context) {
         return null
     }
 
+    /** A large GET (the app update): long read timeout, USB first. Null when the PC is unreachable. */
+    fun download(path: String): Reply? =
+        usb("GET", path, 120_000) ?: wifi("GET", path, 120_000)
+
     /** Forwards a request (method + path with query) to the agent over the best available route. */
     fun request(method: String, pathAndQuery: String): Reply {
         usb(method, pathAndQuery)?.let {
@@ -202,7 +206,7 @@ class AgentLink(private val context: Context) {
             return Reply(504, "application/json", ByteArrayInputStream("""{"ok":false,"error":"The command result is unknown; check the computer before retrying"}""".toByteArray()))
         }
         val body = (if (code >= 400) c.errorStream else c.inputStream) ?: ByteArrayInputStream(ByteArray(0))
-        return Reply(code, c.contentType, body)
+        return Reply(code, c.contentType, body, c.contentLengthLong)
     }
 
     /** While on USB, refresh the Wi-Fi pairing data about once a minute. */

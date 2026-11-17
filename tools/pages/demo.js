@@ -5,6 +5,8 @@
   'use strict';
   const ROOT = new URL('.', document.currentScript.src).href;
   const VERSION = document.currentScript.dataset.version || 'demo'; // stamped by tools/pages/build.py from the agent's version
+  // ?update=1: a newer release is out, so the «Вышла новая версия» card shows (UI tests)
+  const DEMO_UPDATE = new URLSearchParams(location.search).has('update');
   const realFetch = window.fetch.bind(window);
   const bc = new BroadcastChannel('deckbox-demo');
   const START = Date.now();
@@ -185,7 +187,10 @@
   function state(since) {
     const [title, artist, album, dur] = TRACKS[player.track];
     return {
-      update: null, ts: now(), host: 'DESK-PC', cfgVersion: cfgVersion(), pushVersion, evSeq: seq, rules: ['music'], rulesPaused: rulesPaused > now() ? rulesPaused : null,
+      update: DEMO_UPDATE ? { latest: '9.9.9', app: true, agent: true, name: L('Update card', 'Плашка обновлений'), state: 'idle', error: null,
+        notes: [{ title: L('✨ New', '✨ Новое'), items: [L('Shows what is new with Update and Later.', 'Показывает, что нового, с кнопками «Обновить» и «Позже».')] },
+          { title: L('🛠 Fixed', '🛠 Исправлено'), items: [L('Small fixes.', 'Мелкие исправления.')] }] } : null,
+      agentVersion: VERSION, ts: now(), host: 'DESK-PC', cfgVersion: cfgVersion(), pushVersion, evSeq: seq, rules: ['music'], rulesPaused: rulesPaused > now() ? rulesPaused : null,
       events: since == null ? [] : events.filter((e) => e.seq > since),
       pc: {
         cpu: Math.max(1, wave(37, 8, 46, 0, 6)), cpuName: 'AMD Ryzen 9 7950X 16-Core Processor', cpuTemp: wave(60, 52, 68),

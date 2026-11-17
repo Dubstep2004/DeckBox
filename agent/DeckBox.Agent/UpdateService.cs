@@ -8,7 +8,11 @@ using System.Text.Json;
 namespace DeckBox.Agent;
 
 public sealed record UpdateStatus(string AgentVersion, string? AppVersion, string? Latest, string? ReleaseUrl,
-    bool AgentUpdate, bool AppUpdate, long? LastCheck, string State, string? Error);
+    bool AgentUpdate, bool AppUpdate, long? LastCheck, string State, string? Error,
+    string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null);
+
+/// <summary>One part of a release description: "✨ Новое", "⚡ Улучшено", "🛠 Исправлено" or "🗑 Удалено", with its items.</summary>
+public sealed record UpdateNotes(string Title, IReadOnlyList<string> Items);
 
 /// <summary>
 /// Keeps the agent and the phone app up to date from GitHub releases (DeckBox-&lt;v&gt;.apk and
@@ -69,7 +73,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         return new UpdateStatus(AppPaths.Version, AppVersion, latest, _latest?.Url,
             latest is not null && Newer(latest, AppPaths.Version) && _latest!.AgentZip is not null,
             latest is not null && _latest!.Apk is not null && (AppVersion is not null && Newer(latest, AppVersion) || retry),
-            _lastCheck, _state, _error);
+            _lastCheck, _state, _error, _latest?.Name, _latest?.Notes);
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)
@@ -88,7 +92,8 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
                 // a failed check (GitHub answering 504 now and then) is retried soon instead of in 6 hours
                 nextCheck = DateTime.UtcNow + (_error?.StartsWith("Проверка обновлений не удалась") == true ? TimeSpan.FromMinutes(15) : TimeSpan.FromHours(6));
             }
-            if (cfg.Get().Updates.Auto) await ApplyAsync(ct);
+            // "Ask first" (default): the panel and the settings page show what is new, with Update and Later
+            if (cfg.Get().Updates is { Auto: true, Ask: false }) await ApplyAsync(ct);
             await Task.Delay(TimeSpan.FromMinutes(1), ct);
         }
     }
@@ -127,17 +132,18 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     }
 
     /// <summary>Installs whatever is newer: the phone app first (needs USB), then the agent (restarts it).</summary>
-    public async Task ApplyAsync(CancellationToken ct = default)
+    public async Task ApplyAsync(CancellationToken ct = default, bool phone = true)
     {
         var s = Status();
         if (!s.AppUpdate && !s.AgentUpdate) return;
+        if (!phone && !s.AgentUpdate) return;
         if (!await _gate.WaitAsync(0, ct)) return;
         try
         {
             // the agent was just replaced and is restarting: this (old) process still sees the update as pending,
             // and a second swap would trip over its own files
             if (_state == "restarting") return;
-            if (s.AppUpdate && adb.Connected)
+            if (phone && s.AppUpdate && adb.Connected)
             {
                 // a phone that refuses the app must not keep the agent itself from updating
                 try { await UpdatePhoneAsync(ct); }
@@ -415,7 +421,61 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         return string.Join(" → ", parts);
     }
 
-    internal sealed record Release(string Version, string? Url, string? Apk, string? AgentZip, string? Sums);
+    internal sealed record Release(string Version, string? Url, string? Apk, string? AgentZip, string? Sums,
+        string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null);
+
+    /// <summary>
+    /// The verified phone app of the latest release, for a phone that installs it itself over Wi-Fi
+    /// (GET /api/update/apk). Null when the release has no app or is not newer than the agent knows.
+    /// </summary>
+    public async Task<string?> AppPackageAsync(CancellationToken ct = default)
+    {
+        if (_latest is null) await CheckAsync(ct);
+        if (_latest?.Apk is null) return null;
+        await _gate.WaitAsync(ct);
+        try { return await VerifiedDownloadAsync(_latest.Apk, $"DeckBox-{_latest.Version}.apk", ct); }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// The parts of a release description written by tools/release-notes.py: every "### " heading up to the download
+    /// table ("### ⬇ …") with its "- " items, markdown emphasis and links reduced to their text.
+    /// </summary>
+    internal static List<UpdateNotes> ParseNotes(string? body)
+    {
+        var result = new List<UpdateNotes>();
+        if (string.IsNullOrWhiteSpace(body)) return result;
+        string? title = null;
+        var items = new List<string>();
+        void Flush()
+        {
+            if (title is not null && items.Count > 0) result.Add(new UpdateNotes(title, items.ToArray()));
+            items = [];
+        }
+        foreach (var raw in body.Replace("\r", "").Split('\n'))
+        {
+            var line = raw.TrimEnd();
+            if (line.StartsWith("### "))
+            {
+                Flush();
+                title = Plain(line[4..]);
+                if (title.StartsWith('⬇')) { title = null; break; }
+                continue;
+            }
+            if (line.StartsWith("---")) { Flush(); title = null; continue; }
+            if (title is null) continue;
+            if (line.StartsWith("- ") || line.StartsWith("* ")) items.Add(Plain(line[2..]));
+            else if (line.StartsWith("  ") && items.Count > 0 && line.Trim().Length > 0) items[^1] += " " + Plain(line.Trim());
+        }
+        Flush();
+        return result;
+    }
+
+    private static string Plain(string s)
+    {
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"\[([^\]]*)\]\([^)]*\)", "$1");
+        return s.Replace("**", "").Replace("`", "").Trim();
+    }
 
     /// <summary>
     /// The phone app, this machine's agent zip and the checksum file of a GitHub release
@@ -433,7 +493,13 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
             if (name.StartsWith("SHA256SUMS-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) sums = url;
         }
         var tag = release.GetProperty("tag_name").GetString() ?? "";
-        return new Release(tag.TrimStart('v', 'V'), release.GetProperty("html_url").GetString(), apk, zip, sums);
+        var relName = release.TryGetProperty("name", out var n) ? n.GetString() : null;
+        var body = release.TryGetProperty("body", out var b) ? b.GetString() : null;
+        var version = tag.TrimStart('v', 'V');
+        // "DeckBox PRO 1.1.3 — Плашка обновлений" → "Плашка обновлений"
+        var dash = relName?.IndexOf(" — ", StringComparison.Ordinal) ?? -1;
+        var title = dash >= 0 ? relName![(dash + 3)..].Trim() : null;
+        return new Release(version, release.GetProperty("html_url").GetString(), apk, zip, sums, title, ParseNotes(body));
     }
 
     /// <summary>
