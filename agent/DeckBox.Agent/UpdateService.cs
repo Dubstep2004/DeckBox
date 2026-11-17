@@ -120,7 +120,8 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex)
         {
-            _error = "Update check failed: " + ex.Message;
+            _error = "Update check failed: " + Describe(ex);
+            log.LogWarning("update check failed: {Error}", Describe(ex));
             _state = "idle";
         }
     }
@@ -400,6 +401,18 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         foreach (var arg in args) start.ArgumentList.Add(arg);
         var result = await ToolProcess.RunAsync(start, timeout ?? TimeSpan.FromMinutes(3), ct);
         return result.Output + result.Error;
+    }
+
+    /// <summary>
+    /// The message of an exception with its inner causes ("An error occurred while sending the request" alone hides
+    /// whether DNS, the connection, TLS or a proxy failed).
+    /// </summary>
+    internal static string Describe(Exception ex)
+    {
+        var parts = new List<string>();
+        for (var e = ex; e is not null && parts.Count < 4; e = e.InnerException)
+            if (!string.IsNullOrWhiteSpace(e.Message) && !parts.Contains(e.Message.Trim())) parts.Add(e.Message.Trim());
+        return string.Join(" → ", parts);
     }
 
     internal sealed record Release(string Version, string? Url, string? Apk, string? AgentZip, string? Sums);

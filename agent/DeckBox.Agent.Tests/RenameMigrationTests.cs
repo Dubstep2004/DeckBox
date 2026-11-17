@@ -103,6 +103,16 @@ public class RenameMigrationTests
     }
 
     [Fact]
+    public void UpdateErrorsNameTheRealCause()
+    {
+        var ex = new HttpRequestException("An error occurred while sending the request.",
+            new System.Net.Sockets.SocketException(11001));
+        var text = UpdateService.Describe(ex);
+        Assert.StartsWith("An error occurred while sending the request. → ", text);
+        Assert.True(text.Length > "An error occurred while sending the request. → ".Length);
+    }
+
+    [Fact]
     public void NothingToMigrateWithoutALegacyConfig()
     {
         var root = Path.Combine(Path.GetTempPath(), $"deckbox-mig-{Guid.NewGuid():N}");
