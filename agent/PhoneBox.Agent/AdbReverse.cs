@@ -228,6 +228,8 @@ public sealed class AdbReverse(ConfigStore cfg, ILogger<AdbReverse> log, AgentEn
         if (Directory.Exists(winget))
             candidates.AddRange(Directory.GetDirectories(winget, "Google.PlatformTools*")
                 .Select(d => Path.Combine(d, "platform-tools", "adb.exe")));
+        // the copy bundled by the DeckBox installer, used when no other adb is installed
+        candidates.Add(Path.Combine(AppContext.BaseDirectory, "platform-tools", "adb.exe"));
         return candidates.FirstOrDefault(File.Exists);
     }
 
