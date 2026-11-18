@@ -1230,3 +1230,9 @@ body.controls-top .ap-foot { order: -1; margin-bottom: 4px; }
 /* a gold hairline along the top of every card and gold progress accents */
 .card::selection { background: rgba(var(--ambient), .3); }
 #dots { background: rgba(11, 11, 13, .55); border-color: rgba(var(--ambient), .12); }
+
+/* Note editor (tap a Note widget on the phone) */
+.note-edit { position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.note-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; width: min(92vw, 560px); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+.note-ta { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; line-height: 1.4; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); resize: vertical; }
+.note-actions { display: flex; gap: 8px; justify-content: flex-end; }

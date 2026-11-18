@@ -1,4 +1,4 @@
-import { $, API, D, LEVEL_COLOR, LOCALE, mediaHtml, METRICS, Q_STYLE, S_ORDER, ago, api, averageColor, buzz, cfg, chart, color, cssVar, currentProcessesSort, emit, fillIcon, fmtClock, fmtDur, fmtHM, fmtMem, fmtReset, fmtTime, fmtValue, gotoProcesses, gpuMem, gpusOf, h, haptic, hasProcessesPage, hist, hour12, keyButton, levelOf, media, metricText, online, openSheet, paceInfo, pad, prRow, pushView, quotaProviders, r1, registerProcessesSorter, renderStatus, ringSvg, setArtColor, setMediaState, setVolDragging, shortDur, shortGpu, store, t, tick, toast, volDragging, wxBlock, wxIcon } from '../main.js';
+import { $, API, D, LEVEL_COLOR, LOCALE, mediaHtml, METRICS, PANEL_HEADERS, PREVIEW, Q_STYLE, S_ORDER, ago, api, averageColor, buzz, cfg, cfgVersion, chart, color, cssVar, currentProcessesSort, emit, fillIcon, fmtClock, fmtDur, fmtHM, fmtMem, fmtReset, fmtTime, fmtValue, gotoProcesses, gpuMem, gpusOf, h, haptic, hasProcessesPage, hist, hour12, keyButton, levelOf, media, metricText, online, openSheet, paceInfo, pad, prRow, pushView, quotaProviders, r1, registerProcessesSorter, renderStatus, ringSvg, setArtColor, setMediaState, setVolDragging, shortDur, shortGpu, store, t, tick, toast, volDragging, wxBlock, wxIcon } from '../main.js';
 import { W } from '../registry.js';
 import { invalidateDeckState } from './controls.js';
 
@@ -1017,13 +1017,68 @@ W.countdown = {
   },
 };
 
+const NOTE_MAX = 500;
+
 W.note = {
   bare: true, needs: [],
-  create(box, { o }) {
-    const text = String(o.text ?? '');
-    box.style.setProperty('--n', o.color || '#fbbf24');
-    box.style.setProperty('--nf', text.length < 25 ? 15 : text.length < 70 ? 10.5 : text.length < 160 ? 8 : 6.5);
-    box.append(h('div', 'note-t', text));
+  create(box, { o, page, w }) {
+    let savedVersion = null;
+    const paint = () => {
+      const text = String(o.text ?? '');
+      box.style.setProperty('--n', o.color || '#fbbf24');
+      box.style.setProperty('--nf', text.length < 25 ? 15 : text.length < 70 ? 10.5 : text.length < 160 ? 8 : 6.5);
+      box.replaceChildren(h('div', 'note-t', text));
+    };
+    paint();
+    if (PREVIEW || String(w.id).includes(':')) return {};
+    box.addEventListener('click', () => {
+      if (!$('overview').hidden) return;
+      haptic();
+      const wrap = h('div', 'note-edit');
+      wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+      const card = h('div', 'note-card');
+      const ta = document.createElement('textarea');
+      ta.className = 'note-ta';
+      ta.value = String(o.text ?? '');
+      const opened = savedVersion ?? cfgVersion;
+      ta.maxLength = NOTE_MAX;
+      ta.rows = 6;
+      const row = h('div', 'note-actions');
+      const cancel = h('button', 'btn sm', t('w.note.cancel'));
+      cancel.onclick = () => wrap.remove();
+      const save = h('button', 'btn primary sm', t('w.note.save'));
+      save.onclick = async () => {
+        const submitted = ta.value;
+        save.disabled = true;
+        ta.disabled = true;
+        try {
+          const res = await fetch(API + '/widget/' + encodeURIComponent(page.id) + '/' + encodeURIComponent(w.id) + '/note?text=' + encodeURIComponent(submitted) + '&version=' + encodeURIComponent(opened ?? ''), {
+            method: 'POST',
+            cache: 'no-store',
+            headers: PANEL_HEADERS,
+          });
+          if (res.status === 409) {
+            wrap.remove();
+            toast(t('w.note.changed'));
+            return;
+          }
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          savedVersion = (await res.json().catch(() => ({}))).version ?? null;
+          o.text = submitted;
+          paint();
+          wrap.remove();
+        } catch (_) {
+          save.disabled = false;
+          ta.disabled = false;
+          toast(t('w.note.failed'));
+        }
+      };
+      row.append(cancel, save);
+      card.append(ta, row);
+      wrap.append(card);
+      document.body.append(wrap);
+      ta.focus();
+    });
     return {};
   },
 };

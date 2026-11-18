@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using DeckBox.Agent;
@@ -402,13 +403,28 @@ app.MapPost("/api/backup/restore", async (HttpRequest req, ConfigStore cfg, Shor
     if (error is not null) return Results.BadRequest(new { error });
     ShortcutIcons.ClearHasIconCache();
     log.LogInformation("settings restored from a backup ({Icons} icons)", iconCount);
-    return Results.Ok(new { ok = true, icons = iconCount, version = cfg.Version });
+    return Results.Ok(new { ok = true, icons = iconCount, version = cfg.VersionText });
 });
 app.MapGet("/api/store", async (ConfigStore cfg, CancellationToken ct) =>
     Results.Text(await TemplateStore.GetAsync(cfg.Get().Updates.Repo, ct), "application/json; charset=utf-8"));
 // «Показать брифинг на телефоне сейчас» (settings page)
 app.MapPost("/api/briefing", (PushStore push) => { push.Emit("briefing"); return Results.Ok(new { ok = true }); });
 app.MapGet("/api/stats", (WeekStats stats) => Results.Json(stats.Summary()));
+
+// Narrow write path for the phone: only the text of a Note widget may be changed.
+// The text travels in the query string: the Android proxy forwards no request body.
+app.MapPost("/api/widget/{pageId}/{widgetId}/note", (string pageId, string widgetId, string? text, string? version, ConfigStore cfg) =>
+{
+    long? expected = long.TryParse(version, out var v) ? v : null;
+    var r = NoteEdit.Apply(cfg, pageId, widgetId, text, expected);
+    return r.Status switch
+    {
+        200 => Results.Ok(new { version = r.Version }),
+        404 => Results.NotFound(new { error = r.Error }),
+        409 => Results.Json(new { error = r.Error }, statusCode: StatusCodes.Status409Conflict),
+        _ => Results.BadRequest(new { error = r.Error }),
+    };
+});
 
 app.MapPost("/api/shortcuts/test", async (HttpRequest req, ConfigStore cfg, ILogger<Program> log) =>
 {
@@ -492,7 +508,7 @@ object State(IServiceProvider sp, long? ev)
         game = GameMonitor.Current,
         ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         host = Environment.MachineName,
-        cfgVersion = sp.GetRequiredService<ConfigStore>().Version,
+        cfgVersion = sp.GetRequiredService<ConfigStore>().Version.ToString(),
         pushVersion = push.Version,
         evSeq = push.Seq,
         events = ev is { } since ? push.Since(since) : [],
@@ -733,7 +749,7 @@ app.MapGet("/api/widget/{page}/{widget}", (string page, string widget, bool? for
     runner.Get(page, widget, force == true) is { } r ? Results.Json(r) : Results.NotFound());
 
 app.MapGet("/api/config", (ConfigStore cfg, HttpRequest req, ShortcutIconUploads icons) =>
-    Results.Json(new { version = cfg.Version, config = cfg.Get().ToPublic(req.Headers["X-DeckBox-Device"].ToString(),
+    Results.Json(new { version = cfg.Version.ToString(), config = cfg.Get().ToPublic(req.Headers["X-DeckBox-Device"].ToString(),
         s => icons.Revision(s.Id) ?? ShortcutIcons.Revision(s)) }));
 
 // Phones that have talked to this agent, with their settings (Settings › Phones).
