@@ -1271,3 +1271,16 @@ body.controls-top .ap-foot { order: -1; margin-bottom: 4px; }
 .cc-note .cc-txt b { overflow-wrap: anywhere; }
 .cc-note { flex-wrap: wrap; }
 .cc-note .cc-txt { flex-basis: 150px; }
+
+/* «Порядок страниц» (DeckBox PRO) */
+#overview.sorting #ovGrid { grid-auto-rows: minmax(110px, 1fr); }
+.ov-tile.sort { cursor: default; }
+.ov-tile.sort.off { opacity: .45; }
+.ov-tile.sort:active { transform: none; }
+.ov-sort { display: flex; gap: 6px; justify-content: space-between; }
+.ov-sb { flex: 1; min-height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-hi, #1b2027); color: var(--text); font: inherit; font-size: 15px; }
+.ov-sb:disabled { opacity: .3; }
+.ov-sb:active { background: rgba(var(--ambient), .25); }
+#ovSort { margin-left: 10px; white-space: nowrap; flex: none; }
+#overview.sorting #ovVer, #overview.sorting #ovRules { display: none; }
+#overview.sorting #ovSort { background: var(--gold, #d4af37); color: #17130a; border-color: transparent; font-weight: 700; }

@@ -589,6 +589,20 @@
       else if (sc.toggle) toggles[id] = !toggles[id];
       return json({});
     }
+    if (path === '/api/pages/arrange' && method === 'POST') {
+      const c = await config();
+      const ids = (k) => (q.get(k) || '').split(',').filter(Boolean);
+      const order = ids('order'), hidden = ids('hidden');
+      const byId = Object.fromEntries((c.pages || []).map((p) => [p.id, p]));
+      if (!order.length || order.some((id) => !byId[id])) return json({ error: 'page not found' }, 404);
+      const pages = [...order.map((id) => byId[id]), ...(c.pages || []).filter((p) => !order.includes(p.id))];
+      for (const p of pages) if (hidden.includes(p.id)) p.enabled = false; else if (order.includes(p.id)) p.enabled = true;
+      if (!pages.some((p) => p.enabled !== false)) return json({ error: 'at least one page must stay visible' }, 400);
+      c.pages = pages;
+      store.set(CONFIG_KEY, c);
+      store.set('pb-demo-version', cfgVersion() + 1);
+      return json({ version: String(cfgVersion()) });
+    }
     if (path === '/api/claude-code') return json(cc);
     if (path === '/api/claude-code/install' && method === 'POST') {
       if (!cc.installed && !cc.installing) { cc.installing = true; setTimeout(() => { cc.installing = false; cc.installed = true; }, 1500); }

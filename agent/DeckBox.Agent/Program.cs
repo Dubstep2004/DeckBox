@@ -447,6 +447,20 @@ app.MapPost("/api/widget/{pageId}/{widgetId}/note", (string pageId, string widge
     };
 });
 
+// «Порядок страниц»: the phone's page overview reorders and hides pages
+app.MapPost("/api/pages/arrange", (string? order, string? hidden, string? version, ConfigStore cfg) =>
+{
+    long? expected = long.TryParse(version, out var v) ? v : null;
+    var r = PageOrder.Apply(cfg, PageOrder.Ids(order), PageOrder.Ids(hidden), expected);
+    return r.Status switch
+    {
+        200 => Results.Ok(new { version = r.Version }),
+        404 => Results.NotFound(new { error = r.Error }),
+        409 => Results.Json(new { error = r.Error }, statusCode: StatusCodes.Status409Conflict),
+        _ => Results.BadRequest(new { error = r.Error }),
+    };
+});
+
 app.MapPost("/api/shortcuts/test", async (HttpRequest req, ConfigStore cfg, ILogger<Program> log) =>
 {
     if (req.ContentType?.StartsWith("application/json") != true) return Results.StatusCode(415);

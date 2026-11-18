@@ -1526,7 +1526,17 @@ export function openOverview() {
     t.addEventListener('click', (e) => { e.stopPropagation(); haptic(); closeOverview(); goPage(i, true); });
     return t;
   };
+  sorting = null;
+  $('overview').classList.remove('sorting');
+  const hint = document.querySelector('.ov-head small');
+  if (hint?.dataset.was) { hint.textContent = hint.dataset.was; delete hint.dataset.was; }
   $('ovGrid').replaceChildren(...pages.map(tile));
+  const sortBtn = $('ovSort');
+  if (sortBtn) {
+    sortBtn.hidden = PREVIEW || (cfg.pages || []).length < 2;
+    sortBtn.textContent = '⇅ Порядок';
+    sortBtn.onclick = (e) => { e.stopPropagation(); haptic(); startSorting(); };
+  }
   renderRulesBtn();
   // several paired computers: switch between them here (a USB cable always wins)
   const pcs = pairedPcs();
@@ -1545,6 +1555,63 @@ export function openOverview() {
   ov.hidden = false;
 }
 window.openOverview = openOverview;
+
+// ---- «Порядок страниц» (DeckBox PRO): reorder and hide pages right on the phone; saved on the computer
+let sorting = null; // { list: [{ id, title, icon, widgets, shown }] } while the overview is in sorting mode
+function startSorting() {
+  sorting = { list: (cfg.pages || []).filter((p) => Array.isArray(p.widgets)).map((p) => ({ id: p.id, title: p.title, icon: p.icon, widgets: p.widgets, shown: p.enabled !== false })) };
+  $('overview').classList.add('sorting');
+  const btn = $('ovSort');
+  btn.textContent = '✓ Готово';
+  btn.onclick = (e) => { e.stopPropagation(); saveSorting(); };
+  renderSorting();
+}
+function renderSorting() {
+  const list = sorting.list;
+  const move = (i, d) => { const j = i + d; if (j < 0 || j >= list.length) return; haptic(); [list[i], list[j]] = [list[j], list[i]]; renderSorting(); };
+  const btn = (label, title, onClick, off = false) => {
+    const b = h('button', 'ov-sb', label);
+    b.type = 'button'; b.title = title; b.setAttribute('aria-label', title); b.disabled = off;
+    b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+    return b;
+  };
+  const tiles = list.map((p, i) => {
+    const map = h('div', 'ov-map', p.widgets.map((w) => {
+      const b = h('span', null, WIDGET_ICONS[w.type] || '▫️');
+      b.style.gridArea = `${w.y + 1} / ${w.x + 1} / span ${w.h} / span ${w.w}`;
+      return b;
+    }));
+    const tools = h('div', 'ov-sort',
+      btn('◀', 'Раньше', () => move(i, -1), i === 0),
+      btn(p.shown ? '👁' : '🚫', p.shown ? 'Скрыть страницу' : 'Показать страницу', () => {
+        if (p.shown && list.filter((x) => x.shown).length === 1) { toast('Хотя бы одна страница должна остаться', 'warn'); return; }
+        haptic(); p.shown = !p.shown; renderSorting();
+      }),
+      btn('▶', 'Позже', () => move(i, 1), i === list.length - 1));
+    const t = h('div', 'ov-tile sort' + (p.shown ? '' : ' off'), map, h('div', 'ov-name', h('b', null, `${i + 1}`), ` ${p.icon || ''} ${p.title}`), tools);
+    t.addEventListener('click', (e) => e.stopPropagation());
+    return t;
+  });
+  $('ovGrid').replaceChildren(...tiles);
+  const hint = document.querySelector('.ov-head small');
+  if (hint) { hint.dataset.was ??= hint.textContent; hint.textContent = '◀ ▶ переставить · 👁 скрыть или показать'; }
+}
+async function saveSorting() {
+  const list = sorting?.list;
+  if (!list) return;
+  const enc = (a) => a.map(encodeURIComponent).join(',');
+  const order = enc(list.map((p) => p.id)), hidden = enc(list.filter((p) => !p.shown).map((p) => p.id));
+  try {
+    await api(`/pages/arrange?order=${order}&hidden=${hidden}&version=${encodeURIComponent(cfgVersion ?? '')}`, 'POST', 8000);
+    toast('Порядок страниц сохранён', 'ok');
+    sorting = null;
+    await loadConfig();
+    closeOverview();
+  } catch (e) {
+    toast(String(e?.message || '').includes('409') ? 'Настройки изменились на компьютере — откройте «Порядок» ещё раз' : 'Компьютер не ответил, порядок не сохранён', 'err', '', 4);
+    if (String(e?.message || '').includes('409')) { sorting = null; await loadConfig(); closeOverview(); }
+  }
+}
 
 /** The computers this phone is paired with over Wi-Fi: [{ id, name, active }] (empty outside the app). */
 export function pairedPcs() {
