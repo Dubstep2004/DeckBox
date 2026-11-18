@@ -2900,15 +2900,23 @@ async function showUpdateOnce(s, force = false) {
   m.showUpdateCard({ latest: s.latest, name: s.name, notes: s.notes }, {
     versions: [['Компьютер', s.agentVersion], ['Приложение', s.appVersion]],
     apply: async () => {
-      const before = s.error || null;
       await fetch('/api/update/apply', { method: 'POST' });
+      let tries = 0, wasDown = false;
       const poll = setInterval(async () => {
+        tries++;
         try {
           const st = (await (await fetch('/api/update')).json()).status;
-          if (st.error && st.error !== before) { m.setUpdateProgress({ stage: 'error', error: st.error }); clearInterval(poll); }
-          else if (!st.agentUpdate && !st.appUpdate) { m.setUpdateProgress({ stage: 'done' }); clearInterval(poll); loadInfo(); }
+          if (st.error) { m.setUpdateProgress({ stage: 'error', error: st.error }); clearInterval(poll); }
           else if (st.state !== 'idle') m.setUpdateProgress({ stage: st.state });
-        } catch (_) { m.setUpdateProgress({ stage: 'restarting' }); }
+          else if (!st.agentUpdate) {
+            clearInterval(poll); loadInfo();
+            m.setUpdateProgress({ stage: 'done' });
+            if (st.appUpdate) m.setUpdateProgress({ stage: 'done', note: 'Компьютер обновлён. Телефон обновится с плашки «Вышла новая версия» в панели.' });
+          }
+          else if (wasDown) { /* the new agent is starting */ }
+          else if (tries > 8) { m.setUpdateProgress({ stage: 'error', error: 'агент не начал обновление. Скачайте DeckBox-Setup со страницы релизов.' }); clearInterval(poll); }
+        } catch (_) { wasDown = true; m.setUpdateProgress({ stage: 'restarting' }); }
+        if (tries > 150) clearInterval(poll);
       }, 2000);
     },
   });

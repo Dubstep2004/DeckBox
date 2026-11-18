@@ -102,6 +102,9 @@ Section "Запускать вместе с Windows" SecAutostart
 SectionEnd
 
 Section "Установить приложение на телефон (USB)" SecPhone
+  ; a silent update from the agent never waits for the phone: the phone updates itself from its update card
+  IfSilent 0 +2
+    Return
   DetailPrint "Установка приложения на телефон..."
   ExecWait '"$SYSDIR\cmd.exe" /c ""$INSTDIR\install-phone.cmd""'
 SectionEnd

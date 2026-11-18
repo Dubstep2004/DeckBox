@@ -134,7 +134,7 @@ export function setUpdateProgress(p) {
     case 'start': msg.textContent = 'Начинаю обновление…'; pct(3); break;
     case 'download': msg.textContent = `Скачиваю новую версию… ${p.pct || 0}%`; pct(p.pct || 0); break;
     case 'install': msg.textContent = 'Устанавливаю… Подтвердите установку на телефоне, если Android спросит.'; pct(100); break;
-    case 'done': msg.textContent = 'Готово! DeckBox обновлён.'; pct(100); break;
+    case 'done': msg.textContent = p.note || 'Готово! DeckBox обновлён.'; pct(100); go.hidden = true; card._parts.wait.textContent = 'Закрыть'; break;
     case 'error':
       msg.textContent = 'Не получилось: ' + (p.error || 'неизвестная ошибка');
       msg.classList.add('err');

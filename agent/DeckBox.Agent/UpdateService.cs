@@ -153,7 +153,16 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
                     log.LogWarning("phone update failed: {Msg}", ex.Message);
                 }
             }
+            _error = null;
             if (s.AgentUpdate && RunningInstalled) await UpdateAgentAsync(ct);
+            // an agent started from another folder (an unpacked zip, an old PhoneBox install) cannot replace itself:
+            // the Windows installer puts the new version in the right place and starts it
+            else if (s.AgentUpdate && OperatingSystem.IsWindows() && _latest?.Setup is not null) await RunSetupAsync(ct);
+            else if (s.AgentUpdate)
+                _error = $"Агент запущен не из папки установки ({InstallDir}) и не может обновить себя сам. "
+                    + "Скачайте DeckBox-Setup со страницы релизов и запустите его.";
+            else if (s.AppUpdate && !adb.Connected)
+                _error = "Телефон подключён по Wi-Fi: нажмите «Обновить» на плашке в панели на телефоне, приложение обновится само.";
         }
         catch (Exception ex)
         {
@@ -268,6 +277,16 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         _state = "restarting";
         AppRestart.Requested = true;
         life.StopApplication();
+    }
+
+    /// <summary>Downloads the verified Windows installer and runs it silently; it stops this agent and starts the new one.</summary>
+    private async Task RunSetupAsync(CancellationToken ct)
+    {
+        _state = "updating agent";
+        var setup = await VerifiedDownloadAsync(_latest!.Setup!, $"DeckBox-Setup-{_latest.Version}.exe", ct);
+        log.LogInformation("agent {Version}: running the installer (the agent runs from {Dir}, not {Install})", _latest.Version, AppContext.BaseDirectory, InstallDir);
+        _state = "restarting";
+        Process.Start(new ProcessStartInfo(setup, "/S") { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(setup)! });
     }
 
     /// <summary>Release asset download links → the same assets on api.github.com (filled by <see cref="CheckAsync"/>).</summary>
@@ -422,7 +441,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     }
 
     internal sealed record Release(string Version, string? Url, string? Apk, string? AgentZip, string? Sums,
-        string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null);
+        string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null, string? Setup = null);
 
     /// <summary>
     /// The verified phone app of the latest release, for a phone that installs it itself over Wi-Fi
@@ -483,7 +502,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     /// </summary>
     internal static Release SelectAssets(JsonElement release, string rid)
     {
-        string? apk = null, zip = null, sums = null;
+        string? apk = null, zip = null, sums = null, setup = null;
         foreach (var a in release.GetProperty("assets").EnumerateArray())
         {
             var name = a.GetProperty("name").GetString() ?? "";
@@ -491,6 +510,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
             if (name.StartsWith("DeckBox-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".apk", StringComparison.OrdinalIgnoreCase)) apk = url;
             if (name.StartsWith("DeckBoxAgent-", StringComparison.OrdinalIgnoreCase) && name.EndsWith($"-{rid}.zip", StringComparison.OrdinalIgnoreCase)) zip = url;
             if (name.StartsWith("SHA256SUMS-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) sums = url;
+            if (name.StartsWith("DeckBox-Setup-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) setup = url;
         }
         var tag = release.GetProperty("tag_name").GetString() ?? "";
         var relName = release.TryGetProperty("name", out var n) ? n.GetString() : null;
@@ -499,7 +519,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         // "DeckBox PRO 1.1.3 — Плашка обновлений" → "Плашка обновлений"
         var dash = relName?.IndexOf(" — ", StringComparison.Ordinal) ?? -1;
         var title = dash >= 0 ? relName![(dash + 3)..].Trim() : null;
-        return new Release(version, release.GetProperty("html_url").GetString(), apk, zip, sums, title, ParseNotes(body));
+        return new Release(version, release.GetProperty("html_url").GetString(), apk, zip, sums, title, ParseNotes(body), setup);
     }
 
     /// <summary>
