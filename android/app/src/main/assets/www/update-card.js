@@ -75,15 +75,14 @@ const STYLE = `
 .dbu-btn.link{border-color:transparent;font-weight:600;font-size:14px;color:#9d9686;padding:11px 6px}
 .dbu-btn:disabled{opacity:.55;cursor:default}
 .dbu-ver{margin-left:auto;font-size:12.5px;color:#9d9686;text-align:right}
-.dbu-steps{flex-basis:100%;display:none;flex-direction:column;gap:6px}
+.dbu-steps{flex-basis:100%;display:flex;flex-direction:column;gap:6px}
 .dbu-row{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px;font-size:13px}
 .dbu-row>b{color:#c9bfa6;font-weight:600}.dbu-row>b small{display:block;font-weight:400;font-size:11px;color:#8d846f}
-.dbu-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.dbu-chips span{position:relative;padding:5px 4px 7px;border-radius:9px;text-align:center;font-size:12px;color:#7d776a;background:rgba(255,255,255,.04);overflow:hidden}
-.dbu-chips span.on{color:#17130a;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));font-weight:700}
-.dbu-chips span.ok{color:var(--gold-hi, #f2d675);background:rgba(var(--ambient, 212, 175, 55),.14)}
-.dbu-chips span.bad{color:#fff;background:#b4372f}
-.dbu-chips span i{position:absolute;left:0;bottom:0;height:3px;width:0;background:rgba(23,19,10,.55);transition:width .3s}
+.dbu-prog{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+.dbu-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+.dbu-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));transition:width .4s}
+.dbu-prog em{font-style:normal;font-size:12px;color:#8d846f;white-space:nowrap;min-width:84px;text-align:right}
+.dbu-prog.ok em{color:var(--gold-hi, #f2d675)}.dbu-prog.bad em{color:#f87171}.dbu-prog.bad .dbu-bar i{background:#b4372f}
 .dbu-msg{flex-basis:100%;font-size:13.5px;color:#c9bfa6}
 .dbu-msg:empty{display:none}
 .dbu-msg.err{color:#f87171}
@@ -136,7 +135,10 @@ function frame(tag, title, name, body, foot, onBack) {
 
 const titleOf = (text, version) => { const t = el('div', 'dbu-title', text); t.append(el('b', null, version)); return t; };
 
-const STEPS = ['Скачиваю', 'Проверяю', 'Ставлю', 'Готово'];
+// one progress bar per part with a short word of what it is doing (no row of step names)
+const STEP_TEXT = ['скачивает', 'проверяет', 'ставит', '✓ готово'];
+// how far the bar is at the start of each step: the download fills most of it
+const STEP_AT = [0, 85, 92, 100];
 const PART_NAMES = { phone: 'Телефон', pc: 'Компьютер' };
 
 /** 1,3 МБ · 48 МБ · 820 КБ */
@@ -183,7 +185,7 @@ export function showUpdateCard(u, { apply, versions = [], parts, sizes = {}, onC
   const steps = el('div', 'dbu-steps');
   const rows = {};
   for (const p of which.length ? which : ['phone']) {
-    const chips = el('div', 'dbu-chips', ...STEPS.map((s) => el('span', null, s, el('i'))));
+    const chips = el('div', 'dbu-prog', el('div', 'dbu-bar', el('i')), el('em', null, ''));
     rows[p] = chips;
     // «Телефон · 1,3 МБ»: only the parts this version changes are downloaded, and how much each one is
     const size = fmtSize(sizes[p]);
@@ -258,13 +260,13 @@ const AGENT_STATES = {
 const PHONE_STAGES = { download: 0, verify: 1, install: 2, done: 3 };
 
 function mark(part, step, { pct, bad } = {}) {
-  const chips = card?._parts?.rows?.[part];
-  if (!chips) return;
+  const row = card?._parts?.rows?.[part];
+  if (!row) return;
   card._parts.steps.style.display = 'flex';
-  [...chips.children].forEach((c, i) => {
-    c.className = bad && i === step ? 'bad' : i < step || (i === step && step === 3) ? 'ok' : i === step ? 'on' : '';
-    c.lastChild.style.width = i === step && pct != null && step < 3 ? Math.max(0, Math.min(100, pct)) + '%' : '0';
-  });
+  const width = step === 0 && pct != null ? Math.max(2, Math.min(99, pct)) * 0.85 : STEP_AT[step] ?? 0;
+  row.className = 'dbu-prog' + (bad ? ' bad' : step === 3 ? ' ok' : '');
+  row.querySelector('.dbu-bar i').style.width = (bad ? Math.max(width, 6) : width) + '%';
+  row.querySelector('em').textContent = bad ? 'ошибка' : step === 0 && pct ? `${STEP_TEXT[0]} ${Math.round(pct)}%` : STEP_TEXT[step];
 }
 
 /**
@@ -302,7 +304,7 @@ export function setUpdateProgress(p) {
       go.hidden = true; skip.hidden = true; wait.textContent = 'Закрыть';
       break;
     case 'error':
-      mark(part, Math.max(0, [...(card._parts.rows[part]?.children || [])].findIndex((c) => c.className === 'on')), { bad: true });
+      mark(part, 0, { bad: true });
       msg.textContent = 'Не получилось: ' + (p.error || 'неизвестная ошибка');
       msg.classList.add('err');
       go.disabled = false;

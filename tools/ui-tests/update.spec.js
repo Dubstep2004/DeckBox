@@ -39,7 +39,8 @@ test('«Обновить» shows the steps for each part, «Не напомин�
   await expect(card.locator('.dbu-row')).toHaveCount(2); // the phone and the computer get the new version
   await card.getByRole('button', { name: 'Обновить' }).click();
   await expect(card.locator('.dbu-steps')).toBeVisible();
-  await expect(card.locator('.dbu-chips span').first()).toHaveText('Скачиваю');
+  await expect(card.locator('.dbu-chips span')).toHaveCount(0); // no row of step names, one bar per part
+  await expect(card.locator('.dbu-prog em').first()).toContainText(/скачивает|ставит|проверяет/);
   await page.reload();
   await page.locator('.dbu').getByRole('button', { name: 'Не напоминать' }).click();
   await page.reload();
@@ -83,6 +84,7 @@ test('a release description becomes the card\'s sections', async ({ page }) => {
 test('the card shows how much each part downloads, and the speed and time left while the computer downloads', async ({ page }) => {
   await page.goto('/panel/?update=1');
   const card = page.locator('.dbu');
+  await expect(card.locator('.dbu-row').nth(0)).toBeVisible(); // what downloads and how much, before «Обновить»
   await expect(card.locator('.dbu-row').nth(0)).toContainText('1,3 МБ');
   await expect(card.locator('.dbu-row').nth(1)).toContainText('48 МБ');
   await card.getByRole('button', { name: 'Обновить' }).click();
