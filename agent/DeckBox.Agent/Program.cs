@@ -24,6 +24,8 @@ if (!firstInstance)
 }
 
 if (!args.Contains("--config")) AppPaths.EnsureConfig();
+// the old PhoneBox would hold the same port and come back at every sign-in: stop it before DeckBox starts listening
+var legacyStopped = OperatingSystem.IsWindows() ? LegacyPhoneBox.StopOnPc() : [];
 // absolute from here on: a bare file name ("--config profile.json") has no folder, and the files kept next to the
 // config (the Spotify login, backups) need one
 var configPath = Path.GetFullPath(args.SkipWhile(a => a != "--config").Skip(1).FirstOrDefault() ?? AppPaths.ConfigPath);
@@ -447,6 +449,13 @@ app.MapPost("/api/widget/{pageId}/{widgetId}/note", (string pageId, string widge
     };
 });
 
+// the old PhoneBox app on the phones on USB: uninstalled when the panel's «Удалить» is tapped
+app.MapPost("/api/legacy/uninstall", async (AdbReverse adb, ConfigStore cfg, CancellationToken ct) =>
+{
+    var removed = await adb.UninstallLegacyAsync(ct);
+    return Results.Json(new { removed, left = adb.LegacyApp });
+});
+
 // «Порядок страниц»: the phone's page overview reorders and hides pages
 app.MapPost("/api/pages/arrange", (string? order, string? hidden, string? version, ConfigStore cfg) =>
 {
@@ -537,7 +546,10 @@ object State(IServiceProvider sp, long? ev)
     var push = sp.GetRequiredService<PushStore>();
     return new
     {
-        update = upd.Status() is { } u && (u.AppUpdate || u.AgentUpdate) ? new { latest = u.Latest, app = u.AppUpdate, agent = u.AgentUpdate, name = u.Name, notes = u.Notes, state = u.State, error = u.Error, url = u.ReleaseUrl } : null,
+        update = upd.Status() is { } u && (u.AppUpdate || u.AgentUpdate) ? new { latest = u.Latest, app = u.AppUpdate, agent = u.AgentUpdate, name = u.Name, notes = u.Notes, state = u.State, error = u.Error, url = u.ReleaseUrl,
+            appSize = u.AppSize, agentSize = u.AgentSize, download = u.Download } : null,
+        // phones on USB that still have the old PhoneBox app: the panel offers to uninstall it
+        legacyApp = sp.GetRequiredService<AdbReverse>().LegacyApp is { Length: > 0 } legacy ? legacy : null,
         agentVersion = AppPaths.Version,
         quiet = QuietMode.Snapshot() is { On: true } q ? new { since = q.Since } : null,
         game = GameMonitor.Current,
@@ -942,6 +954,7 @@ app.MapDelete("/api/settings/shortcut-icon", (string id, HttpRequest req, Config
     return Results.Ok(new { version = cfg.VersionText });
 });
 
+foreach (var what in legacyStopped) app.Logger.LogInformation("old PhoneBox: {What}", what);
 app.Lifetime.ApplicationStarted.Register(() =>
     app.Logger.LogInformation("DeckBox agent {Version} ready on http://127.0.0.1:{Port} (config: {Path})", AppPaths.Version, Port, configPath));
 

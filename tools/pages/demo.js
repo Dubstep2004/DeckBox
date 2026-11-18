@@ -15,6 +15,8 @@
   const cc = { installed: !DEMO_NO_CC, signedIn: !DEMO_NO_CC, installing: false, error: null, canInstall: true };
   // ?game=1: a game runs (the «Игровой режим» widget and page)
   const DEMO_GAME = new URLSearchParams(location.search).has('game');
+  // ?legacy=1: the phone on USB still has the old PhoneBox app (UI tests)
+  let demoLegacy = new URLSearchParams(location.search).has('legacy') ? ['DEMO0001'] : [];
   window.__deckboxDemo = true;
   let demoQuiet = 0;
   const realFetch = window.fetch.bind(window);
@@ -208,6 +210,7 @@
         appSize: 1400000, agentSize: DEMO_APP_ONLY ? null : 50000000, ...demoDownload(),
         notes: [{ title: L('✨ New', '✨ Новое'), items: [L('Shows what is new with Update and Later.', 'Показывает, что нового, с кнопками «Обновить» и «Позже».')] },
           { title: L('🛠 Fixed', '🛠 Исправлено'), items: [L('Small fixes.', 'Мелкие исправления.')] }] } : null,
+      legacyApp: demoLegacy.length ? demoLegacy : null,
       agentVersion: VERSION, ts: now(),
       quiet: demoQuiet ? { since: demoQuiet } : null,
       game: DEMO_GAME ? { name: 'Cyberpunk 2077', process: 'Cyberpunk2077', since: now() - 47 * 60_000, fps: Math.round(wave(5, 112, 144)) } : null, host: 'DESK-PC', cfgVersion: cfgVersion(), pushVersion, evSeq: seq, rules: ['music'], rulesPaused: rulesPaused > now() ? rulesPaused : null,
@@ -603,6 +606,7 @@
       store.set('pb-demo-version', cfgVersion() + 1);
       return json({ version: String(cfgVersion()) });
     }
+    if (path === '/api/legacy/uninstall' && method === 'POST') { const removed = demoLegacy; demoLegacy = []; return json({ removed, left: [] }); }
     if (path === '/api/claude-code') return json(cc);
     if (path === '/api/claude-code/install' && method === 'POST') {
       if (!cc.installed && !cc.installing) { cc.installing = true; setTimeout(() => { cc.installing = false; cc.installed = true; }, 1500); }

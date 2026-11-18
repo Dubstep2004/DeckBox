@@ -2078,8 +2078,36 @@ function followUpdates(s) {
   const want = u?.app ? u.latest : '';
   if (want !== badgeFor) { badgeFor = want; try { bridge?.updateBadge?.(want); } catch (_) {} }
   whatsNew(s);
+  legacyPrompt(s);
 }
 let badgeFor = null;
+
+// the old PhoneBox app is still on the phone (found over USB): offer once to uninstall it
+let legacyAsked = false;
+function legacyPrompt(s) {
+  if (PREVIEW || legacyAsked || !s.legacyApp?.length || store.get('legacy-keep', false) || document.querySelector('.legacy-backdrop')) return;
+  legacyAsked = true;
+  const backdrop = h('div', 'legacy-backdrop'); // not .session-backdrop: page changes close those
+  const close = () => backdrop.remove();
+  const del = h('button', 'cc-btn primary', '🗑 Удалить PhoneBox');
+  const keep = h('button', 'cc-btn', 'Оставить');
+  del.type = keep.type = 'button';
+  del.addEventListener('click', async () => {
+    haptic(); del.disabled = true; del.textContent = 'Удаляю…';
+    try {
+      const r = await api('/legacy/uninstall', 'POST', 30000);
+      toast(r?.removed?.length ? 'Старое приложение PhoneBox удалено' : 'Не получилось удалить PhoneBox: удалите его в настройках Android', r?.removed?.length ? 'ok' : 'err', '', 4);
+    } catch (_) { toast('Компьютер не ответил. Удалите PhoneBox в настройках Android', 'err', '', 4); }
+    close();
+  });
+  keep.addEventListener('click', () => { haptic(); store.set('legacy-keep', true); close(); });
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  backdrop.append(h('div', 'session-panel legacy-panel', h('div', 'session-panel-head', h('span', null, 'DeckBox PRO')),
+    h('h2', null, 'Найден старый PhoneBox'),
+    h('p', 'cc-lead', 'На этом телефоне ещё стоит старое приложение PhoneBox. DeckBox его полностью заменяет, а старое может мешать: открываться вместо панели и занимать место. Удалить его? Ваши страницы и настройки DeckBox не пострадают.'),
+    h('div', 'legacy-btns', del, keep)));
+  document.body.append(backdrop);
+}
 
 /** «Обновлено до 1.5.0»: once, the first time the panel sees a newer app or agent than before. */
 async function whatsNew(s) {

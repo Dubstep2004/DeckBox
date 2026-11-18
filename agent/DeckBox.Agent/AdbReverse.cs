@@ -16,6 +16,27 @@ public sealed class AdbReverse(ConfigStore cfg, ILogger<AdbReverse> log, AgentEn
 
     /// <summary>Connected phones that do not have the DeckBox app yet (installed from Settings, e.g. after winget / Scoop).</summary>
     public string[] MissingApp => _missingApp;
+    private volatile string[] _legacyApp = [];
+    private readonly HashSet<string> _legacyChecked = [];
+    /// <summary>Connected phones that still have the old PhoneBox app (net.oxog.phonebox).</summary>
+    public string[] LegacyApp => _legacyApp;
+
+    /// <summary>Uninstalls the old PhoneBox app from the phones that have it; returns the serials it was removed from.</summary>
+    public async Task<string[]> UninstallLegacyAsync(CancellationToken ct)
+    {
+        var adb = FindAdb(cfg.Get().AdbPath);
+        if (adb is null) return [];
+        var removed = new List<string>();
+        foreach (var d in _legacyApp)
+        {
+            var r = await Adb(adb, $"-s {d} uninstall {LegacyPhoneBox.AppPackage}", ct, anyExit: true);
+            if (r.Contains("Success", StringComparison.OrdinalIgnoreCase)) { removed.Add(d); log.LogInformation("{Device}: old PhoneBox app uninstalled", d); }
+            else log.LogWarning("{Device}: old PhoneBox app not uninstalled: {Answer}", d, r.Trim());
+        }
+        _legacyApp = _legacyApp.Except(removed).ToArray();
+        StateChanged?.Invoke();
+        return removed.ToArray();
+    }
     private const string Rule = "tcp:8765";
     private string TargetRule => $"tcp:{endpoint?.Port ?? 8765}";
 
@@ -130,6 +151,17 @@ public sealed class AdbReverse(ConfigStore cfg, ILogger<AdbReverse> log, AgentEn
         if (devices.Length == 0) { Report("no phone connected, waiting..."); return; }
 
         _missingApp = _missingApp.Where(devices.Contains).ToArray();
+        // the old PhoneBox app: looked for once per phone while it is plugged in
+        _legacyApp = _legacyApp.Where(devices.Contains).ToArray();
+        lock (_legacyChecked) _legacyChecked.IntersectWith(devices);
+        foreach (var d in devices)
+        {
+            bool check;
+            lock (_legacyChecked) check = _legacyChecked.Add(d);
+            if (!check) continue;
+            var old = (await Adb(adb, $"-s {d} shell pm path {LegacyPhoneBox.AppPackage}", ct, anyExit: true)).Contains("package:");
+            if (old && !_legacyApp.Contains(d)) { _legacyApp = _legacyApp.Union([d]).ToArray(); log.LogInformation("{Device}: the old PhoneBox app is installed", d); StateChanged?.Invoke(); }
+        }
         foreach (var d in devices)
         {
             var list = await Adb(adb, $"-s {d} reverse --list", ct);

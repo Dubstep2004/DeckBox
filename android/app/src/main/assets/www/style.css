@@ -1284,3 +1284,5 @@ body.controls-top .ap-foot { order: -1; margin-bottom: 4px; }
 #ovSort { margin-left: 10px; white-space: nowrap; flex: none; }
 #overview.sorting #ovVer, #overview.sorting #ovRules { display: none; }
 #overview.sorting #ovSort { background: var(--gold, #d4af37); color: #17130a; border-color: transparent; font-weight: 700; }
+.legacy-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.legacy-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(3, 5, 9, .78); }
