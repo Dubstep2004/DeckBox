@@ -21,6 +21,8 @@ public sealed class AgentConfig
     public GameConfig Game { get; set; } = new();
     /// <summary>«Утренний брифинг»: weather, the day's events, tasks and rates after the computer starts.</summary>
     public BriefingConfig Briefing { get; set; } = new();
+    /// <summary>«Блокировка PIN-кодом»: the panel shows its data but takes no taps until the code is entered.</summary>
+    public LockConfig Lock { get; set; } = new();
     public ClaudeConfig Claude { get; set; } = new();
     public List<PageConfig> Pages { get; set; } = [];
     public List<Shortcut> Shortcuts { get; set; } = [];
@@ -79,6 +81,7 @@ public sealed class AgentConfig
         charge = new { Charge.Enabled, Charge.Min, Charge.Max },
         briefing = Briefing,
         game = new { Game.Enabled },
+        @lock = new { Lock.PinHash, Lock.AfterMin },
     };
 
     /// <summary>Ending processes is allowed when an enabled page has a processes widget that allows it.</summary>
@@ -201,6 +204,14 @@ public sealed class GameConfig
     public bool Enabled { get; set; } = true;
     /// <summary>Extra process names that are games ("eldenring", "GTA5.exe"), besides game libraries and full screen.</summary>
     public List<string> Processes { get; set; } = [];
+}
+
+public sealed class LockConfig
+{
+    /// <summary>SHA-256 of "deckbox-pin:" + the code, in hex; empty = no lock. The code itself is never stored.</summary>
+    public string PinHash { get; set; } = "";
+    /// <summary>Lock again after this many minutes without a touch; 0 = only when the app starts.</summary>
+    public int AfterMin { get; set; } = 5;
 }
 
 public sealed class BriefingConfig
@@ -531,11 +542,15 @@ public sealed partial class ConfigStore(string path)
         // DeckBox speaks Russian only; a language saved by an older version (PhoneBox "auto", "en", "tr"…) becomes "ru"
         c.Display.Language = "ru";
         // DeckBox PRO replaced the old themes; the old default teal accent becomes the PRO gold, a colour the user chose stays
-        c.Display.Theme = "pro";
+        // DeckBox PRO comes in four metals; the old PhoneBox themes become gold
+        if (c.Display.Theme is not ("pro" or "silver" or "emerald" or "ruby")) c.Display.Theme = "pro";
         if (c.Display.Wallpaper is not ("gold" or "none")) c.Display.Wallpaper = "gold";
         c.Briefing ??= new();
         c.Briefing.Minutes = Math.Clamp(c.Briefing.Minutes, 1, 240);
         c.Briefing.Tasks = (c.Briefing.Tasks ?? []).Select(x => (x ?? "").Trim()).Where(x => x.Length > 0).Take(12).Select(x => x.Length > 120 ? x[..120] : x).ToList();
+        c.Lock ??= new();
+        c.Lock.PinHash = System.Text.RegularExpressions.Regex.IsMatch(c.Lock.PinHash ?? "", "^[0-9a-f]{64}$") ? c.Lock.PinHash! : "";
+        c.Lock.AfterMin = Math.Clamp(c.Lock.AfterMin, 0, 1440);
         c.Game ??= new();
         c.Game.Processes = (c.Game.Processes ?? []).Select(x => (x ?? "").Trim()).Where(x => x.Length > 0).Take(40).ToList();
         if (string.IsNullOrWhiteSpace(c.Display.Accent) || string.Equals(c.Display.Accent.Trim(), "#2dd4bf", StringComparison.OrdinalIgnoreCase))

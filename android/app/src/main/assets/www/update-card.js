@@ -35,23 +35,23 @@ function later(version) {
 
 const STYLE = `
 .dbu-back{position:fixed;inset:0;z-index:9000;background:rgba(5,5,7,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:4vmin;animation:dbu-in .25s ease}
-.dbu{position:relative;width:min(620px,100%);max-height:100%;display:flex;flex-direction:column;background:linear-gradient(160deg,#1a1814,#0e0e10 60%);border:1px solid rgba(212,175,55,.45);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(242,214,117,.08) inset;color:#f1ece1;font-family:inherit;overflow:hidden}
-.dbu-head{padding:22px 26px 14px;border-bottom:1px solid rgba(212,175,55,.18)}
-.dbu-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#17130a;background:linear-gradient(90deg,#d4af37,#f2d675);padding:4px 10px;border-radius:999px;font-weight:700}
+.dbu{position:relative;width:min(620px,100%);max-height:100%;display:flex;flex-direction:column;background:linear-gradient(160deg,#1a1814,#0e0e10 60%);border:1px solid rgba(var(--ambient, 212, 175, 55),.45);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(var(--ambient, 212, 175, 55),.08) inset;color:#f1ece1;font-family:inherit;overflow:hidden}
+.dbu-head{padding:22px 26px 14px;border-bottom:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
+.dbu-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#17130a;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));padding:4px 10px;border-radius:999px;font-weight:700}
 .dbu-title{margin:12px 0 2px;font-size:26px;font-weight:800;letter-spacing:-.01em}
-.dbu-title b{background:linear-gradient(90deg,#d4af37,#f2d675);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dbu-title b{background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));-webkit-background-clip:text;background-clip:text;color:transparent}
 .dbu-name{color:#c9bfa6;font-size:16px}
 .dbu-body{padding:6px 26px 8px;overflow:auto;flex:1}
-.dbu-sec{margin:14px 0 4px;font-size:15px;font-weight:700;color:#f2d675}
+.dbu-sec{margin:14px 0 4px;font-size:15px;font-weight:700;color:var(--gold-hi, #f2d675)}
 .dbu-body ul{margin:0;padding-left:20px}
 .dbu-body li{margin:5px 0;font-size:14.5px;line-height:1.4;color:#e6dfcf}
-.dbu-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 26px 20px;border-top:1px solid rgba(212,175,55,.18)}
-.dbu-btn{appearance:none;border:1px solid rgba(212,175,55,.5);background:transparent;color:#f1ece1;font:inherit;font-size:16px;font-weight:700;padding:12px 22px;border-radius:14px;cursor:pointer}
-.dbu-btn.go{background:linear-gradient(90deg,#d4af37,#f2d675);color:#17130a;border-color:transparent;box-shadow:0 6px 20px rgba(212,175,55,.3)}
+.dbu-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 26px 20px;border-top:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
+.dbu-btn{appearance:none;border:1px solid rgba(var(--ambient, 212, 175, 55),.5);background:transparent;color:#f1ece1;font:inherit;font-size:16px;font-weight:700;padding:12px 22px;border-radius:14px;cursor:pointer}
+.dbu-btn.go{background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));color:#17130a;border-color:transparent;box-shadow:0 6px 20px rgba(var(--ambient, 212, 175, 55),.3)}
 .dbu-btn:disabled{opacity:.55;cursor:default}
 .dbu-ver{margin-left:auto;font-size:12.5px;color:#9d9686;text-align:right}
-.dbu-bar{height:4px;background:rgba(212,175,55,.15);border-radius:4px;overflow:hidden;flex-basis:100%;display:none}
-.dbu-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#d4af37,#f2d675);transition:width .3s}
+.dbu-bar{height:4px;background:rgba(var(--ambient, 212, 175, 55),.15);border-radius:4px;overflow:hidden;flex-basis:100%;display:none}
+.dbu-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));transition:width .3s}
 .dbu-msg{flex-basis:100%;font-size:13.5px;color:#c9bfa6}
 .dbu-msg:empty{display:none}
 .dbu-msg.err{color:#f87171}

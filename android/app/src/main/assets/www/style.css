@@ -22,6 +22,11 @@
   color-scheme: dark;
 }
 
+/* the other PRO metals: --gold / --gold-hi are "the metal" of the theme, whatever it is */
+body[data-theme="silver"] { --gold: #c3cad5; --gold-hi: #eef2f8; --line: rgba(195, 202, 213, 0.16); --text: #eef1f5; --muted: #9aa1ac; --dim: #626873; --card: rgba(230, 236, 248, 0.045); --card-hi: rgba(230, 236, 248, 0.08); --cpu: #c9d3e2; }
+body[data-theme="emerald"] { --gold: #2fbf8a; --gold-hi: #7ff0c2; --line: rgba(47, 191, 138, 0.16); --text: #ecf6f1; --muted: #93a79e; --dim: #5b6d65; --card: rgba(220, 255, 240, 0.04); --card-hi: rgba(220, 255, 240, 0.075); --cpu: #5fd6a8; --gpu: #e8c15a; }
+body[data-theme="ruby"] { --gold: #e0455f; --gold-hi: #ff8fa1; --line: rgba(224, 69, 95, 0.16); --text: #f7ecee; --muted: #ab9398; --dim: #6f5a5e; --card: rgba(255, 228, 232, 0.045); --card-hi: rgba(255, 228, 232, 0.08); --cpu: #ff7a8e; }
+
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
@@ -163,7 +168,7 @@ body.night #pagePauseOverlay { display: none; }
   display: flex; flex-direction: column; gap: 5px; padding: 7px; border-radius: 14px; min-height: 0;
   background: #10141a; border: 1px solid var(--line); text-align: left;
 }
-#ovVer { margin-left: auto; font-size: 11.5px; font-weight: 600; color: var(--gold, #d4af37); white-space: nowrap; cursor: default; }
+#ovVer { margin-left: auto; font-size: 11.5px; font-weight: 600; color: var(--gold); white-space: nowrap; cursor: default; }
 #ovVer.new { cursor: pointer; text-decoration: underline dotted; }
 #ovPcs { margin-left: 10px; display: flex; gap: 6px; }
 .ov-pc { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; }
@@ -247,7 +252,7 @@ body.night #navCard, body.night #navChip { display: none; }
 .status .qm b { font-weight: 600; }
 .status .qm .sep { margin-right: 5px; }
 .status .smini { color: #fca5a5; font-weight: 600; }
-.status .upd { color: var(--gold-hi, #f2d675); font-weight: 700; cursor: pointer; text-decoration: underline dotted; }
+.status .upd { color: var(--gold-hi); font-weight: 700; cursor: pointer; text-decoration: underline dotted; }
 .dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--dim); transition: background .3s; }
 .dot.on { background: var(--ok); box-shadow: 0 0 8px rgba(34, 197, 94, .7); }
 .dot.off { background: var(--err); }
@@ -1224,4 +1229,4 @@ body.controls-top .ap-foot { order: -1; margin-bottom: 4px; }
 /* ---------- DeckBox PRO details ---------- */
 /* a gold hairline along the top of every card and gold progress accents */
 .card::selection { background: rgba(var(--ambient), .3); }
-#dots { background: rgba(11, 11, 13, .55); border-color: rgba(212, 175, 55, .12); }
+#dots { background: rgba(11, 11, 13, .55); border-color: rgba(var(--ambient), .12); }

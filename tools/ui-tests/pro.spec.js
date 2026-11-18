@@ -60,7 +60,7 @@ test('«Игровой режим» shows the game, FPS, temperatures and opens 
 test('«Статистика за неделю» draws seven days, the totals and the top apps', async ({ page }) => {
   await show(page, [{ id: 's', type: 'weekstats', x: 0, y: 0, w: 8, h: 6 }]);
   await expect(page.locator('.ws-bar')).toHaveCount(7);
-  await expect(page.locator('.ws-top')).toContainText('ПК работал за 7 дней');
+  await expect(page.locator('.ws-top')).toContainText('за 7 дней');
   await expect(page.locator('.ws-apps span')).toHaveCount(5);
 });
 
@@ -89,4 +89,43 @@ test('the PRO settings list the template store and open the wizard', async ({ pa
   await page.locator('#modalBody .tpl', { hasText: 'Геймер' }).click();
   await expect(page.locator('#modalBody')).toContainText('Готово');
   await expect(page.locator('#save')).toBeEnabled();
+});
+
+test('the PRO themes repaint the panel, and a hand-picked accent stays', async ({ page }) => {
+  for (const [theme, rgb] of [['ruby', '224, 69, 95'], ['emerald', '47, 191, 138'], ['silver', '195, 202, 213']]) {
+    await page.addInitScript(([theme]) => {
+      localStorage.setItem('pb-demo-config', JSON.stringify({ night: { enabled: false }, rules: [], shortcuts: [], display: { theme, accent: '#d4af37' },
+        pages: [{ id: 'p', title: 'P', enabled: true, widgets: [{ id: 'q', type: 'quiet', x: 0, y: 0, w: 4, h: 3 }] }] }));
+    }, [theme]);
+    await page.goto('/panel/');
+    await expect(page.locator('body')).toHaveAttribute('data-theme', theme);
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())).toBe(`rgb(${rgb})`);
+  }
+  await page.addInitScript(() => {
+    localStorage.setItem('pb-demo-config', JSON.stringify({ night: { enabled: false }, rules: [], shortcuts: [], display: { theme: 'ruby', accent: '#3366ff' }, pages: [] }));
+  });
+  await page.goto('/panel/');
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())).toBe('rgb(51, 102, 255)');
+});
+
+test('a PIN locks the panel: taps do nothing until the right code', async ({ page }) => {
+  // SHA-256 of "deckbox-pin:2580"
+  const hash = require('crypto').createHash('sha256').update('deckbox-pin:2580').digest('hex');
+  await page.addInitScript((hash) => {
+    localStorage.setItem('pb-demo-config', JSON.stringify({ night: { enabled: false }, rules: [], shortcuts: [], lock: { pinHash: hash, afterMin: 5 },
+      pages: [{ id: 'p', title: 'P', enabled: true, widgets: [{ id: 'q', type: 'quiet', x: 0, y: 0, w: 4, h: 3 }] }] }));
+  }, hash);
+  await page.goto('/panel/');
+  const lock = page.locator('.pinlock');
+  await expect(lock).toBeVisible();
+  await page.mouse.click(100, 100); // a tap on the panel opens the keypad instead of pressing the button
+  await expect(page.locator('.pl-keys')).toBeVisible();
+  await expect(page.locator('.pro-dnd')).toHaveCount(0);
+  for (const k of '1111') await page.locator('.pl-keys button', { hasText: new RegExp(`^${k}$`) }).click();
+  await page.getByRole('button', { name: 'Открыть' }).click();
+  await expect(page.locator('.pl-msg')).toHaveText('Неверный код');
+  for (const k of '2580') await page.locator('.pl-keys button', { hasText: new RegExp(`^${k}$`) }).click();
+  await expect(lock).toHaveCount(0);
+  await page.locator('.w-quiet .q-btn').click();
+  await expect(page.locator('.pro-dnd')).toBeVisible();
 });

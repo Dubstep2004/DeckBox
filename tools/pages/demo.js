@@ -126,6 +126,8 @@
       shortcuts: (c.shortcuts || []).map(({ id, label, icon, color, toggle, cmd }) => ({ id, label, icon, color, toggle: !!toggle || cmd === 'builtin:mute' })),
       rules: (c.rules || []).map(({ id, name, enabled, when }) => ({ id, name, enabled: enabled !== false, when })),
       charge: { enabled: !!c.charge?.enabled, min: c.charge?.min ?? 50, max: c.charge?.max ?? 80 },
+      briefing: c.briefing ?? null, game: { enabled: c.game?.enabled !== false },
+      lock: { pinHash: c.lock?.pinHash || '', afterMin: c.lock?.afterMin ?? 5 },
     };
   }
 

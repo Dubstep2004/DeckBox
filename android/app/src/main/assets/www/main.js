@@ -547,6 +547,8 @@ export const setMediaState = (m) => {
 };
 // The background glow: the accent colour (Settings › Display), or the album art's colour while music plays.
 export let DEFAULT_AMBIENT = '212, 175, 55';
+/** The PRO themes and their accent colours (style.css has the rest of each palette). */
+export const THEMES = { pro: '#d4af37', silver: '#c3cad5', emerald: '#2fbf8a', ruby: '#e0455f' };
 export let artTint = true;
 export let currentArtColor = null;
 export const setArtColor = (c) => { currentArtColor = c; setAmbient(c); };
@@ -1790,8 +1792,12 @@ export function applyDisplay() {
   LOCALE = I18n ? I18n.getLocale() : 'en-GB';
   I18n?.applyDom();
   // theme and accent apply in the preview and the browser too
-  document.body.dataset.theme = 'pro'; // DeckBox PRO is the only design
-  const accent = hexToRgb(d.accent);
+  // DeckBox PRO comes in four metals: gold (pro), silver, emerald and ruby
+  const theme = THEMES[d.theme] ? d.theme : 'pro';
+  document.body.dataset.theme = theme;
+  // an accent left at one of the themes' own colours follows the theme; a colour picked by hand stays
+  const own = !d.accent || Object.values(THEMES).includes(String(d.accent).toLowerCase());
+  const accent = hexToRgb(own ? THEMES[theme] : d.accent);
   const before = DEFAULT_AMBIENT;
   DEFAULT_AMBIENT = accent || '212, 175, 55';
   document.documentElement.style.setProperty('--accent', `rgb(${DEFAULT_AMBIENT})`);

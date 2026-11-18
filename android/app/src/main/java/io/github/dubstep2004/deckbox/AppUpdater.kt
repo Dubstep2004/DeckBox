@@ -40,6 +40,15 @@ class AppUpdater(private val context: Context, private val link: AgentLink, priv
             if (Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         }
         val id = installer.createSession(params)
+        try { write(installer, id, reply) }
+        catch (e: Exception) {
+            // a download cut off half-way must not leave a half-written install session behind
+            try { installer.abandonSession(id) } catch (_: Exception) { }
+            throw e
+        }
+    }
+
+    private fun write(installer: PackageInstaller, id: Int, reply: AgentLink.Reply) {
         installer.openSession(id).use { session ->
             var last = -1
             reply.body.use { input ->
@@ -94,6 +103,7 @@ class AppUpdater(private val context: Context, private val link: AgentLink, priv
     /** The app was just replaced by its new version: open the panel again (only after an update from the card). */
     class Replaced : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
             val prefs = context.getSharedPreferences("deckbox-update", Context.MODE_PRIVATE)
             if (System.currentTimeMillis() - prefs.getLong("started", 0) > 30 * 60_000L) return
             prefs.edit().remove("started").apply()

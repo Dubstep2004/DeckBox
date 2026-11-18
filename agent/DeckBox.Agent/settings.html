@@ -443,11 +443,27 @@ dd { margin: 0; word-break: break-all; }
       </div>
 
       <div class="card">
+        <h3>Блокировка PIN-кодом</h3>
+        <p class="hint">Панель на телефоне остаётся видна, но кнопки не нажимаются, пока не введён код. Удобно, если рядом
+          дети. Сам код нигде не хранится: в настройках лежит только его отпечаток (SHA-256).</p>
+        <div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field" style="width:200px"><label>Новый PIN (4–8 цифр)</label><input id="pinNew" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>
+          <div class="field" style="width:220px"><label>Блокировать снова через</label>
+            <select data-bind="lock.afterMin" data-type="int"><option value="1">1 минуту</option><option value="5">5 минут</option><option value="15">15 минут</option><option value="30">30 минут</option><option value="60">1 час</option><option value="0">только при запуске</option></select></div>
+          <button class="btn primary" id="pinSet" type="button">Установить PIN</button>
+          <button class="btn" id="pinOff" type="button">Убрать PIN</button>
+        </div>
+        <p class="hint" id="pinState"></p>
+      </div>
+
+      <div class="card">
         <h3>Панель на телефоне</h3>
         <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="display.gestures"><span></span></label>
           <span>Жесты: свайп двумя пальцами вниз выключает звук на ПК, двойной тап по пустому месту — пауза музыки</span></div>
         <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="display.sleepWithPc"><span></span></label>
           <span>Гасить экран телефона, когда компьютер спит, и включать, когда он просыпается</span></div>
+        <div class="field"><label>Тема PRO</label>
+          <div class="row" id="themePick" style="gap:10px;flex-wrap:wrap"></div></div>
         <div class="field" style="width:280px"><label>Обои</label>
           <select data-bind="display.wallpaper"><option value="gold">Анимированное золото</option><option value="none">Без анимации</option></select></div>
         <p class="hint">Новые виджеты: «Не беспокоить», «Курс ЦБ РФ», «Игровой режим», «Утренний брифинг», «Статистика за
@@ -2981,15 +2997,51 @@ window.addEventListener('beforeunload', (e) => { if (!$('save').disabled) { e.pr
 
 
 // ---------------------------------------------------------------- DeckBox PRO: briefing, game, backup, store, wizard
+
+// the four PRO metals (the panel's style.css has the full palettes)
+const PRO_THEMES = [['pro', 'Золото', '#d4af37', '#f2d675'], ['silver', 'Серебро', '#c3cad5', '#eef2f8'], ['emerald', 'Изумруд', '#2fbf8a', '#7ff0c2'], ['ruby', 'Рубин', '#e0455f', '#ff8fa1']];
+function paintTheme() {
+  const cur = PRO_THEMES.find((x) => x[0] === cfg.display?.theme) || PRO_THEMES[0];
+  // the settings page wears the same metal as the panel
+  document.documentElement.style.setProperty('--accent', cur[2]);
+  document.documentElement.style.setProperty('--accent-hi', cur[3]);
+  $('themePick').replaceChildren(...PRO_THEMES.map(([id, name, c, hi]) => h('button', {
+    type: 'button', class: 'btn' + (id === cur[0] ? ' primary' : ''), 'aria-pressed': String(id === cur[0]),
+    style: { display: 'flex', alignItems: 'center', gap: '8px' },
+    onclick: () => {
+      cfg.display.theme = id;
+      // an accent left at a theme colour follows the new theme
+      if (!cfg.display.accent || PRO_THEMES.some((x) => x[2] === String(cfg.display.accent).toLowerCase())) cfg.display.accent = c;
+      paintTheme(); changed();
+    },
+  }, h('span', { style: { width: '16px', height: '16px', borderRadius: '50%', background: `linear-gradient(135deg, ${hi}, ${c})`, boxShadow: '0 0 0 1px rgba(255,255,255,.2)' } }), name)));
+}
+
+
+function paintPin() { $('pinState').textContent = cfg.lock?.pinHash ? '🔒 PIN установлен. Нажмите «Сохранить», чтобы изменения дошли до телефона.' : 'PIN не установлен: панель не блокируется.'; }
+$('pinSet').onclick = async () => {
+  const pin = $('pinNew').value.trim();
+  if (!/^\d{4,8}$/.test(pin)) { toast('PIN — от 4 до 8 цифр', true); return; }
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('deckbox-pin:' + pin));
+  cfg.lock = { ...(cfg.lock || { afterMin: 5 }), pinHash: [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('') };
+  $('pinNew').value = '';
+  paintPin(); changed();
+  toast('PIN установлен. Не забудьте нажать «Сохранить»');
+};
+$('pinOff').onclick = () => { cfg.lock = { ...(cfg.lock || {}), pinHash: '' }; paintPin(); changed(); };
+
 function bindPro() {
   cfg.briefing ??= { enabled: true, minutes: 20, tasks: [] };
   cfg.game ??= { enabled: true, processes: [] };
+  cfg.lock ??= { pinHash: '', afterMin: 5 };
+  paintPin();
   const lines = (el, get, set) => {
     el.value = (get() || []).join('\n');
     el.oninput = () => { set(el.value.split('\n').map((x) => x.trim()).filter(Boolean)); changed(); };
   };
   lines($('briefTasks'), () => cfg.briefing.tasks, (v) => { cfg.briefing.tasks = v; });
   lines($('gameProcs'), () => cfg.game.processes, (v) => { cfg.game.processes = v; });
+  paintTheme();
 }
 
 $('briefTest').onclick = async () => {
