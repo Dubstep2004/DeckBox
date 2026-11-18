@@ -105,7 +105,7 @@ internal sealed partial class WindowsDeckNative
     {
         if (action.Kind is "sound" or "radio") { lock (_gate) return _sounds.ContainsKey(action.Id) || _hls.ContainsKey(action.Id) ? "Playing" : "Stopped"; }
         return action.Kind == "service" ? ServiceState(action.Target) switch
-        { 1 => "Stopped", 2 => "Starting", 3 => "Stopping", 4 => "Running", 5 => "Resuming", 6 => "Pausing", 7 => "Paused", _ => "Service unavailable" } : null;
+        { 1 => "Stopped", 2 => "Starting", 3 => "Stopping", 4 => "Running", 5 => "Resuming", 6 => "Pausing", 7 => "Paused", _ => "Служба недоступна" } : null;
     }
     private static async Task<bool> WaitService(string name, int expected, CancellationToken ct)
     {

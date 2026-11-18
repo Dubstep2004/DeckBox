@@ -341,7 +341,7 @@ W.meters = {
         const gpus = gpusOf(D.state);
         for (const g of gpus) {
           const m = gpuMem(g);
-          if (m) rows.push(meter(gpus.length > 1 ? `${m.label === 'VRAM' ? 'VRAM' : 'GPU'} · ${shortGpu(g.name)}` : m.label === 'VRAM' ? 'VRAM' : 'GPU MEMORY',
+          if (m) rows.push(meter(gpus.length > 1 ? `${m.label === 'VRAM' ? 'Видеопамять' : 'ГП'} · ${shortGpu(g.name)}` : m.label === 'VRAM' ? 'Видеопамять' : 'Память ГП',
             `${r1(m.used)} / ${Math.round(m.total)} GB`, (m.used / m.total) * 100, cssVar('--gpu')));
         }
         const disks = h('div', 'disks', ...(pc.disks || []).map((dk) => meter(dk.name === '/' ? 'DISK' : dk.name, Math.round((dk.usedGb / dk.totalGb) * 100) + '%', (dk.usedGb / dk.totalGb) * 100, '#94a3b8')));

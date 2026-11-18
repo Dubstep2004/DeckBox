@@ -53,6 +53,7 @@ def build(out):
     shutil.copy(PAGES / 'demo.js', out / 'demo.js')
     (out / 'index.html').write_text(landing_html(), encoding='utf-8')
     for name in ('widgets.json', 'templates.json'): shutil.copy(AGENT / name, out / name)
+    shutil.copy(AGENT.parent.parent / 'store' / 'store.json', out / 'store.json')
     shutil.copy(AGENT / 'deckbox.ico', out / 'favicon.ico')
     shutil.copytree(WWW, out / 'panel', dirs_exist_ok=True, ignore=shutil.ignore_patterns('index.html'))
     (out / 'panel' / 'index.html').write_text(panel_html(), encoding='utf-8')

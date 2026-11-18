@@ -341,6 +341,7 @@ dd { margin: 0; word-break: break-all; }
     <a href="#shortcuts" data-i18n="s.nav.shortcuts">Shortcuts</a>
     <a href="#rules" data-i18n="s.nav.rules">Rules</a>
     <a href="#webhooks" data-i18n="s.nav.webhooks">Webhooks</a>
+    <a href="#pro">⭐ PRO</a>
     <a href="#general" data-i18n="s.nav.general">General</a>
     <a href="#advanced" data-i18n="s.nav.advanced">Advanced</a>
   </nav>
@@ -388,6 +389,70 @@ dd { margin: 0; word-break: break-all; }
         <button class="btn sm" id="rulesPauseBtn" data-i18n="s.rules.pause1h">Pause all rules for 1 hour</button>
       </div>
       <div id="ruleList"></div>
+    </section>
+
+    <section id="pro">
+      <h2>⭐ DeckBox PRO</h2>
+      <p class="lead">Мастер настройки, резервная копия, магазин шаблонов и новые возможности панели.</p>
+
+      <div class="card">
+        <h3>Мастер первого запуска</h3>
+        <p class="hint">Три шага: подключить телефон, выбрать шаблон, готово.</p>
+        <button class="btn primary" id="wizardOpen" type="button">Открыть мастер</button>
+      </div>
+
+      <div class="card">
+        <h3>Резервная копия настроек</h3>
+        <p class="hint">Все страницы, кнопки, правила и свои значки в одном файле .zip. Его можно сохранить на всякий случай
+          или перенести на другой компьютер: там откройте эти настройки и нажмите «Восстановить».</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <a class="btn primary" id="backupSave" href="/api/backup" download>💾 Сохранить копию</a>
+          <button class="btn" id="backupRestore" type="button">📂 Восстановить из файла…</button>
+          <input type="file" id="backupFile" accept=".zip,application/zip" hidden>
+        </div>
+        <p class="hint" id="backupMsg"></p>
+      </div>
+
+      <div class="card">
+        <h3>Магазин шаблонов</h3>
+        <p class="hint">Готовые наборы страниц. Новые наборы приходят с GitHub сами; свой можно прислать в папку
+          <a href="https://github.com/Dubstep2004/DeckBox/tree/main/store" target="_blank" rel="noopener">store</a>.</p>
+        <div class="tpl-grid" id="storeList"><p class="hint">Загружаю…</p></div>
+      </div>
+
+      <div class="card">
+        <h3>Утренний брифинг</h3>
+        <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="briefing.enabled"><span></span></label>
+          <span>Показывать брифинг на телефоне после включения компьютера: погода, события дня, задачи и курс ЦБ РФ</span></div>
+        <div class="row" style="gap:12px;flex-wrap:wrap">
+          <div class="field" style="width:220px"><label>Если ПК включён меньше (минут)</label><input type="number" min="1" max="240" data-bind="briefing.minutes" data-type="int"></div>
+          <div class="field" style="flex:1;min-width:260px"><label>Задачи на утро (по одной в строке)</label><textarea id="briefTasks" rows="4" placeholder="Проверить почту&#10;Созвон в 10:00"></textarea></div>
+        </div>
+        <button class="btn" id="briefTest" type="button">Показать брифинг на телефоне сейчас</button>
+      </div>
+
+      <div class="card">
+        <h3>Игровой режим</h3>
+        <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="game.enabled"><span></span></label>
+          <span>Узнавать запущенную игру и открывать страницу с виджетом «Игровой режим»</span></div>
+        <p class="hint">Игры из Steam, Epic, GOG, Battle.net, Riot, EA, Ubisoft и Xbox, а также программы во весь экран
+          (кроме браузеров и плееров) определяются сами. FPS показывается, когда запущен RivaTuner Statistics Server
+          (идёт вместе с MSI Afterburner).</p>
+        <div class="field"><label>Ещё игры (имя процесса, по одному в строке)</label><textarea id="gameProcs" rows="3" placeholder="eldenring&#10;GTA5.exe"></textarea></div>
+        <p class="hint" id="gameNow"></p>
+      </div>
+
+      <div class="card">
+        <h3>Панель на телефоне</h3>
+        <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="display.gestures"><span></span></label>
+          <span>Жесты: свайп двумя пальцами вниз выключает звук на ПК, двойной тап по пустому месту — пауза музыки</span></div>
+        <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="display.sleepWithPc"><span></span></label>
+          <span>Гасить экран телефона, когда компьютер спит, и включать, когда он просыпается</span></div>
+        <div class="field" style="width:280px"><label>Обои</label>
+          <select data-bind="display.wallpaper"><option value="gold">Анимированное золото</option><option value="none">Без анимации</option></select></div>
+        <p class="hint">Новые виджеты: «Не беспокоить», «Курс ЦБ РФ», «Игровой режим», «Утренний брифинг», «Статистика за
+          неделю» и «Голосовые команды». Их можно добавить на любую страницу в разделе «Страницы».</p>
+      </div>
     </section>
 
     <section id="general">
@@ -759,6 +824,7 @@ const PRESETS_LINUX = [
   ['gnome-control-center', 'GNOME Settings'],
   ['gnome-system-monitor', 'System Monitor'],
   ['builtin:mute', 'Built-in: toggle mute'],
+  ['builtin:quiet', 'Встроенная: «Не беспокоить» (звук и уведомления)'],
   ['builtin:monitor-off', 'Built-in: turn monitors off (X11)'],
   ['builtin:lock', 'Built-in: lock the session'],
 ];
@@ -769,6 +835,7 @@ const PRESETS_MACOS = [
   ['shortcuts', 'Run a Shortcut (args: run "Name")'],
   ['osascript', 'AppleScript (args: -e "…")'],
   ['builtin:mute', 'Built-in: toggle mute'],
+  ['builtin:quiet', 'Встроенная: «Не беспокоить» (звук и уведомления)'],
   ['builtin:monitor-off', 'Built-in: sleep the display'],
   ['builtin:lock', 'Built-in: lock (sleeps the display)'],
 ];
@@ -783,6 +850,7 @@ const PRESETS = [
   ['ms-screenclip:', 'Screen snip'],
   ['taskmgr.exe', 'Task Manager'],
   ['builtin:mute', 'Built-in: toggle mute'],
+  ['builtin:quiet', 'Встроенная: «Не беспокоить» (звук и уведомления)'],
   ['builtin:monitor-off', 'Built-in: turn monitors off'],
   ['builtin:lock', 'Built-in: lock the PC'],
 ];
@@ -2516,14 +2584,14 @@ function appearanceEditor(owner, parents, label, widget = false) {
     })();
     fields.push(h('div', { class: 'field' }, h('label', {}, t('s.ap.font')),
       h('select', { 'aria-label': 'Font', onchange: e => { set('font', e.target.value || null); render(); } },
-        h('option', { value: '', selected: owner.appearance?.font == null }, !inheritedFont || inheritedFont === 'default' ? 'Original widget font' : 'Inherit (' + fontLabels[inheritedFont] + ')'),
+        h('option', { value: '', selected: owner.appearance?.font == null }, !inheritedFont || inheritedFont === 'default' ? 'Original widget font' : 'Как выше (' + fontLabels[inheritedFont] + ')'),
         ...Object.entries(fontLabels).map(([value, text]) => h('option', { value, selected: owner.appearance?.font === value }, text)))));
     const numeric = (key, title, max, fallback, min = 0, step = 1, unit = ' px') => {
       const value = current[key];
       const output = h('output', { style: { minWidth: '80px', fontVariantNumeric: 'tabular-nums' } }, value == null ? 'Automatic' : value + unit);
       const input = h('input', { type: 'range', min, max, step, value: value ?? fallback, 'aria-label': title, style: { flex: '1', minWidth: '60px' } });
       input.oninput = () => { set(key, Number(input.value)); output.textContent = input.value + unit; };
-      const reset = h('button', { type: 'button', class: 'btn sm', 'aria-label': 'Inherit ' + title.toLowerCase(), onclick: () => { set(key, null); render(); } }, t('s.ap.inherit'));
+      const reset = h('button', { type: 'button', class: 'btn sm', 'aria-label': 'Наследовать: ' + title.toLowerCase(), onclick: () => { set(key, null); render(); } }, t('s.ap.inherit'));
       fields.push(h('div', { class: 'field' }, h('label', {}, title), h('div', { class: 'row', style: { gap: '10px' } }, input, output, reset)));
     };
     numeric('fontScale', t('s.ap.fontSize'), 200, 100, 50, 5, '%');
@@ -2537,7 +2605,7 @@ function appearanceEditor(owner, parents, label, widget = false) {
       const fallback = DeckBoxAppearance.resolve(...parents(), inherited)[key];
       fields.push(h('div', { class: 'field' }, h('label', {}, title),
         h('select', { 'aria-label': title, onchange: e => set(key, e.target.value === '' ? null : e.target.value === 'true') },
-          h('option', { value: '', selected: value == null }, fallback == null ? 'Original widget default' : 'Inherit (' + (fallback ? 'on' : 'off') + ')'),
+          h('option', { value: '', selected: value == null }, fallback == null ? 'Original widget default' : 'Как выше (' + (fallback ? 'вкл.' : 'выкл.') + ')'),
           h('option', { value: 'true', selected: value === true }, 'On'), h('option', { value: 'false', selected: value === false }, 'Off'))));
     }
     root.replaceChildren(h('summary', {}, label), h('p', { class: 'hint' }, widget
@@ -2661,6 +2729,7 @@ function bindForm() {
     };
   });
   bindCodexBar();
+  bindPro();
   $('nbv').textContent = Math.round(cfg.night.brightness * 100) + '%';
 }
 
@@ -2706,7 +2775,7 @@ async function loadInfo() {
     $('ver').textContent = 'v' + i.version;
     const pill = $('phone');
     pill.className = 'pill' + (i.connected ? ' on' : '');
-    pill.querySelector('span').textContent = i.connected ? 'Phone connected' + (i.via ? ' · ' + i.via : '') : 'No phone connected';
+    pill.querySelector('span').textContent = i.connected ? 'Телефон подключён' + (i.via ? ' · ' + ({ usb: 'USB', wifi: 'Wi-Fi', 'Wi-Fi': 'Wi-Fi' }[i.via] || i.via) : '') : 'Телефон не подключён';
     osName = i.os || 'windows';
     $('followComputerLockOption').style.display = osName === 'macos' ? '' : 'none';
     $('adbFound').textContent = i.adb ? 'Found: ' + i.adb : 'adb not found — ' + ({ linux: 'sudo apt install adb', macos: 'brew install android-platform-tools' }[osName] || 'winget install Google.PlatformTools');
@@ -2766,6 +2835,8 @@ async function load() {
   else localizeCatalog();
   saved = JSON.stringify(cfg);
   renderPages(); renderDeck(); renderRules(); renderCalendars(); renderFeeds(); renderCameras(); renderConsole(); renderNetAdapters(); renderCharge(); bindForm(); changed(); loadInfo(); loadPhones();
+  let seen = null; try { seen = localStorage.getItem('deckbox-wizard'); } catch (_) {}
+  if (!seen && !window.__deckboxDemo && !navigator.webdriver) openWizard(1);
 }
 
 async function save() {
@@ -2900,11 +2971,128 @@ $('applyJson').onclick = () => {
 document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (!$('save').disabled) save(); } });
 window.addEventListener('beforeunload', (e) => { if (!$('save').disabled) { e.preventDefault(); e.returnValue = ''; } });
 
+
+// ---------------------------------------------------------------- DeckBox PRO: briefing, game, backup, store, wizard
+function bindPro() {
+  cfg.briefing ??= { enabled: true, minutes: 20, tasks: [] };
+  cfg.game ??= { enabled: true, processes: [] };
+  const lines = (el, get, set) => {
+    el.value = (get() || []).join('\n');
+    el.oninput = () => { set(el.value.split('\n').map((x) => x.trim()).filter(Boolean)); changed(); };
+  };
+  lines($('briefTasks'), () => cfg.briefing.tasks, (v) => { cfg.briefing.tasks = v; });
+  lines($('gameProcs'), () => cfg.game.processes, (v) => { cfg.game.processes = v; });
+}
+
+$('briefTest').onclick = async () => {
+  const r = await fetch('/api/briefing', { method: 'POST' }).catch(() => null);
+  toast(r?.ok ? 'Брифинг откроется на телефоне через пару секунд' : 'Не получилось: телефон не на связи', !r?.ok);
+};
+
+$('backupRestore').onclick = () => $('backupFile').click();
+$('backupFile').onchange = async () => {
+  const f = $('backupFile').files[0];
+  $('backupFile').value = '';
+  if (!f) return;
+  if (!confirm(`Заменить текущие настройки копией «${f.name}»?`)) return;
+  $('backupMsg').textContent = 'Восстанавливаю…';
+  try {
+    const r = await fetch('/api/backup/restore', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: f });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+    $('backupMsg').textContent = `Готово: настройки восстановлены${j.icons ? `, значков: ${j.icons}` : ''}.`;
+    toast('Настройки восстановлены из копии');
+    await load();
+  } catch (e) { $('backupMsg').textContent = 'Не получилось: ' + e.message; toast('Не получилось восстановить копию', true); }
+};
+
+let storePacks = null;
+async function loadStore() {
+  if (storePacks) return storePacks;
+  try { storePacks = (await (await fetch('/api/store')).json()).packs || []; } catch (_) { storePacks = []; }
+  return storePacks;
+}
+
+/** Adds the pages of a pack (replace: instead of the current pages). */
+function installPack(pack, replace = false) {
+  const pages = pack.pages.map((p) => ({
+    id: '', title: p.title, icon: p.icon || '▫️', enabled: true,
+    widgets: JSON.parse(JSON.stringify(p.widgets)).map((w) => ({ ...w, options: { ...defaultOptions(w.type), ...(w.options || {}) } })),
+  }));
+  if (replace) cfg.pages = pages; else cfg.pages.push(...pages);
+  selPage = replace ? 0 : cfg.pages.length - pages.length; selWidget = -1;
+  renderPages(); changed();
+  return pages.length;
+}
+
+async function renderStore(box = $('storeList'), onPick = null) {
+  const packs = await loadStore();
+  if (!packs.length) { box.replaceChildren(h('p', { class: 'hint' }, 'Магазин сейчас недоступен.')); return; }
+  box.replaceChildren(...packs.map((p) => h('button', { class: 'tpl', type: 'button', onclick: () => {
+    if (onPick) { onPick(p); return; }
+    const n = installPack(p);
+    toast(`«${p.name}»: добавлено страниц — ${n}. Нажмите «Сохранить».`);
+  } }, miniMap(p.pages[0]?.widgets || []), h('b', {}, `${p.icon || ''} ${p.name}`),
+    h('small', {}, `${p.desc} · ${p.pages.map((x) => x.title).join(', ')}${p.author ? ' · автор: ' + p.author : ''}`))));
+}
+
+async function gameNow() {
+  try {
+    const s = await (await fetch('/api/state')).json();
+    $('gameNow').textContent = s.game ? `Сейчас: ${s.game.name}${s.game.fps != null ? ` · ${s.game.fps} FPS` : ''}` : 'Сейчас игра не запущена.';
+  } catch (_) {}
+}
+
+// the wizard: shown once by itself on the first visit, and from PRO › «Открыть мастер»
+function openWizard(step = 1) {
+  const body = $('modalBody');
+  let poll = 0;
+  onModalClose = () => { clearInterval(poll); try { localStorage.setItem('deckbox-wizard', '1'); } catch (_) {} };
+  const dots = h('div', { style: { display: 'flex', gap: '6px', margin: '4px 0 14px' } },
+    ...[1, 2, 3].map((i) => h('span', { style: { flex: '1', height: '4px', borderRadius: '4px', background: i <= step ? 'var(--accent, #d4af37)' : 'rgba(255,255,255,.12)' } })));
+  const nav = (...b) => h('div', { class: 'row', style: { justifyContent: 'flex-end', gap: '8px', marginTop: '16px' } }, ...b);
+  if (step === 1) {
+    const st = h('p', { class: 'hint', style: { fontSize: '15px' } }, 'Проверяю…');
+    const check = async () => {
+      try {
+        const i = await (await fetch('/api/info')).json();
+        st.textContent = i.connected ? `✅ Телефон подключён (${i.via}). Можно дальше.` : '⏳ Телефон пока не подключён.';
+      } catch (_) {}
+    };
+    check(); poll = setInterval(check, 2000);
+    body.replaceChildren(h('h3', {}, 'Шаг 1 из 3 · Подключите телефон'), dots,
+      h('p', {}, 'Установите на телефон приложение DeckBox (файл DeckBox-…apk со страницы релизов) и подключите его одним из способов:'),
+      h('ol', {}, h('li', {}, 'USB-кабель: включите на телефоне «Отладку по USB» (Настройки › Для разработчиков) и разрешите доступ этому компьютеру.'),
+        h('li', {}, 'Wi-Fi: нажмите «Сопряжение по Wi-Fi» и отсканируйте QR-код приложением DeckBox.')),
+      st,
+      nav(h('button', { class: 'btn', type: 'button', onclick: () => pairOverWifi() }, 'Сопряжение по Wi-Fi'),
+        h('button', { class: 'btn primary', type: 'button', onclick: () => { clearInterval(poll); openWizard(2); } }, 'Дальше')));
+  } else if (step === 2) {
+    const list = h('div', { class: 'tpl-grid' }, h('p', { class: 'hint' }, 'Загружаю…'));
+    const replace = h('input', { type: 'checkbox', checked: true });
+    body.replaceChildren(h('h3', {}, 'Шаг 2 из 3 · Выберите шаблон'), dots,
+      h('p', {}, 'Выберите готовый набор страниц. Потом его можно менять как угодно.'),
+      h('label', { class: 'row', style: { gap: '8px', marginBottom: '10px' } }, replace, 'Заменить мои страницы (иначе добавить к ним)'),
+      list, nav(h('button', { class: 'btn', type: 'button', onclick: () => openWizard(1) }, 'Назад'),
+        h('button', { class: 'btn', type: 'button', onclick: () => openWizard(3) }, 'Оставить как есть')));
+    renderStore(list, (p) => { installPack(p, replace.checked); openWizard(3); });
+  } else {
+    body.replaceChildren(h('h3', {}, 'Шаг 3 из 3 · Готово'), dots,
+      h('p', { style: { fontSize: '15px' } }, '🎉 Всё готово. Нажмите «Сохранить» — панель на телефоне обновится сама.'),
+      h('p', { class: 'hint' }, 'Страницы и виджеты можно поменять в разделе «Страницы», а в разделе ⭐ PRO — сделать резервную копию.'),
+      nav(h('button', { class: 'btn', type: 'button', onclick: () => openWizard(2) }, 'Назад'),
+        h('button', { class: 'btn primary', type: 'button', onclick: async () => { if (!$('save').disabled) await save(); closeModal(); location.hash = '#pages'; } }, 'Сохранить и закрыть')));
+  }
+  $('modal').hidden = false;
+}
+$('wizardOpen').onclick = () => openWizard(1);
+
 function route() {
   const id = (location.hash || '#pages').slice(1);
   document.querySelectorAll('section').forEach((s) => s.classList.toggle('on', s.id === id));
   document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
   if (id === 'webhooks') loadPushed();
+  if (id === 'pro') { renderStore(); gameNow(); }
 }
 window.addEventListener('hashchange', route);
 route();

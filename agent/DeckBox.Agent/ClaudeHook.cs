@@ -44,7 +44,7 @@ public static class ClaudeHook
                 hookEventName = "PermissionRequest",
                 decision = decision == "allow"
                     ? (object)new { behavior = "allow" }
-                    : new { behavior = "deny", message = "Denied from the DeckBox panel." },
+                    : new { behavior = "deny", message = "Отклонено на панели DeckBox." },
             },
         };
     }

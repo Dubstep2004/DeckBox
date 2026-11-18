@@ -96,7 +96,7 @@ public sealed partial class ControlDeck
     {
         var state = action.Kind is "task" or "server" ? _tasks.State(action.Id) : _actionResults.GetValueOrDefault(action.Id);
         var available = true;
-        if (action.Kind == "service") { state = _native.ActionState(action) ?? "Service unavailable"; available = state != "Service unavailable"; }
+        if (action.Kind == "service") { state = _native.ActionState(action) ?? "Служба недоступна"; available = state != "Служба недоступна"; }
         if (action.Kind is "sound" or "radio")
         {
             if (action.Kind == "radio")

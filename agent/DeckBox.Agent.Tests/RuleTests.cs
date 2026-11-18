@@ -129,15 +129,15 @@ public class UsbDoctorTests
 
     [Fact]
     public void ChargingWithoutDataBlamesTheCable() =>
-        Assert.Contains("only carries power", UsbDoctor.Diagnose(R(true, "none", source: "ac"), false, Now));
+        Assert.Contains("только заряжает", UsbDoctor.Diagnose(R(true, "none", source: "ac"), false, Now));
 
     [Fact]
     public void ConnectedWithAdbButUnseenBlamesThePort() =>
-        Assert.Contains("adb does not see it", UsbDoctor.Diagnose(R(true, "connected,configured,adb"), false, Now));
+        Assert.Contains("adb его не видит", UsbDoctor.Diagnose(R(true, "connected,configured,adb"), false, Now));
 
     [Fact]
     public void ConnectedWithoutAdbAsksForDebugging() =>
-        Assert.Contains("USB debugging is off", UsbDoctor.Diagnose(R(true, "connected,configured"), false, Now));
+        Assert.Contains("отладка по USB выключена", UsbDoctor.Diagnose(R(true, "connected,configured"), false, Now));
 
     [Theory]
     [InlineData(true, "none", 0, true)]                 // adb sees the phone: nothing to explain

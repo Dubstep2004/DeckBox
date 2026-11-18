@@ -202,6 +202,8 @@ public sealed class RuleEngine(ConfigStore config, PushStore push, SessionMonito
                     .FirstOrDefault(n => procs.Contains(n) || procs.Any(p => p.Length >= 15 && n.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
                 return hit is null ? (false, "") : (true, hit);
             }
+            case "game-running":
+                return GameMonitor.Current is { } game ? (true, game.Name) : (false, "");
             case "app-in-front":
             {
                 var front = FrontApp();

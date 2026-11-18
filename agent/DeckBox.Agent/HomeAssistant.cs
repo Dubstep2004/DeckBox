@@ -30,7 +30,7 @@ public sealed class HomeAssistant(ConfigStore config, ILogger<HomeAssistant> log
     {
         var ha = config.Get().HomeAssistant;
         if (string.IsNullOrWhiteSpace(ha.Url) || string.IsNullOrWhiteSpace(ha.Token))
-            return new { configured = false, error = "Set up Home Assistant in Settings › General", entities = Array.Empty<HaEntity>() };
+            return new { configured = false, error = "Настройте Home Assistant: Настройки › Общие", entities = Array.Empty<HaEntity>() };
         var allowed = Widgets.SelectMany(EntitiesOf).ToHashSet();
         await _lock.WaitAsync();
         try

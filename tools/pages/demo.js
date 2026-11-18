@@ -7,6 +7,10 @@
   const VERSION = document.currentScript.dataset.version || 'demo'; // stamped by tools/pages/build.py from the agent's version
   // ?update=1: a newer release is out, so the «Вышла новая версия» card shows (UI tests)
   const DEMO_UPDATE = new URLSearchParams(location.search).has('update');
+  // ?game=1: a game runs (the «Игровой режим» widget and page)
+  const DEMO_GAME = new URLSearchParams(location.search).has('game');
+  window.__deckboxDemo = true;
+  let demoQuiet = 0;
   const realFetch = window.fetch.bind(window);
   const bc = new BroadcastChannel('deckbox-demo');
   const START = Date.now();
@@ -190,7 +194,9 @@
       update: DEMO_UPDATE ? { latest: '9.9.9', app: true, agent: true, name: L('Update card', 'Плашка обновлений'), state: 'idle', error: null,
         notes: [{ title: L('✨ New', '✨ Новое'), items: [L('Shows what is new with Update and Later.', 'Показывает, что нового, с кнопками «Обновить» и «Позже».')] },
           { title: L('🛠 Fixed', '🛠 Исправлено'), items: [L('Small fixes.', 'Мелкие исправления.')] }] } : null,
-      agentVersion: VERSION, ts: now(), host: 'DESK-PC', cfgVersion: cfgVersion(), pushVersion, evSeq: seq, rules: ['music'], rulesPaused: rulesPaused > now() ? rulesPaused : null,
+      agentVersion: VERSION, ts: now(),
+      quiet: demoQuiet ? { since: demoQuiet } : null,
+      game: DEMO_GAME ? { name: 'Cyberpunk 2077', process: 'Cyberpunk2077', since: now() - 47 * 60_000, fps: Math.round(wave(5, 112, 144)) } : null, host: 'DESK-PC', cfgVersion: cfgVersion(), pushVersion, evSeq: seq, rules: ['music'], rulesPaused: rulesPaused > now() ? rulesPaused : null,
       events: since == null ? [] : events.filter((e) => e.seq > since),
       pc: {
         cpu: Math.max(1, wave(37, 8, 46, 0, 6)), cpuName: 'AMD Ryzen 9 7950X 16-Core Processor', cpuTemp: wave(60, 52, 68),
@@ -515,6 +521,19 @@
     if (path === '/api/controls/state') return json(await deckState());
     if (path.startsWith('/api/controls/command/') && method === 'POST') return json(await controlCommand(path.split('/').pop(), q));
     if (path === '/api/state') return json(state(q.has('ev') ? +q.get('ev') : null));
+    if (path === '/api/quiet' && method === 'POST') {
+      const on = q.get('on'); demoQuiet = (on === '1' || (on == null && !demoQuiet)) ? now() : 0;
+      return json({ on: !!demoQuiet, since: demoQuiet || null });
+    }
+    if (path === '/api/stats') {
+      const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(Date.now() - (6 - i) * 86400_000); const m = [380, 455, 290, 510, 610, 720, 240][i];
+        return { date: d.toISOString().slice(0, 10), minutes: m, cpu: [18, 22, 15, 27, 31, 38, 21][i], game: [40, 0, 85, 30, 120, 210, 0][i] }; });
+      return json({ days, totalMinutes: days.reduce((a, d) => a + d.minutes, 0), gameMinutes: days.reduce((a, d) => a + d.game, 0), avgCpu: 24.6,
+        apps: [{ name: 'Code', minutes: 1260 }, { name: 'chrome', minutes: 940 }, { name: 'Cyberpunk2077', minutes: 485 }, { name: 'Telegram', minutes: 300 }, { name: 'obs64', minutes: 190 }] });
+    }
+    if (path === '/api/store') return json(await (await fetch(new URL('../store.json', location.href))).json());
+    if (path === '/api/briefing' && method === 'POST') return json({ ok: true });
+    if (path.startsWith('/api/backup')) return json({ error: L('Backups need the installed computer agent', 'Резервная копия работает с установленным агентом на компьютере') }, 400);
     if (path === '/api/config') return json({ version: cfgVersion(), config: publicConfig(await config()) });
     if (path === '/api/volume' && method === 'POST') {
       // the agent answers with the new volume state (AudioSnapshot)

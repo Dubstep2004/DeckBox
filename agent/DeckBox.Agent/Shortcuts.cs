@@ -16,6 +16,7 @@ public static class Shortcuts
     {
         var sc = cfg.Shortcuts.FirstOrDefault(s => s.Id == id);
         if (sc is null) return $"no such shortcut: {id}";
+        if (sc.Cmd == "builtin:quiet") { QuietMode.Toggle(audio); return null; }
         if (!sc.Toggle) return Execute(sc, log, cfg);
         var on = State(sc, push, audio) ?? false;
         var target = on && sc.OffCmd is not null ? new Shortcut { Label = sc.Label, Cmd = sc.OffCmd, Args = sc.OffArgs, Cwd = sc.Cwd } : sc;
@@ -28,7 +29,7 @@ public static class Shortcuts
     public static Dictionary<string, bool>? States(AgentConfig cfg, PushStore push, AudioControl audio)
     {
         Dictionary<string, bool>? map = null;
-        foreach (var sc in cfg.Shortcuts.Where(s => s.Toggle || s.Cmd == "builtin:mute"))
+        foreach (var sc in cfg.Shortcuts.Where(s => s.Toggle || s.Cmd is "builtin:mute" or "builtin:quiet"))
             if (State(sc, push, audio) is { } on) (map ??= [])[sc.Id] = on;
         return map;
     }
@@ -36,6 +37,7 @@ public static class Shortcuts
     public static bool? State(Shortcut sc, PushStore? push, AudioControl? audio)
     {
         if (sc.Cmd == "builtin:mute" && sc.StateKey is null) return audio?.Snapshot()?.Muted;
+        if (sc.Cmd == "builtin:quiet") return QuietMode.Snapshot().On;
         if (sc.StateKey is not null)
         {
             if (push?.Snapshot().TryGetValue(sc.StateKey, out var item) != true) return false;

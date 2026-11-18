@@ -364,11 +364,11 @@ test('the GPU details widget shows the main card and the integrated one', async 
   const [main, igpu] = [page.locator('.w-gpu').nth(0), page.locator('.w-gpu').nth(1)];
   await expect(main.locator('.s-name')).toHaveText('GeForce RTX 4080');
   await expect(main.locator('.s-label')).toHaveText('NVIDIA');
-  await expect(main).toContainText('VRAM');
+  await expect(main).toContainText('Видеопамять');
   await expect(main).toContainText('/ 320 W');
   await expect(main).toContainText('Driver 596.36');
   await expect(igpu.locator('.s-label')).toHaveText('AMD · iGPU');
-  await expect(igpu).toContainText('GPU memory');
+  await expect(igpu).toContainText('Память ГП');
   await expect(igpu).toContainText('% of limit');
   expect(errors).toEqual([]);
 });

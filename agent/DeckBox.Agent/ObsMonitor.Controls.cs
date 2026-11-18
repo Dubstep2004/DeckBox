@@ -12,7 +12,7 @@ public sealed partial class ObsMonitor
 
     public async Task<JsonObject> DeckSnapshot(CancellationToken ct)
     {
-        if (!_snap.Connected) return new() { ["connected"] = false, ["error"] = _snap.Error ?? "Configure the OBS connection in desktop settings" };
+        if (!_snap.Connected) return new() { ["connected"] = false, ["error"] = _snap.Error ?? "Настройте подключение к OBS в настройках на компьютере" };
         if (_deck is not null && Environment.TickCount64 - _deckAt < 1500) return _deck;
         Task<JsonObject> refresh;
         lock (_deckRefreshGate)
@@ -29,7 +29,7 @@ public sealed partial class ObsMonitor
 
     private async Task<JsonObject> BuildDeckSnapshot(CancellationToken ct)
     {
-        if (!_snap.Connected) return new() { ["connected"] = false, ["error"] = _snap.Error ?? "Configure the OBS connection in desktop settings" };
+        if (!_snap.Connected) return new() { ["connected"] = false, ["error"] = _snap.Error ?? "Настройте подключение к OBS в настройках на компьютере" };
         if (_deck is not null && Environment.TickCount64 - _deckAt < 1500) return _deck;
         await _deckGate.WaitAsync(ct);
         try

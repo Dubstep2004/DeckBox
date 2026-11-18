@@ -78,7 +78,7 @@ public sealed partial class ControlDeck : BackgroundService
         var c = _config.Get();
         IReadOnlyList<DeckMedia> media = [];
         string? mediaError = null;
-        try { media = await _native.Media(ct); } catch { mediaError = "Media sessions are unavailable"; }
+        try { media = await _native.Media(ct); } catch { mediaError = "Медиа недоступно"; }
         object[] sleep;
         lock (_state) sleep = _sleep.Select(p => (object)new { id = p.Key, at = p.Value }).ToArray();
         return new
@@ -295,7 +295,7 @@ public sealed partial class ControlDeck : BackgroundService
                 await SendOsc(action.Device ?? "", action.Target, value ?? action.Value, ct); return new(true);
             case "workflow": return await Workflow(action, ct);
             case "playlist":
-                if (_spotify is null) return new(false, "Spotify is unavailable");
+                if (_spotify is null) return new(false, "Spotify недоступен");
                 return await RunWithMediaFocusAsync(async token =>
                 {
                     var res = await _spotify.Act("playlist", action.Id, token);

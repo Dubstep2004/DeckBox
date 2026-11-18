@@ -17,6 +17,10 @@ public sealed class AgentConfig
     public DisplayConfig Display { get; set; } = new();
     public LanConfig Lan { get; set; } = new();
     public UpdateConfig Updates { get; set; } = new();
+    /// <summary>«Игровой режим»: which apps count as games.</summary>
+    public GameConfig Game { get; set; } = new();
+    /// <summary>«Утренний брифинг»: weather, the day's events, tasks and rates after the computer starts.</summary>
+    public BriefingConfig Briefing { get; set; } = new();
     public ClaudeConfig Claude { get; set; } = new();
     public List<PageConfig> Pages { get; set; } = [];
     public List<Shortcut> Shortcuts { get; set; } = [];
@@ -69,10 +73,12 @@ public sealed class AgentConfig
         }),
         // cameras: only how often the Camera widget may ask for a picture; the addresses and names stay on this computer
         cameras = Cameras.Sources.Select(c => new { c.Id, c.Fps }),
-        shortcuts = Shortcuts.Select(s => new { s.Id, s.Label, s.Icon, s.Color, toggle = s.Toggle || s.Cmd == "builtin:mute", iconRev = shortcutIconRev?.Invoke(s) }),
+        shortcuts = Shortcuts.Select(s => new { s.Id, s.Label, s.Icon, s.Color, toggle = s.Toggle || s.Cmd is "builtin:mute" or "builtin:quiet", iconRev = shortcutIconRev?.Invoke(s) }),
         // names only (for the Rules widget); what a rule matches on stays here
         rules = Rules.Select(r => new { r.Id, r.Name, r.Enabled, r.When }),
         charge = new { Charge.Enabled, Charge.Min, Charge.Max },
+        briefing = Briefing,
+        game = new { Game.Enabled },
     };
 
     /// <summary>Ending processes is allowed when an enabled page has a processes widget that allows it.</summary>
@@ -130,6 +136,12 @@ public sealed class DisplayConfig
     public int IdleReturnSec { get; set; } = 90;
     /// <summary>Vibrate when a session finishes or needs input.</summary>
     public bool Vibrate { get; set; } = true;
+    /// <summary>Two fingers down mute the computer; a double tap on an empty spot pauses or plays.</summary>
+    public bool Gestures { get; set; } = true;
+    /// <summary>The phone's screen goes dark while the computer sleeps and comes back when it wakes.</summary>
+    public bool SleepWithPc { get; set; } = true;
+    /// <summary>"gold": animated gold lights behind the widgets; "none": still background.</summary>
+    public string Wallpaper { get; set; } = "gold";
     /// <summary>The phone's volume keys switch pages.</summary>
     public bool VolumeKeys { get; set; } = true;
     /// <summary>landscape, portrait or auto (follow the phone). In portrait the widgets are arranged automatically.</summary>
@@ -182,6 +194,22 @@ public sealed class LanConfig
     public string? Token { get; set; }
     /// <summary>Separate key for the webhook API from other machines (push/notify/goto/refresh only). May appear in URLs.</summary>
     public string? WebhookToken { get; set; }
+}
+
+public sealed class GameConfig
+{
+    public bool Enabled { get; set; } = true;
+    /// <summary>Extra process names that are games ("eldenring", "GTA5.exe"), besides game libraries and full screen.</summary>
+    public List<string> Processes { get; set; } = [];
+}
+
+public sealed class BriefingConfig
+{
+    public bool Enabled { get; set; } = true;
+    /// <summary>Shown when the computer has been on for less than this many minutes (once per start).</summary>
+    public int Minutes { get; set; } = 20;
+    /// <summary>Lines of the morning tasks ("Проверить почту").</summary>
+    public List<string> Tasks { get; set; } = [];
 }
 
 public sealed class UpdateConfig
@@ -452,15 +480,15 @@ public sealed partial class ConfigStore(string path)
         cfg = Normalize(cfg, staleIds);
         foreach (var s in cfg.Shortcuts)
             if (string.IsNullOrWhiteSpace(s.Cmd)) return $"Shortcut '{s.Label}' has no command";
-        if (cfg.Console.Profiles.Count > AppConsole.MaxProfiles) return $"The app console has more than {AppConsole.MaxProfiles} apps";
+        if (cfg.Console.Profiles.Count > AppConsole.MaxProfiles) return $"В консоли приложений больше {AppConsole.MaxProfiles} приложений";
         foreach (var p in cfg.Console.Profiles)
             if (AppConsole.Validate(p) is { } consoleError) return consoleError;
-        if (cfg.Cameras.Sources.Count > CameraFeeds.MaxCameras) return $"There are more than {CameraFeeds.MaxCameras} cameras";
+        if (cfg.Cameras.Sources.Count > CameraFeeds.MaxCameras) return $"Камер больше {CameraFeeds.MaxCameras}";
         foreach (var cam in cfg.Cameras.Sources)
             if (!CameraFeeds.ValidUrl(cam.Url))
                 return $"Camera '{(cam.Name.Length > 0 ? cam.Name : "(no name)")}': the address must start with rtsp:// or rtsps://";
-        if (cfg.Weather.Lat is < -90 or > 90 || cfg.Weather.Lon is < -180 or > 180) return "Invalid weather location";
-        if (!HhMm().IsMatch(cfg.Night.Start ?? "") || !HhMm().IsMatch(cfg.Night.End ?? "")) return "Night mode times must be in HH:MM format";
+        if (cfg.Weather.Lat is < -90 or > 90 || cfg.Weather.Lon is < -180 or > 180) return "Неверное место для погоды";
+        if (!HhMm().IsMatch(cfg.Night.Start ?? "") || !HhMm().IsMatch(cfg.Night.End ?? "")) return "Время ночного режима должно быть в формате ЧЧ:ММ";
 
         lock (_lock)
         {
@@ -504,6 +532,12 @@ public sealed partial class ConfigStore(string path)
         c.Display.Language = "ru";
         // DeckBox PRO replaced the old themes; the old default teal accent becomes the PRO gold, a colour the user chose stays
         c.Display.Theme = "pro";
+        if (c.Display.Wallpaper is not ("gold" or "none")) c.Display.Wallpaper = "gold";
+        c.Briefing ??= new();
+        c.Briefing.Minutes = Math.Clamp(c.Briefing.Minutes, 1, 240);
+        c.Briefing.Tasks = (c.Briefing.Tasks ?? []).Select(x => (x ?? "").Trim()).Where(x => x.Length > 0).Take(12).Select(x => x.Length > 120 ? x[..120] : x).ToList();
+        c.Game ??= new();
+        c.Game.Processes = (c.Game.Processes ?? []).Select(x => (x ?? "").Trim()).Where(x => x.Length > 0).Take(40).ToList();
         if (string.IsNullOrWhiteSpace(c.Display.Accent) || string.Equals(c.Display.Accent.Trim(), "#2dd4bf", StringComparison.OrdinalIgnoreCase))
             c.Display.Accent = "#d4af37";
         c.Display.SwitchCountdownSec = Math.Clamp(c.Display.SwitchCountdownSec, 0, 30);

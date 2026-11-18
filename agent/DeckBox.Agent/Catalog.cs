@@ -22,6 +22,8 @@ public static class Catalog
 
     public static readonly string WidgetsJson = Read("widgets.json");
     public static readonly string TemplatesJson = Read("templates.json");
+    /// <summary>The «Магазин шаблонов» sets shipped with the agent (store/store.json).</summary>
+    public static readonly string StoreJson = Read("store.json");
 
     public static readonly IReadOnlyList<TemplateDef> Templates =
         JsonSerializer.Deserialize<List<TemplateDef>>(TemplatesJson, Opts) ?? [];

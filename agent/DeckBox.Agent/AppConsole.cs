@@ -147,16 +147,16 @@ public sealed class AppConsole(ConfigStore config, ILogger<AppConsole> log)
     /// <summary>Checks a profile's key specs; null when they are all valid.</summary>
     public static string? Validate(ConsoleProfile p)
     {
-        if (!p.AppNames().Any()) return $"App console profile '{p.Label}' has no app";
+        if (!p.AppNames().Any()) return $"В профиле консоли «{p.Label}» не указано приложение";
         // refused rather than cut short: a shortened list or combo could still be valid and match or press something else
-        if (p.Apps.Length > MaxApps) return $"App console profile '{p.Label}': the app list is longer than {MaxApps} characters";
-        if (p.Keys.Count > ConsoleProfile.MaxKeys) return $"App console profile '{p.Label}' has more than {ConsoleProfile.MaxKeys} keys";
+        if (p.Apps.Length > MaxApps) return $"Профиль консоли «{p.Label}»: список приложений длиннее {MaxApps} символов";
+        if (p.Keys.Count > ConsoleProfile.MaxKeys) return $"В профиле консоли «{p.Label}» больше {ConsoleProfile.MaxKeys} клавиш";
         foreach (var (spec, what) in p.Keys.Select((k, i) => ((string?)k.Keys, $"key {i + 1}")).Append((p.DialLeft, "dial left")).Append((p.DialRight, "dial right")).Append((p.DialPress, "dial press")))
         {
             if (spec is null) continue;
-            if (spec.Length > MaxSpec) return $"App console profile '{p.Label}', {what}: longer than {MaxSpec} characters";
-            try { if (KeySender.Parse(spec).Count > MaxCombos) return $"App console profile '{p.Label}', {what}: more than {MaxCombos} key presses"; }
-            catch (ArgumentException ex) { return $"App console profile '{p.Label}', {what}: {ex.Message}"; }
+            if (spec.Length > MaxSpec) return $"Профиль консоли «{p.Label}», {what}: длиннее {MaxSpec} символов";
+            try { if (KeySender.Parse(spec).Count > MaxCombos) return $"Профиль консоли «{p.Label}», {what}: больше {MaxCombos} нажатий"; }
+            catch (ArgumentException ex) { return $"Профиль консоли «{p.Label}», {what}: {ex.Message}"; }
         }
         return null;
     }

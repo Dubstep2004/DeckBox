@@ -103,7 +103,7 @@ public sealed partial class DiscordMonitor(ConfigStore config, ILogger<DiscordMo
         // handshake
         await WriteFrame(io, 0, new JsonObject { ["v"] = 1, ["client_id"] = cfg.ClientId }, ct);
         var ready = (await ReadFrame(io, ct))?.Body ?? throw new IOException("Discord closed the connection");
-        if (ready["evt"]?.GetValue<string>() != "READY") throw new Exception(ready["data"]?["message"]?.GetValue<string>() ?? "Discord refused the client ID");
+        if (ready["evt"]?.GetValue<string>() != "READY") throw new Exception(ready["data"]?["message"]?.GetValue<string>() ?? "Discord не принял Client ID");
         _io = io;
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var reader = Task.Run(() => ReadLoop(io, stop.Token), CancellationToken.None);
@@ -340,7 +340,7 @@ public sealed partial class DiscordMonitor(ConfigStore config, ILogger<DiscordMo
                 }
                 var id = msg["nonce"]?.GetValue<string>();
                 if (id is null || !_pending.TryRemove(id, out var tcs)) continue;
-                if (evt == "ERROR") tcs.TrySetException(new Exception(msg["data"]?["message"]?.GetValue<string>() ?? "Discord refused the request"));
+                if (evt == "ERROR") tcs.TrySetException(new Exception(msg["data"]?["message"]?.GetValue<string>() ?? "Discord отклонил запрос"));
                 else tcs.TrySetResult(msg["data"]?.DeepClone());
             }
         }
@@ -354,7 +354,7 @@ public sealed partial class DiscordMonitor(ConfigStore config, ILogger<DiscordMo
 
     private async Task<JsonNode?> Request(string cmd, JsonObject? args, string? evt, CancellationToken ct, TimeSpan? wait = null)
     {
-        var io = _io ?? throw new Exception("Discord is not connected");
+        var io = _io ?? throw new Exception("Discord не подключён");
         var id = Guid.NewGuid().ToString("N");
         var tcs = new TaskCompletionSource<JsonNode?>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pending[id] = tcs;
@@ -401,7 +401,7 @@ public sealed partial class DiscordMonitor(ConfigStore config, ILogger<DiscordMo
             // Checked again here: the widget's option or page may have been switched off while this press was queued.
             if (!ControlAllowed(config.Get())) return "controlling Discord is turned off in the widget's settings";
             var s = _snap;
-            if (!s.Connected) return "Discord is not connected";
+            if (!s.Connected) return "Discord не подключён";
             switch (action)
             {
                 case "mute": ApplyVoice(await Request("SET_VOICE_SETTINGS", new JsonObject { ["mute"] = !s.Muted }, null, CancellationToken.None)); break;

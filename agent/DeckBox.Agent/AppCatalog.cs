@@ -124,7 +124,7 @@ public sealed class AppCatalog(ConfigStore config, ILogger<AppCatalog> log)
     /// <summary>Opens (or brings forward) an app from the last scan; returns an error message, or null when it worked.</summary>
     public string? Open(string id)
     {
-        if (!Supported) return "Opening apps is supported on macOS only";
+        if (!Supported) return "Открытие приложений поддерживается только на macOS";
         if (!OpenAllowed()) return "Add an All apps widget to a page to open apps from the phone";
         if (Find(id) is not { } app) return "Unknown app";
         if (!Directory.Exists(app.Path)) return $"{app.Name} is no longer installed";

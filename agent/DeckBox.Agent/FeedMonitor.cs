@@ -147,9 +147,9 @@ public sealed class FeedMonitor(ConfigStore config, ILogger<FeedMonitor> log) : 
     /// <summary>Opens a headline from the current list on this computer; returns an error message, or null when it worked.</summary>
     public string? Open(string? id)
     {
-        if (!OpenAllowed()) return "Opening articles is off: turn on \"Open articles on the PC\" in the News feeds widget's settings";
-        if (string.IsNullOrEmpty(id) || _snap.Items.FirstOrDefault(i => i.Id == id) is not { } item) return "That headline is no longer in the list";
-        if (FeedParser.SafeLink(item.Link) is not { } uri) return "This headline has no link";
+        if (!OpenAllowed()) return "Открытие статей выключено: включите «Открывать статьи на ПК» в настройках виджета «Новости»";
+        if (string.IsNullOrEmpty(id) || _snap.Items.FirstOrDefault(i => i.Id == id) is not { } item) return "Этой новости уже нет в списке";
+        if (FeedParser.SafeLink(item.Link) is not { } uri) return "У этой новости нет ссылки";
         try { Opener(uri); }
         catch (Exception ex) { log.LogWarning("feed: could not open {Host}: {Msg}", uri.Host, ex.Message); return "Could not open it on the computer"; }
         log.LogInformation("feed article opened from the phone: {Host}", uri.Host);

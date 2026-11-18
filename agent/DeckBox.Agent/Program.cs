@@ -89,6 +89,8 @@ AddMonitor<DiscordMonitor>(builder.Services);
 AddMonitor<BatteryMonitor>(builder.Services);
 AddMonitor<RuleEngine>(builder.Services);
 AddMonitor<ChargeGuard>(builder.Services);
+AddMonitor<GameMonitor>(builder.Services);
+AddMonitor<WeekStats>(builder.Services);
 builder.Services.AddHostedService<Tray>();
 
 var app = builder.Build();
@@ -139,13 +141,13 @@ app.MapGet("/api/controls/radio-directory/countries", async (CancellationToken c
 {
     try { return Results.Json(new { countries = await RadioBrowserDirectory.GetCountriesAsync(ct) }); }
     catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-    catch (Exception ex) { return Results.Json(new { ok = false, error = ex is RadioDirectoryUnavailableException ? ex.Message : "Radio directory is temporarily unavailable." }, statusCode: StatusCodes.Status502BadGateway); }
+    catch (Exception ex) { return Results.Json(new { ok = false, error = ex is RadioDirectoryUnavailableException ? ex.Message : "Каталог радио временно недоступен." }, statusCode: StatusCodes.Status502BadGateway); }
 });
 app.MapGet("/api/controls/radio-directory/stations", async (string? country, int? limit, CancellationToken ct) =>
 {
     try { return Results.Json(new { stations = await RadioBrowserDirectory.GetStationsByCountryAsync(country ?? "", limit ?? 40, ct) }); }
     catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-    catch (Exception ex) { return Results.Json(new { ok = false, error = ex is RadioDirectoryUnavailableException ? ex.Message : "Radio directory is temporarily unavailable." }, statusCode: StatusCodes.Status502BadGateway); }
+    catch (Exception ex) { return Results.Json(new { ok = false, error = ex is RadioDirectoryUnavailableException ? ex.Message : "Каталог радио временно недоступен." }, statusCode: StatusCodes.Status502BadGateway); }
 });
 app.MapPost("/api/controls/radio-directory/check", async (HttpRequest req, CancellationToken ct) =>
 {
@@ -377,6 +379,37 @@ app.MapPut("/api/settings", async (HttpRequest req, ConfigStore cfg, ControlDeck
     return Results.Ok(new { version = cfg.Version });
 });
 
+// «Резервная копия»: settings and custom icons in one zip, to keep or to move to another computer (local only).
+app.MapGet("/api/backup", () =>
+{
+    var ms = new MemoryStream();
+    using (var zip = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+    {
+        if (File.Exists(AppPaths.ConfigPath)) System.IO.Compression.ZipFileExtensions.CreateEntryFromFile(zip, AppPaths.ConfigPath, "config.json");
+        var icons = Path.Combine(AppPaths.ConfigDir, "icons");
+        if (Directory.Exists(icons))
+            foreach (var f in Directory.GetFiles(icons)) System.IO.Compression.ZipFileExtensions.CreateEntryFromFile(zip, f, "icons/" + Path.GetFileName(f));
+        var info = zip.CreateEntry("deckbox-backup.txt");
+        using var w = new StreamWriter(info.Open());
+        w.Write($"DeckBox {AppPaths.Version}\n{Environment.MachineName}\n{DateTime.Now:yyyy-MM-dd HH:mm}\n");
+    }
+    ms.Position = 0;
+    return Results.File(ms, "application/zip", $"deckbox-backup-{DateTime.Now:yyyy-MM-dd}.zip");
+});
+app.MapPost("/api/backup/restore", async (HttpRequest req, ConfigStore cfg, ShortcutIconUploads icons, ILogger<Program> log) =>
+{
+    var (error, iconCount) = await Backup.RestoreAsync(req.Body, cfg, Path.Combine(AppPaths.ConfigDir, "icons"));
+    if (error is not null) return Results.BadRequest(new { error });
+    ShortcutIcons.ClearHasIconCache();
+    log.LogInformation("settings restored from a backup ({Icons} icons)", iconCount);
+    return Results.Ok(new { ok = true, icons = iconCount, version = cfg.Version });
+});
+app.MapGet("/api/store", async (ConfigStore cfg, CancellationToken ct) =>
+    Results.Text(await TemplateStore.GetAsync(cfg.Get().Updates.Repo, ct), "application/json; charset=utf-8"));
+// «Показать брифинг на телефоне сейчас» (settings page)
+app.MapPost("/api/briefing", (PushStore push) => { push.Emit("briefing"); return Results.Ok(new { ok = true }); });
+app.MapGet("/api/stats", (WeekStats stats) => Results.Json(stats.Summary()));
+
 app.MapPost("/api/shortcuts/test", async (HttpRequest req, ConfigStore cfg, ILogger<Program> log) =>
 {
     if (req.ContentType?.StartsWith("application/json") != true) return Results.StatusCode(415);
@@ -455,6 +488,8 @@ object State(IServiceProvider sp, long? ev)
     {
         update = upd.Status() is { } u && (u.AppUpdate || u.AgentUpdate) ? new { latest = u.Latest, app = u.AppUpdate, agent = u.AgentUpdate, name = u.Name, notes = u.Notes, state = u.State, error = u.Error, url = u.ReleaseUrl } : null,
         agentVersion = AppPaths.Version,
+        quiet = QuietMode.Snapshot() is { On: true } q ? new { since = q.Since } : null,
+        game = GameMonitor.Current,
         ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         host = Environment.MachineName,
         cfgVersion = sp.GetRequiredService<ConfigStore>().Version,
@@ -738,6 +773,10 @@ app.MapPost("/api/media/{action}", async (string action, long? ms, MediaMonitor 
     return outcome.Ok ? Results.Json(new { ok = true, media = outcome.Media }) : Results.BadRequest();
 });
 
+// «Не беспокоить»: on=1 / on=0, or a toggle without it
+app.MapPost("/api/quiet", (string? on, AudioControl audio) =>
+    Results.Json(on switch { "1" or "true" => QuietMode.Set(true, audio), "0" or "false" => QuietMode.Set(false, audio), _ => QuietMode.Toggle(audio) }));
+
 app.MapPost("/api/volume", (int? level, string? op, AudioControl audio) =>
 {
     var ok = op switch
@@ -822,7 +861,7 @@ app.MapGet("/api/shortcuts/icon", (string id, ConfigStore cfg, ShortcutIconUploa
 // phone only ever needs to read an icon (GET /api/shortcuts/icon, above), never write one.
 app.MapPost("/api/settings/shortcut-icon", async (string id, HttpRequest req, ConfigStore cfg, ShortcutIconUploads icons) =>
 {
-    if (!cfg.Get().Shortcuts.Any(s => s.Id == id)) return Results.NotFound(new { error = "Unknown shortcut (save it once first)" });
+    if (!cfg.Get().Shortcuts.Any(s => s.Id == id)) return Results.NotFound(new { error = "Неизвестная кнопка (сначала сохраните настройки)" });
     if (cfg.VersionConflict(req.Headers["X-Config-Version"])) return Results.Json(new { error = ConfigStore.Conflict }, statusCode: StatusCodes.Status409Conflict);
     var bytes = await ShortcutIconUploads.ReadBounded(req.Body);
     var err = icons.Save(id, req.ContentType, bytes);
@@ -844,6 +883,16 @@ app.MapDelete("/api/settings/shortcut-icon", (string id, HttpRequest req, Config
 app.Lifetime.ApplicationStarted.Register(() =>
     app.Logger.LogInformation("DeckBox agent {Version} ready on http://127.0.0.1:{Port} (config: {Path})", AppPaths.Version, Port, configPath));
 
+#if WINDOWS
+// «Компьютер спит»: the phone turns its screen off when the computer goes to sleep (and back on when it wakes)
+{
+    var sleepPush = app.Services.GetRequiredService<PushStore>();
+    Microsoft.Win32.SystemEvents.PowerModeChanged += (_, e) =>
+    {
+        if (e.Mode == Microsoft.Win32.PowerModes.Suspend) sleepPush.Emit("pcsleep");
+    };
+}
+#endif
 app.Run();
 
 // Restart requested from the settings page (e.g. Wi-Fi turned on): hand over to a fresh instance.

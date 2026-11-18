@@ -163,7 +163,7 @@ public sealed class CameraFeedsTests : IDisposable
         Assert.Equal("udp", sources[1].Transport);
         // more than the limit is refused with a message, not silently cut
         var nine = string.Join(",", Enumerable.Range(1, CameraFeeds.MaxCameras + 1).Select(i => $$"""{"name":"C{{i}}","url":"rtsp://10.0.0.{{i}}/a"}"""));
-        Assert.Contains($"more than {CameraFeeds.MaxCameras} cameras", store.Save("{\"cameras\":{\"sources\":[" + nine + "]}}"));
+        Assert.Contains($"Камер больше {CameraFeeds.MaxCameras}", store.Save("{\"cameras\":{\"sources\":[" + nine + "]}}"));
     }
 
     private sealed class FakeRun : ICameraRun

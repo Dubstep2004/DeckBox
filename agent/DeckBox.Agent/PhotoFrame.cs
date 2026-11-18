@@ -165,26 +165,26 @@ public sealed class PhotoFrame(ConfigStore config, ILogger<PhotoFrame> log)
     /// <summary>Folders too broad to show as a photo frame: a drive or file-system root, the home folder itself, system folders.</summary>
     internal static string? RefuseRoot(string root)
     {
-        if (string.IsNullOrWhiteSpace(root) || !System.IO.Path.IsPathFullyQualified(root)) return "Choose a full folder path in Settings › General";
+        if (string.IsNullOrWhiteSpace(root) || !System.IO.Path.IsPathFullyQualified(root)) return "Укажите полный путь к папке: Настройки › Общие";
         string full;
         try { full = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(root)); }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return "Choose a full folder path in Settings › General"; }
-        if (full.StartsWith(@"\\", StringComparison.Ordinal) || full.StartsWith("//", StringComparison.Ordinal)) return "Network paths aren't supported; use a folder on this computer";
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return "Укажите полный путь к папке: Настройки › Общие"; }
+        if (full.StartsWith(@"\\", StringComparison.Ordinal) || full.StartsWith("//", StringComparison.Ordinal)) return "Сетевые пути не поддерживаются; выберите папку на этом компьютере";
         if (OperatingSystem.IsWindows())
-            try { if (new DriveInfo(full).DriveType == DriveType.Network) return "Network drives aren't supported; use a folder on this computer"; }
+            try { if (new DriveInfo(full).DriveType == DriveType.Network) return "Сетевые диски не поддерживаются; выберите папку на этом компьютере"; }
             catch (ArgumentException) { }
         var home = System.IO.Path.TrimEndingDirectorySeparator(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         var cmp = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         bool Same(string? other) => !string.IsNullOrEmpty(other) && string.Equals(full, System.IO.Path.TrimEndingDirectorySeparator(other), cmp);
         bool Under(string? other) => !string.IsNullOrEmpty(other)
             && (Same(other) || full.StartsWith(System.IO.Path.TrimEndingDirectorySeparator(other) + System.IO.Path.DirectorySeparatorChar, cmp));
-        if (System.IO.Path.GetPathRoot(full) is { } r && Same(r)) return "Choose a photo folder, not a whole drive";
-        if (Same(home) || Same(System.IO.Path.GetDirectoryName(home))) return "Choose a photo folder, not your whole home folder";
+        if (System.IO.Path.GetPathRoot(full) is { } r && Same(r)) return "Выберите папку с фото, а не весь диск";
+        if (Same(home) || Same(System.IO.Path.GetDirectoryName(home))) return "Выберите папку с фото, а не всю домашнюю папку";
         if (Under(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) || Under(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles))
             || Under(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)) || Under(AppPaths.ConfigDir)
             || (!OperatingSystem.IsWindows() && (Under("/etc") || Under("/proc") || Under("/sys") || Under("/dev") || Under("/System") || Under("/Library") || Under("/usr"))))
-            return "Choose a photo folder, not a system folder";
-        if (!Directory.Exists(full)) return "The photo folder doesn't exist";
+            return "Выберите папку с фото, а не системную папку";
+        if (!Directory.Exists(full)) return "Папка с фото не найдена";
         return null;
     }
 

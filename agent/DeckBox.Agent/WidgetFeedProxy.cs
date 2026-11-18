@@ -99,7 +99,7 @@ public static class WidgetFeedProxy
     public static async Task<IResult> FetchAsync(string? rawUrl, CancellationToken ct, HttpClient? client = null)
     {
         if (!TryValidateTarget(rawUrl, out var target) || target is null)
-            return Results.BadRequest(new { error = "Disallowed or invalid feed URL" });
+            return Results.BadRequest(new { error = "Недопустимый адрес ленты" });
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(10));

@@ -35,7 +35,7 @@ public sealed partial class QuotaMonitor
         if (endpoints.Length == 0 && cli is null)
         {
             _antigravity = _antigravity is { Limits.Count: > 0 } prev
-                ? prev with { Error = "Antigravity process not running" }
+                ? prev with { Error = "Antigravity не запущен" }
                 : null;
             return false;
         }
@@ -45,7 +45,7 @@ public sealed partial class QuotaMonitor
             _antigravity = provider;
             return true;
         }
-        const string error = "Could not read local Antigravity quotas";
+        const string error = "Не удалось прочитать лимиты Antigravity";
         _antigravity = _antigravity is { Limits.Count: > 0 } cached
             ? cached with { Error = error } : Fail("antigravity", "Antigravity", error);
         return false;

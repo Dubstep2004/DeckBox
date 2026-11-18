@@ -442,7 +442,7 @@ public sealed partial class QuotaMonitor(ConfigStore config, ILogger<QuotaMonito
         SaveClaudeSchedule(new ClaudeSchedule(next, _claudeFailures, error, refused, refusedAt));
     }
 
-    private const string RefusedMessage = "Anthropic did not accept the sign-in; it will refresh when Claude Code runs";
+    private const string RefusedMessage = "Anthropic не принял вход; он обновится при запуске Claude Code";
 
     /// <summary>Sends the one request and sets <see cref="_claude"/> from its answer.</summary>
     private async Task<(ClaudeResult, TimeSpan?)> FetchClaude(string plan, string token, long nowMs, CancellationToken ct)
@@ -633,7 +633,7 @@ public sealed partial class QuotaMonitor(ConfigStore config, ILogger<QuotaMonito
     {
         if (root.TryGetProperty("extra_usage", out var x) && x.ValueKind == JsonValueKind.Object
             && x.TryGetProperty("is_enabled", out var en) && en.ValueKind == JsonValueKind.True)
-            return $"Extra usage on · {Num(x, "utilization") ?? 0:0}%";
+            return $"Доп. использование · {Num(x, "utilization") ?? 0:0}%";
         return null;
     }
 

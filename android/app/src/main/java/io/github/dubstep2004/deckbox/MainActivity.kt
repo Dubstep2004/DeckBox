@@ -292,6 +292,13 @@ class MainActivity : Activity(), SensorEventListener {
     inner class Bridge {
         private fun ok(key: String) = key == bridgeKey
 
+        /**
+         * «Компьютер спит»: true lets the phone's screen go dark (no keep-awake, lowest brightness) and watches for the
+         * computer to answer again; then the screen comes back on by itself. false ends it at once.
+         */
+        @JavascriptInterface
+        fun pcAsleep(key: String, on: Boolean) { if (ok(key)) setPcAsleep(on) }
+
         /** Screen brightness 0..1; a negative value returns control to the system setting. */
         @JavascriptInterface
         fun setBrightness(key: String, value: Float) {
@@ -451,6 +458,47 @@ class MainActivity : Activity(), SensorEventListener {
 
         @JavascriptInterface
         fun cancelListening(key: String, id: Int) { if (ok(key) && id > 0) dictation.cancel(id) }
+    }
+
+    @Volatile private var sleepWatch = 0
+
+    private fun setPcAsleep(on: Boolean) {
+        val gen = ++sleepWatch
+        runOnUiThread {
+            if (on) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                window.attributes = window.attributes.apply { screenBrightness = 0.01f }
+            } else {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+        if (!on) return
+        Thread({
+            // the computer still answers for a moment while it falls asleep: wake only after it was gone at least once
+            var wasGone = false
+            while (sleepWatch == gen) {
+                try { Thread.sleep(15_000) } catch (_: InterruptedException) { return@Thread }
+                if (sleepWatch != gen) return@Thread
+                val up = try { link.request("GET", "/api/state").let { r -> r.body.close(); r.code in 200..299 } } catch (_: Exception) { false }
+                if (!up) { wasGone = true; continue }
+                if (!wasGone) continue
+                sleepWatch++
+                wakeScreen()
+                runOnUiThread { web.evaluateJavascript("window.onPcAwake && window.onPcAwake()", null) }
+                return@Thread
+            }
+        }, "pc-sleep").apply { isDaemon = true; start() }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun wakeScreen() {
+        val pm = getSystemService(android.os.PowerManager::class.java) ?: return
+        val lock = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK or android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP, "deckbox:pcawake")
+        lock.acquire(10_000)
+        runOnUiThread {
+            if (android.os.Build.VERSION.SDK_INT >= 27) setTurnScreenOn(true)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     companion object {

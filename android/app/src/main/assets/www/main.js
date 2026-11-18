@@ -17,6 +17,7 @@ import './widgets/console.js';
 import './widgets/dictate.js';
 import './widgets/camera.js';
 import './widgets/spectrum.js';
+import './widgets/pro.js';
 
 // DeckBox desk panel. Pages are 12 × 6 grids of widgets, designed in the agent's settings page.
 // The panel talks to the DeckBox agent through "/agent/*", which the Android shell proxies over USB
@@ -36,7 +37,7 @@ export const $ = (id) => document.getElementById(id);
 // The native bridge (window.Android) is in every frame, sandboxed widgets included, so each call carries a key that only
 // the panel's own frames receive (MainActivity.bridgeKey). This wrapper adds it.
 const BRIDGE = ['battery', 'buzz', 'haptic', 'is24Hour', 'pcs', 'selectPc', 'forgetPc', 'setBrightness', 'setHomeScreen', 'setOrientation',
-  'setPinned', 'setVolumeKeys', 'transport', 'sensors', 'version', 'canListen', 'listen', 'stopListening', 'cancelListening', 'installUpdate'];
+  'setPinned', 'setVolumeKeys', 'transport', 'sensors', 'version', 'canListen', 'listen', 'stopListening', 'cancelListening', 'installUpdate', 'pcAsleep'];
 export const bridge = typeof Android === 'undefined' ? null : Object.fromEntries(BRIDGE.filter((m) => typeof Android[m] === 'function')
   .map((m) => [m, (...args) => Android[m](window.__deckboxKey || '', ...args)]));
 // Live preview inside the agent's layout editor: the layout comes from the editor (unsaved), not from the agent.
@@ -217,9 +218,9 @@ export function fmtDur(ms) {
 export function shortDur(ms) {
   const m = Math.max(0, Math.floor(ms / 60000));
   if (m < 1) return t('time.now');
-  if (m < 60) return m + 'm';
+  if (m < 60) return m + ' мин';
   const hr = Math.floor(m / 60);
-  return hr < 24 ? `${hr}h ${m % 60}m` : `${Math.floor(hr / 24)}d`;
+  return hr < 24 ? (m % 60 ? `${hr} ч ${m % 60} мин` : `${hr} ч`) : `${Math.floor(hr / 24)} д`;
 }
 export const ago = (ts) => { const d = Date.now() - ts; return d < 60_000 ? t('time.justNow') : t('time.ago', { dur: shortDur(d) }); };
 export const r1 = (v) => (v == null ? '—' : (Math.round(v * 10) / 10).toString());
@@ -981,7 +982,11 @@ export function handleEvent(e) {
   else if (e.kind === 'back' && e.data) requestBack(e.data.rule);
   else if (e.kind === 'refresh') { loadConfig(); loadQuotas(); loadWork(); loadPush(); loadWeather(true); loadCalendar(); }
   else if (e.kind === 'reload') location.reload();
+  for (const f of hooks.event) try { f(e); } catch (err) { console.warn(err); }
 }
+
+/** pro.js (DeckBox PRO features) listens here: every state from the agent, every event, the online flag. */
+export const hooks = { state: [], event: [], online: [] };
 
 export const WIDGET_ICONS = { camera: '📹', dictate: '🎙️', spectrum: '📶', 'app-console': '🎛️',discord: '💬', rules: '⚡', chargecare: '🔋', nextup: '⏭️', moon: '🌙', wordclock: '🔤', clock: '🕒', weather: '⛅', forecast: '🌦️', media: '🎵', stat: '📈', gauge: '⏲️', chart: '📊', meters: '💾', gpu: '🎮', quotas: '✳️', sessions: '🤖',
   github: '🐙', processes: '⚙️', shortcuts: '🎛️', button: '🔘', worldclock: '🌍', calendar: '📅', pomodoro: '🍅', countdown: '⏳', note: '📝', command: '💻',
@@ -1863,6 +1868,7 @@ export function setOnline(on) {
   const changed = online !== on;
   online = on;
   if (changed) emit('state');
+  if (changed) for (const f of hooks.online) try { f(on); } catch (err) { console.warn(err); }
 }
 
 // ---------------------------------------------------------------- «Вышла новая версия»
@@ -1904,6 +1910,7 @@ export function applyState(s, replayGen = null) {
     openUpdate();
     if (updateViaAgent && s.update.state && s.update.state !== 'idle') setUpdateProgress({ stage: s.update.state });
   } else if (updateViaAgent && updateCardOpen()) { updateViaAgent = false; setUpdateProgress({ stage: 'done' }); }
+  for (const f of hooks.state) try { f(s); } catch (err) { console.warn(err); }
   media = s.media ? { ...s.media, at: performance.now() } : null;
   setOnline(true);
   if (s.cfgVersion !== undefined && cfgVersion !== null && s.cfgVersion !== cfgVersion) loadConfig();

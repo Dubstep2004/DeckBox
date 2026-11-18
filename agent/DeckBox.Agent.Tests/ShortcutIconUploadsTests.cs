@@ -81,10 +81,10 @@ public sealed class ShortcutIconUploadsTests : IDisposable
         Assert.Contains("PNG", _uploads.Save("terminal", "image/png", [0x89, 0x50, 0x4E, 0x47, 0, 0, 0, 0]));
 
     [Fact]
-    public void AnEmptyFileIsRejected() => Assert.Equal("The file is empty", _uploads.Save("terminal", "image/png", []));
+    public void AnEmptyFileIsRejected() => Assert.Equal("Файл пустой", _uploads.Save("terminal", "image/png", []));
 
     [Fact]
-    public void TooLargeAnUploadIsRejected() => Assert.Equal($"The icon is larger than {ShortcutIconUploads.MaxBytes / 1024} KB", _uploads.Save("terminal", "image/png", null));
+    public void TooLargeAnUploadIsRejected() => Assert.Equal($"Значок больше {ShortcutIconUploads.MaxBytes / 1024} КБ", _uploads.Save("terminal", "image/png", null));
 
     [Fact]
     public void UploadingAgainInADifferentFormatReplacesTheOldOne()

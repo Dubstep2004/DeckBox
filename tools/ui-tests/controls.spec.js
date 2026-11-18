@@ -45,8 +45,8 @@ test('push-to-talk releases the microphone after pointer release', async ({ page
 
 test('unconfigured power and audio listening remain disabled', async ({ page }) => {
   await show(page, 'power-controls');
-  await expect(page.getByRole('button', { name: /Hold:/ })).toHaveCount(3);
-  for (const button of await page.getByRole('button', { name: /Hold:/ }).all()) await expect(button).toBeDisabled();
+  await expect(page.getByRole('button', { name: /Удерживайте:/ })).toHaveCount(3);
+  for (const button of await page.getByRole('button', { name: /Удерживайте:/ }).all()) await expect(button).toBeDisabled();
   await show(page, 'pc-listen');
   await expect(page.getByRole('button', { name: 'Listen', exact: true })).toBeDisabled();
 });

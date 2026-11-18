@@ -77,11 +77,11 @@ public sealed class ShortcutIconUploads(string? iconsDir = null)
     /// <returns>An error message, or null on success.</returns>
     public string? Save(string id, string? contentType, byte[]? bytes)
     {
-        if (bytes is null) return $"The icon is larger than {MaxBytes / 1024} KB";
-        if (bytes.Length == 0) return "The file is empty";
+        if (bytes is null) return $"Значок больше {MaxBytes / 1024} КБ";
+        if (bytes.Length == 0) return "Файл пустой";
         var type = contentType?.Split(';')[0].Trim() ?? "";
         if (!ExtensionByContentType.TryGetValue(type, out var ext)) return "Only PNG, WEBP or SVG icons are supported";
-        if (!LooksValid(ext, bytes)) return $"That does not look like a valid {ext[1..].ToUpperInvariant()} file";
+        if (!LooksValid(ext, bytes)) return $"Это не похоже на файл {ext[1..].ToUpperInvariant()}";
 
         Directory.CreateDirectory(_dir);
         var target = PathFor(id, ext);

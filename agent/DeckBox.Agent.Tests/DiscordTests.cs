@@ -46,7 +46,7 @@ public sealed class DiscordTests : IDisposable
     public async Task Actions_need_a_connection_even_with_control_on()
     {
         var error = await Monitor(true).ActAsync("leave", null);
-        Assert.Equal("Discord is not connected", error);
+        Assert.Equal("Discord не подключён", error);
     }
 
     [Fact]

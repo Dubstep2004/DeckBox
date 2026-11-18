@@ -152,7 +152,7 @@ public sealed class SpotifyControl : IDisposable
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (Exception ex) when (ex is IOException or HttpRequestException or JsonException or OperationCanceledException)
-            { _snapshot = new() { ["connected"] = false, ["error"] = ex is IOException ? ex.Message : "Spotify is unavailable" }; }
+            { _snapshot = new() { ["connected"] = false, ["error"] = ex is IOException ? ex.Message : "Spotify недоступен" }; }
             _readAt = Now; return _snapshot;
         }
         finally { _readGate.Release(); }
@@ -213,7 +213,7 @@ public sealed class SpotifyControl : IDisposable
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is IOException or HttpRequestException or JsonException or OperationCanceledException)
-        { return new(false, ex is IOException ? ex.Message : "Spotify is unavailable"); }
+        { return new(false, ex is IOException ? ex.Message : "Spotify недоступен"); }
     }
     private string DeviceQuery() => _config.Get().Controls.SpotifyDevice is { Length: > 0 } id ? "?device_id=" + Uri.EscapeDataString(id) : "";
     public void Dispose() { _http.Dispose(); _tokenGate.Dispose(); _readGate.Dispose(); }

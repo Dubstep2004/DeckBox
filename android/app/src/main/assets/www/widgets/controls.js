@@ -134,7 +134,7 @@ function chooser(box, options, which) {
 }
 
 function hold(box, options, power = null) {
-  const b = h('button', 'deck-hold', power ? `Hold: ${power}` : 'Hold to talk'); b.type = 'button';
+  const b = h('button', 'deck-hold', power ? `Удерживайте: ${({ sleep: 'сон', restart: 'перезагрузка', shutdown: 'выключение', lock: 'блокировка', logoff: 'выход' })[power] || power}` : 'Hold to talk'); b.type = 'button';
   b.disabled = true;
   const status = h('div', 'deck-caption', power ? 'Hold for 2 seconds' : 'Release to restore the microphone'); box.append(b, status);
   let held = false, lease = null, timer = 0, renewal = 0, device = null;
@@ -193,10 +193,18 @@ function mediaView(box, options, mode) {
     controls.querySelectorAll('button').forEach(b => b.disabled = !current);
     if (seek) { seek.input.max = Math.max(1, current?.duration || 1); seek.set(current?.position || 0); seek.number.textContent = `${Math.floor((current?.position || 0) / 1000)} / ${Math.floor((current?.duration || 0) / 1000)} s`; seek.input.disabled = !current?.canSeek; }
     if (shuffle) { shuffle.disabled = !current?.canShuffle; shuffle.setAttribute('aria-pressed', String(!!current?.shuffle)); }
-    if (repeat) { repeat.disabled = !current?.canRepeat; repeat.textContent = 'Repeat: ' + (current?.repeat || 'None'); }
+    if (repeat) { repeat.disabled = !current?.canRepeat; repeat.textContent = 'Повтор: ' + ({ None: 'выкл.', Track: 'трек', List: 'список' }[current?.repeat || 'None'] || current.repeat); }
   };
 }
 
+const DECK_TITLES = {
+  'app-dock': 'Док приложений', hotkeys: 'Горячие клавиши', 'macro-pad': 'Макропад', 'window-layouts': 'Раскладки окон',
+  'project-launcher': 'Проекты', snippets: 'Фрагменты текста', presentation: 'Презентация', 'display-profiles': 'Профили экрана',
+  'focus-profile': 'Фокус', 'meeting-controls': 'Созвон', 'discord-controls': 'Управление Discord', 'meeting-profile': 'Профиль созвона',
+  'task-runner': 'Задачи', 'dev-servers': 'Серверы разработки', services: 'Службы', 'workflow-runner': 'Workflow GitHub',
+  'script-pad': 'Скрипты', soundboard: 'Звуковая панель', radio: 'Радио', playlists: 'Плейлисты', 'audio-routing': 'Аудиовыходы',
+  'external-mixer': 'Внешний микшер', 'midi-pad': 'MIDI-пад', 'osc-pad': 'OSC-пад',
+};
 const groups = {
   'app-dock': ['app', 'shortcut'], hotkeys: ['keys'], 'macro-pad': ['macro'], 'window-layouts': ['window-layout'],
   'project-launcher': ['project', 'app'], snippets: ['snippet', 'text'], presentation: ['presentation'],
@@ -221,8 +229,8 @@ function actionsView(box, options, type) {
       const b = button('', async () => { await deckCommand(item.kind === 'profile' ? 'profile' : 'action', { id: item.id, op: item.kind === 'radio' ? 'toggle' : (type === 'app-dock' ? 'focus' : '') }); signature = ''; });
       b.disabled = item.available === false;
       b.append(label, state);
-      if (type === 'dev-servers') return h('div', 'deck-task', b, button('Stop', () => deckCommand('action', { id: item.id, op: 'stop' }), 'Stop ' + item.name));
-      if (type === 'soundboard') return h('div', 'deck-task', b, button('Stop', () => deckCommand('sound-stop', { id: item.id }), 'Stop ' + item.name));
+      if (type === 'dev-servers') return h('div', 'deck-task', b, button('Stop', () => deckCommand('action', { id: item.id, op: 'stop' }), 'Остановить ' + item.name));
+      if (type === 'soundboard') return h('div', 'deck-task', b, button('Stop', () => deckCommand('sound-stop', { id: item.id }), 'Остановить ' + item.name));
       return b;
     }));
   };
@@ -588,7 +596,7 @@ export function registerDeckWidget(type, title, mode = type) {
         render = data => {
           const items = (data.monitors || []).filter(m => !o.device || m.id === o.device);
           if (!items.length) { empty(list, t('w.noMonitors')); return; }
-          reconcile(list, items.map(m => { if (!rows.has(m.id)) { const s = slider(m.name + ' brightness', value => deckCommand('brightness', { id: m.id, value }));
+          reconcile(list, items.map(m => { if (!rows.has(m.id)) { const s = slider('Яркость: ' + m.name, value => deckCommand('brightness', { id: m.id, value }));
             rows.set(m.id, { ...s, el: h('div', 'deck-channel', h('div', 'deck-channel-name', m.name), s.input, s.number) }); }
             const row = rows.get(m.id); row.input.disabled = m.brightness == null; row.set(m.brightness || 0); if (m.brightness == null) row.number.textContent = 'DDC/CI unavailable'; return row.el; }));
         };
@@ -618,7 +626,7 @@ for (const [type, title, mode] of [
   ['brightness', 'Display brightness', 'brightness'], ['power-plans', 'Power plans', 'plans'], ['desktops', 'Virtual desktops', 'desktops'],
   ['system-keys', 'Lock and displays', 'system'], ['power-controls', 'Power controls', 'power'], ['pc-listen', 'Listen to PC audio', 'listen'],
 ]) registerDeckWidget(type, title, mode);
-for (const type of Object.keys(groups)) registerDeckWidget(type, type.split('-').map(s => s[0].toUpperCase() + s.slice(1)).join(' '));
+for (const type of Object.keys(groups)) registerDeckWidget(type, DECK_TITLES[type] || type.split('-').map(s => s[0].toUpperCase() + s.slice(1)).join(' '));
 
 W['meeting-status'] = W.onair;
 

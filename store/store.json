@@ -1,0 +1,313 @@
+{
+ "version": 1,
+ "about": "Магазин шаблонов DeckBox. Свой набор можно прислать pull request'ом: добавьте его в этот файл.",
+ "packs": [
+  {
+   "id": "streamer",
+   "name": "Стример",
+   "icon": "🎥",
+   "author": "DeckBox",
+   "desc": "Сцены и микшер OBS, запись и трансляция, Discord, звуковая панель и «Не беспокоить».",
+   "pages": [
+    {
+     "title": "Эфир",
+     "icon": "🔴",
+     "widgets": [
+      {
+       "type": "obs-scenes",
+       "x": 0,
+       "y": 0,
+       "w": 6,
+       "h": 6
+      },
+      {
+       "type": "obs-mixer",
+       "x": 6,
+       "y": 0,
+       "w": 6,
+       "h": 3
+      },
+      {
+       "type": "obs-recording",
+       "x": 6,
+       "y": 3,
+       "w": 3,
+       "h": 3
+      },
+      {
+       "type": "quiet",
+       "x": 9,
+       "y": 3,
+       "w": 3,
+       "h": 3
+      }
+     ]
+    },
+    {
+     "title": "Звуки",
+     "icon": "🔊",
+     "widgets": [
+      {
+       "type": "soundboard",
+       "x": 0,
+       "y": 0,
+       "w": 8,
+       "h": 6
+      },
+      {
+       "type": "discord",
+       "x": 8,
+       "y": 0,
+       "w": 4,
+       "h": 6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "developer",
+   "name": "Программист",
+   "icon": "👨‍💻",
+   "author": "DeckBox",
+   "desc": "Сессии Claude Code и Codex, лимиты, GitHub, Docker и загрузка ПК.",
+   "pages": [
+    {
+     "title": "Код",
+     "icon": "⌨️",
+     "widgets": [
+      {
+       "type": "sessions",
+       "x": 0,
+       "y": 0,
+       "w": 6,
+       "h": 6
+      },
+      {
+       "type": "quotas",
+       "x": 6,
+       "y": 0,
+       "w": 6,
+       "h": 3
+      },
+      {
+       "type": "github",
+       "x": 6,
+       "y": 3,
+       "w": 6,
+       "h": 3
+      }
+     ]
+    },
+    {
+     "title": "Сервисы",
+     "icon": "🐳",
+     "widgets": [
+      {
+       "type": "docker",
+       "x": 0,
+       "y": 0,
+       "w": 6,
+       "h": 6
+      },
+      {
+       "type": "chart",
+       "x": 6,
+       "y": 0,
+       "w": 6,
+       "h": 3
+      },
+      {
+       "type": "topprocs",
+       "x": 6,
+       "y": 3,
+       "w": 6,
+       "h": 3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gamer",
+   "name": "Геймер",
+   "icon": "🕹",
+   "author": "DeckBox",
+   "desc": "Игровой режим с FPS и температурами, Discord, музыка и статистика за неделю.",
+   "pages": [
+    {
+     "title": "Игровой режим",
+     "icon": "🎮",
+     "widgets": [
+      {
+       "type": "game",
+       "x": 0,
+       "y": 0,
+       "w": 12,
+       "h": 6
+      }
+     ]
+    },
+    {
+     "title": "Перед игрой",
+     "icon": "🎧",
+     "widgets": [
+      {
+       "type": "discord",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 6
+      },
+      {
+       "type": "media",
+       "x": 4,
+       "y": 0,
+       "w": 5,
+       "h": 4
+      },
+      {
+       "type": "quiet",
+       "x": 9,
+       "y": 0,
+       "w": 3,
+       "h": 2
+      },
+      {
+       "type": "voice",
+       "x": 9,
+       "y": 2,
+       "w": 3,
+       "h": 2
+      },
+      {
+       "type": "weekstats",
+       "x": 4,
+       "y": 4,
+       "w": 8,
+       "h": 2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "trader",
+   "name": "Трейдер",
+   "icon": "📈",
+   "author": "DeckBox",
+   "desc": "Курс ЦБ РФ, криптовалюты и новости.",
+   "pages": [
+    {
+     "title": "Рынки",
+     "icon": "💹",
+     "widgets": [
+      {
+       "type": "cbr",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 6,
+       "options": {
+        "codes": "USD, EUR, CNY, GBP, JPY, KZT"
+       }
+      },
+      {
+       "type": "crypto",
+       "x": 4,
+       "y": 0,
+       "w": 4,
+       "h": 6
+      },
+      {
+       "type": "feeds",
+       "x": 8,
+       "y": 0,
+       "w": 4,
+       "h": 6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "office",
+   "name": "Офис",
+   "icon": "💼",
+   "author": "DeckBox",
+   "desc": "Утренний брифинг, ближайшая встреча, заметка и тихий режим.",
+   "pages": [
+    {
+     "title": "Рабочий день",
+     "icon": "🗂",
+     "widgets": [
+      {
+       "type": "briefing",
+       "x": 0,
+       "y": 0,
+       "w": 8,
+       "h": 6
+      },
+      {
+       "type": "nextup",
+       "x": 8,
+       "y": 0,
+       "w": 4,
+       "h": 2
+      },
+      {
+       "type": "note",
+       "x": 8,
+       "y": 2,
+       "w": 4,
+       "h": 2
+      },
+      {
+       "type": "quiet",
+       "x": 8,
+       "y": 4,
+       "w": 4,
+       "h": 2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "music",
+   "name": "Меломан",
+   "icon": "🎵",
+   "author": "DeckBox",
+   "desc": "Плеер, спектр и радио.",
+   "pages": [
+    {
+     "title": "Музыка",
+     "icon": "🎶",
+     "widgets": [
+      {
+       "type": "media",
+       "x": 0,
+       "y": 0,
+       "w": 6,
+       "h": 6
+      },
+      {
+       "type": "spectrum",
+       "x": 6,
+       "y": 0,
+       "w": 6,
+       "h": 3
+      },
+      {
+       "type": "radio",
+       "x": 6,
+       "y": 3,
+       "w": 6,
+       "h": 3
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

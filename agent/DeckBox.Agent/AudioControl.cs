@@ -29,6 +29,12 @@ public sealed class AudioControl
 
     public bool Step(int delta) => Snapshot() is { } s && SetVolume(s.Volume + delta);
 
+    public bool SetMute(bool mute) => Use(ep =>
+    {
+        ep.SetMute(mute, ref _ctx);
+        return true;
+    });
+
     public bool ToggleMute() => Use(ep =>
     {
         ep.GetMute(out var m);

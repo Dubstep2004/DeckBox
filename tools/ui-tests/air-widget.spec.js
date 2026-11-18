@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-for (const [aqi, value, band] of [[null, '—', 'Unavailable'], [0, '0', 'Good']]) {
+for (const [aqi, value, band] of [[null, '—', 'Unavailable'], [0, '0', 'Хорошо']]) {
   test(`air quality displays the right reading for AQI ${aqi}`, async ({ page }) => {
     await page.addInitScript(() => {
       const config = JSON.stringify({

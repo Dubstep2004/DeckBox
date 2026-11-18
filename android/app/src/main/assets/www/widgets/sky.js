@@ -48,7 +48,7 @@ W.sun = {
   },
 };
 
-export const AQI_BANDS = [[20, 'Good', '#22c55e'], [40, 'Fair', '#84cc16'], [60, 'Moderate', '#eab308'], [80, 'Poor', '#f97316'], [100, 'Very poor', '#ef4444'], [1e9, 'Extremely poor', '#a855f7']];
+export const AQI_BANDS = [[20, 'Хорошо', '#22c55e'], [40, 'Неплохо', '#84cc16'], [60, 'Умеренно', '#eab308'], [80, 'Плохо', '#f97316'], [100, 'Очень плохо', '#ef4444'], [1e9, 'Крайне плохо', '#a855f7']];
 W.air = {
   needs: ['tick'],
   create(box) {
@@ -127,8 +127,8 @@ W.moon = {
         q('.mo-lit').setAttribute('d', d);
         q('.mo-name').textContent = m.name;
         q('.mo-ill').textContent = `${Math.round(m.illum * 100)}% lit`;
-        const inDays = (target) => { const dd = ((target - age) % syn + syn) % syn; return dd < 0.5 ? 'tonight' : dd < 1.5 ? 'tomorrow' : `in ${Math.round(dd)} days`; };
-        q('.mo-next').textContent = age < syn / 2 ? `Full moon ${inDays(syn / 2)}` : `New moon ${inDays(syn)}`;
+        const inDays = (target) => { const dd = ((target - age) % syn + syn) % syn; const n = Math.round(dd); return dd < 0.5 ? 'сегодня ночью' : dd < 1.5 ? 'завтра' : `через ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'день' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'дня' : 'дней'}`; };
+        q('.mo-next').textContent = age < syn / 2 ? `Полнолуние ${inDays(syn / 2)}` : `Новолуние ${inDays(syn)}`;
       },
     };
   },

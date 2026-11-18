@@ -796,7 +796,7 @@ W.nextup = {
         const sameDay = new Date(ev.start).toDateString() === new Date().toDateString();
         when.textContent = cur ? t('w.nowLeft', { dur }) : sameDay || left < 12 * 60 ? t('time.inDur', { dur }) : new Date(ev.start).toLocaleDateString(LOCALE, { weekday: 'long' });
         title.textContent = ev.title;
-        meta.textContent = [`${hm(ev.start)}–${hm(ev.end)}`, ev.location, cur && next ? `then ${next.title} at ${hm(next.start)}` : ''].filter(Boolean).join(' · ');
+        meta.textContent = [`${hm(ev.start)}–${hm(ev.end)}`, ev.location, cur && next ? `затем ${next.title} в ${hm(next.start)}` : ''].filter(Boolean).join(' · ');
         if (cur) bar.style.width = Math.min(100, ((now - ev.start) / (ev.end - ev.start)) * 100) + '%';
         box.style.setProperty('--nu', ev.color || 'rgb(var(--ambient))');
       },
@@ -841,11 +841,11 @@ W.gpu = {
 
         const temps = [g.temp != null ? `${Math.round(g.temp)}°C` : null, g.hotSpot != null ? `hot spot ${Math.round(g.hotSpot)}°` : null,
           g.memTemp != null ? `memory ${Math.round(g.memTemp)}°` : null].filter(Boolean).join(' · ');
-        big.replaceChildren(h('b', null, g.util != null ? String(Math.round(g.util)) : '—'), h('small', null, '% load'), h('span', 'gd-temp', temps));
+        big.replaceChildren(h('b', null, g.util != null ? String(Math.round(g.util)) : '—'), h('small', null, '% загрузка'), h('span', 'gd-temp', temps));
 
         const list = [];
         const mem = gpuMem(g);
-        if (mem) list.push(meter(mem.label === 'VRAM' ? 'VRAM' : 'GPU memory', `${r1(mem.used)} / ${Math.round(mem.total)} GB`, (mem.used / mem.total) * 100));
+        if (mem) list.push(meter(mem.label === 'VRAM' ? 'Видеопамять' : 'Память ГП', `${r1(mem.used)} / ${Math.round(mem.total)} GB`, (mem.used / mem.total) * 100));
         if (!g.integrated && g.sharedTotal && g.sharedUsed != null) list.push(meter('Shared memory', `${r1(g.sharedUsed)} GB`, (g.sharedUsed / g.sharedTotal) * 100, '#64748b'));
         if (g.power != null) {
           list.push(meter('Power', g.powerLimit ? `${Math.round(g.power)} / ${Math.round(g.powerLimit)} W` : `${Math.round(g.power)} W`,

@@ -206,13 +206,13 @@ public sealed class AppConsoleTests : IDisposable
         File.WriteAllText(_path, "{}");
         var store = new ConfigStore(_path);
         Assert.Contains("unknown key", store.Save("""{ "console": { "profiles": [{ "label": "X", "apps": "x", "keys": [{ "keys": "ctrl+nope" }] }] } }"""));
-        Assert.Contains("no app", store.Save("""{ "console": { "profiles": [{ "label": "X", "apps": " , ", "keys": [{ "keys": "f5" }] }] } }"""));
+        Assert.Contains("не указано приложение", store.Save("""{ "console": { "profiles": [{ "label": "X", "apps": " , ", "keys": [{ "keys": "f5" }] }] } }"""));
         // too long is refused, never cut short into another valid key or app name
-        Assert.Contains("longer than", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "x", "keys": [{ "keys": "{{string.Join(", ", Enumerable.Repeat("ctrl+shift+f12", 20))}}" }] }] } }"""));
-        Assert.Contains("longer than", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "{{new string('a', 301)}}", "keys": [{ "keys": "f5" }] }] } }"""));
-        Assert.Contains("more than 12 keys", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "x", "keys": [{{string.Join(",", Enumerable.Repeat("""{ "keys": "f5" }""", 13))}}] }] } }"""));
-        Assert.Contains("more than 20 key presses", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "x", "dialLeft": "{{string.Join(",", Enumerable.Repeat("a", 21))}}" }] } }"""));
-        Assert.Contains("more than 30 apps", store.Save($$"""{ "console": { "profiles": [{{string.Join(",", Enumerable.Range(0, 31).Select(i => $$"""{ "label": "A{{i}}", "apps": "a{{i}}" }"""))}}] } }"""));
+        Assert.Contains("длиннее", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "x", "keys": [{ "keys": "{{string.Join(", ", Enumerable.Repeat("ctrl+shift+f12", 20))}}" }] }] } }"""));
+        Assert.Contains("длиннее", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "{{new string('a', 301)}}", "keys": [{ "keys": "f5" }] }] } }"""));
+        Assert.Contains("больше 12 клавиш", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "x", "keys": [{{string.Join(",", Enumerable.Repeat("""{ "keys": "f5" }""", 13))}}] }] } }"""));
+        Assert.Contains("больше 20 нажатий", store.Save($$"""{ "console": { "profiles": [{ "label": "X", "apps": "x", "dialLeft": "{{string.Join(",", Enumerable.Repeat("a", 21))}}" }] } }"""));
+        Assert.Contains("больше 30 приложений", store.Save($$"""{ "console": { "profiles": [{{string.Join(",", Enumerable.Range(0, 31).Select(i => $$"""{ "label": "A{{i}}", "apps": "a{{i}}" }"""))}}] } }"""));
         Assert.Null(store.Save("""{ "console": { "profiles": [{ "label": "Edit Pro", "apps": "edit", "keys": [{ "keys": "f5" }], "dialLeft": " " }, { "label": "Edit Pro", "apps": "e2" }] } }"""));
         var saved = store.Get().Console.Profiles;
         Assert.Equal(["edit-pro", "edit-pro-2"], saved.Select(p => p.Id));

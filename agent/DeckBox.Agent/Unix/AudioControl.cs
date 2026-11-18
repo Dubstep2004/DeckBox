@@ -78,6 +78,9 @@ public sealed partial class AudioControl
 
     public bool Step(int delta) => Current() is { } s && SetVolume(s.Volume + delta);
 
+    /// <summary>Mutes or unmutes (only toggles when the state differs, as the Unix tools have no "set" on every system).</summary>
+    public bool SetMute(bool mute) => Current() is { } s && (s.Muted == mute || ToggleMute());
+
     public bool ToggleMute()
     {
         if (OperatingSystem.IsMacOS() && Current() is not { CanControl: true }) return false;

@@ -13,7 +13,7 @@
     <Product>DeckBox</Product>
     <Company>DeckBox</Company>
     <Description>DeckBox desktop agent: feeds the DeckBox Android desk panel over USB or Wi-Fi.</Description>
-    <Version>1.1.3</Version>
+    <Version>1.2.0</Version>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
@@ -60,6 +60,7 @@
     <EmbeddedResource Include="settings.html" LogicalName="settings.html" />
     <EmbeddedResource Include="widgets.json" LogicalName="widgets.json" />
     <EmbeddedResource Include="templates.json" LogicalName="templates.json" />
+    <EmbeddedResource Include="..\..\store\store.json" LogicalName="store.json" />
     <!-- the phone's panel, served at /panel/ for the live preview in the layout editor -->
     <EmbeddedResource Include="..\..\android\app\src\main\assets\www\*.*" LogicalName="www/%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\..\android\app\src\main\assets\www\widgets\*.*" LogicalName="www/widgets/%(Filename)%(Extension)" />
