@@ -79,3 +79,21 @@ test('a release description becomes the card\'s sections', async ({ page }) => {
     '![b](x)\n\n### ✨ Новое\n- `📱 Панель` `💻 Компьютер` **Плашка**: что [нового](https://x).\n- Вторая\n  строка.\n\n### 🛠 Исправлено\n- `adb`\n\n---\n\n### ⬇ Что скачать\n- нет'));
   expect(notes).toEqual([{ title: '✨ Новое', items: ['📱 Панель · 💻 Компьютер — Плашка: что нового.', 'Вторая строка.'] }, { title: '🛠 Исправлено', items: ['adb'] }]);
 });
+
+test('the card shows how much each part downloads, and the speed and time left while the computer downloads', async ({ page }) => {
+  await page.goto('/panel/?update=1');
+  const card = page.locator('.dbu');
+  await expect(card.locator('.dbu-row').nth(0)).toContainText('1,3 МБ');
+  await expect(card.locator('.dbu-row').nth(1)).toContainText('48 МБ');
+  await card.getByRole('button', { name: 'Обновить' }).click();
+  await expect(card.locator('.dbu-msg')).toContainText('Компьютер скачивает новую версию', { timeout: 8000 });
+  await expect(card.locator('.dbu-msg')).toContainText('2,1 МБ/с · ещё ~');
+});
+
+test('a release of the panel alone downloads only the phone app', async ({ page }) => {
+  await page.goto('/panel/?update=app');
+  const card = page.locator('.dbu');
+  await expect(card.locator('.dbu-row')).toHaveCount(1);
+  await expect(card.locator('.dbu-row')).toContainText('Телефон');
+  await expect(card.locator('.dbu-row')).toContainText('1,3 МБ');
+});

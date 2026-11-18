@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the tags: PARTS-<version>.json compares this release with the previous one
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -86,7 +88,10 @@ jobs:
           V: ${{ steps.v.outputs.version }}
         run: |
           tag="v$V"
-          files=("installer/DeckBox-Setup-$V.exe" "installer/DeckBox-$V.apk" "installer/DeckBoxAgent-$V-win-x64.zip" "installer/SHA256SUMS-$V.txt")
+          # which parts this release changes: computers and phones download only what is new for them
+          python3 tools/release-parts.py "$V" > "installer/PARTS-$V.json"
+          cat "installer/PARTS-$V.json" >> "$GITHUB_STEP_SUMMARY"
+          files=("installer/DeckBox-Setup-$V.exe" "installer/DeckBox-$V.apk" "installer/DeckBoxAgent-$V-win-x64.zip" "installer/SHA256SUMS-$V.txt" "installer/PARTS-$V.json")
           # the description comes from this version's section of CHANGELOG.md (✨ Новое, ⚡ Улучшено, 🛠 Исправлено, 🗑 Удалено)
           python3 tools/release-notes.py "$V" > "$RUNNER_TEMP/notes.md"
           title="DeckBox PRO $V$(sed -n "s/^## $V — \(.*\)$/ — \1/p" CHANGELOG.md | head -n1)"

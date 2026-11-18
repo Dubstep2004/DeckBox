@@ -56,3 +56,40 @@ public class ClaudeCodeTests
         Assert.True(Lan.AllowedOverLan("/api/claude-code/signin"));
     }
 }
+
+/// <summary>«Время и дата» and the weather units: only values the panel understands are kept.</summary>
+public class TimeWeatherSettingsTests
+{
+    [Theory]
+    [InlineData("Asia/Yekaterinburg", "Asia/Yekaterinburg")]
+    [InlineData("Europe/Moscow", "Europe/Moscow")]
+    [InlineData("UTC", "UTC")]
+    [InlineData("", "")]
+    [InlineData(null, "")]
+    [InlineData("Mars/Olympus", "")]
+    [InlineData("../../etc/passwd", "")]
+    [InlineData("Asia/Yekaterinburg; rm", "")]
+    public void TheTimeZoneIsAKnownZoneOrThePhones(string? input, string expected) =>
+        Assert.Equal(expected, ConfigStore.ValidTimeZone(input));
+
+    [Fact]
+    public void UnknownUnitsAndFormatsFallBackToTheDefaults()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "deckbox-tw-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var path = Path.Combine(dir, "config.json");
+            File.WriteAllText(path, """{"weather":{"city":"X","lat":1,"lon":2,"tempUnit":"kelvin","windUnit":"knots"},"display":{"dateFormat":"weird","timeZone":"Nowhere/Land"}}""");
+            var c = new ConfigStore(path).Get();
+            Assert.Equal("c", c.Weather.TempUnit);
+            Assert.Equal("ms", c.Weather.WindUnit);
+            Assert.Equal("long", c.Display.DateFormat);
+            Assert.Equal("", c.Display.TimeZone);
+            File.WriteAllText(path, """{"weather":{"city":"X","lat":1,"lon":2,"tempUnit":"f","windUnit":"kmh"},"display":{"dateFormat":"numeric","timeZone":"Asia/Yekaterinburg"}}""");
+            c = new ConfigStore(path).Get();
+            Assert.Equal(("f", "kmh", "numeric", "Asia/Yekaterinburg"), (c.Weather.TempUnit, c.Weather.WindUnit, c.Display.DateFormat, c.Display.TimeZone));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+}

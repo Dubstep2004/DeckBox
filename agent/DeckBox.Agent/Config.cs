@@ -103,6 +103,10 @@ public sealed class WeatherConfig
     public string City { get; set; } = "Москва";
     public double Lat { get; set; } = 55.756;
     public double Lon { get; set; } = 37.617;
+    /// <summary>"c" (°C, default) or "f" (°F).</summary>
+    public string TempUnit { get; set; } = "c";
+    /// <summary>"ms" (м/с, default), "kmh" (км/ч) or "mph".</summary>
+    public string WindUnit { get; set; } = "ms";
 }
 
 public sealed class PingConfig
@@ -133,6 +137,10 @@ public sealed class DisplayConfig
     /// <summary>The codes the panel and the settings page are translated into (i18n.js).</summary>
     internal static readonly string[] Languages = ["ru"];
     public bool ShowSeconds { get; set; } = true;
+    /// <summary>The time zone the panel's clocks show (IANA, e.g. "Asia/Yekaterinburg"); empty = the phone's own.</summary>
+    public string TimeZone { get; set; } = "";
+    /// <summary>"long" (среда, 18 ноября; default), "full" (… 2026 г.), "short" (ср, 18 нояб.) or "numeric" (18.11.2026).</summary>
+    public string DateFormat { get; set; } = "long";
     /// <summary>false ("14:05", default), true ("2:05 PM") or "auto" (follow the phone).</summary>
     [JsonConverter(typeof(Hour12JsonConverter))]
     public string Hour12 { get; set; } = "false";
@@ -534,6 +542,15 @@ public sealed partial class ConfigStore(string path)
         return null;
     }
 
+    /// <summary>An IANA time zone the panel can show ("Asia/Yekaterinburg"), or "" (the phone's own) for anything else.</summary>
+    internal static string ValidTimeZone(string? tz)
+    {
+        tz = (tz ?? "").Trim();
+        if (tz.Length == 0 || tz.Length > 64 || !System.Text.RegularExpressions.Regex.IsMatch(tz, @"^[A-Za-z]+(?:/[A-Za-z0-9_+\-]+){0,2}$|^UTC$")) return "";
+        try { TimeZoneInfo.FindSystemTimeZoneById(tz); return tz; }
+        catch (Exception e) when (e is TimeZoneNotFoundException or InvalidTimeZoneException) { return ""; }
+    }
+
     /// <summary>Fills in defaults: builds pages from templates, migrates old pages, generates unique ids.</summary>
     private static AgentConfig Normalize(AgentConfig c, IReadOnlySet<string>? staleIds = null)
     {
@@ -553,6 +570,11 @@ public sealed partial class ConfigStore(string path)
         c.Display ??= new();
         c.Display.Appearance?.Normalize();
         c.Display.Hour12 = Hour12JsonConverter.Normalize(c.Display.Hour12);
+        c.Display.TimeZone = ValidTimeZone(c.Display.TimeZone);
+        if (c.Display.DateFormat is not ("long" or "full" or "short" or "numeric")) c.Display.DateFormat = "long";
+        c.Weather ??= new();
+        if (c.Weather.TempUnit is not ("c" or "f")) c.Weather.TempUnit = "c";
+        if (c.Weather.WindUnit is not ("ms" or "kmh" or "mph")) c.Weather.WindUnit = "ms";
         c.Display.IdleReturnSec = Math.Clamp(c.Display.IdleReturnSec, 0, 3600);
         c.Display.IdleDimMin = Math.Clamp(c.Display.IdleDimMin, 0, 1440);
         // a language the panel does not have falls back to following the phone / browser

@@ -9,7 +9,11 @@ namespace DeckBox.Agent;
 
 public sealed record UpdateStatus(string AgentVersion, string? AppVersion, string? Latest, string? ReleaseUrl,
     bool AgentUpdate, bool AppUpdate, long? LastCheck, string State, string? Error,
-    string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null, string? PrevVersion = null);
+    string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null, string? PrevVersion = null,
+    long? AgentSize = null, long? AppSize = null, UpdateDownload? Download = null);
+
+/// <summary>A download in progress: which part ("pc" or "phone"), bytes so far, total, speed in bytes per second.</summary>
+public sealed record UpdateDownload(string Part, long Done, long? Total, long Bps);
 
 /// <summary>What the last update of the agent brought: shown once as «Обновлено до …» on the phone and the computer.</summary>
 public sealed record LastUpdate(string Version, string? From, string? Name, IReadOnlyList<UpdateNotes>? Notes, long At, bool Night);
@@ -76,10 +80,12 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     {
         var latest = _latest?.Version;
         var retry = latest is not null && _phoneRetryFor == latest && _phoneRetry.Length > 0;
-        return new UpdateStatus(AppPaths.Version, AppVersion, latest, _latest?.Url,
-            latest is not null && Newer(latest, AppPaths.Version) && _latest!.AgentZip is not null,
-            latest is not null && _latest!.Apk is not null && (AppVersion is not null && Newer(latest, AppVersion) || retry),
-            _lastCheck, _state, _error, _latest?.Name, _latest?.Notes, PreviousVersion());
+        var r = _latest;
+        return new UpdateStatus(AppPaths.Version, AppVersion, latest, r?.Url,
+            r is not null && Newer(r.AgentNeeds, AppPaths.Version) && r.AgentZip is not null,
+            r is not null && r.Apk is not null && (AppVersion is not null && Newer(r.AppNeeds, AppVersion) || retry),
+            _lastCheck, _state, _error, r?.Name, r?.Notes, PreviousVersion(),
+            OperatingSystem.IsWindows() && r?.Setup is not null ? r.SetupSize : r?.ZipSize, r?.ApkSize, _download);
     }
 
     // ------------------------------------------------------------------ «Обновлено до …», night update, rollback
@@ -292,11 +298,26 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
                 if (a.GetProperty("browser_download_url").GetString() is { } url && a.TryGetProperty("url", out var api) && api.GetString() is { } apiUrl)
                     _apiUrls[url] = apiUrl;
             _latest = SelectAssets(r, AppPaths.Rid);
+            // which parts this release changes: a release of the panel alone is not a reason to download the computer's 48 MB
+            if (_latest.Parts is { } partsUrl)
+            {
+                try
+                {
+                    using var pc = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    pc.CancelAfter(TimeSpan.FromSeconds(20));
+                    var (agentSince, appSince) = ParseParts(await _http.GetStringAsync(partsUrl, pc.Token));
+                    _latest = _latest with { AgentSince = agentSince, AppSince = appSince };
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
+                {
+                    log.LogInformation("release parts unreadable ({Msg}); both parts follow the release", ex.Message);
+                }
+            }
             // the Windows notification comes once per version, not at every start of the computer
             var announcedFile = Path.Combine(AppPaths.ConfigDir, "update-announced.txt");
             _announced ??= File.Exists(announcedFile) ? File.ReadAllText(announcedFile).Trim() : "";
             if (_latest is { } found && found.Version != _announced
-                && (Newer(found.Version, AppPaths.Version) || AppVersion is not null && Newer(found.Version, AppVersion)))
+                && (Newer(found.AgentNeeds, AppPaths.Version) || AppVersion is not null && Newer(found.AppNeeds, AppVersion)))
             {
                 _announced = found.Version;
                 try { File.WriteAllText(announcedFile, found.Version); } catch (IOException) { }
@@ -397,7 +418,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         _state = "updating phone app";
         // decided before the download: a phone that already has the new app can report it while the APK downloads,
         // and must not turn this into a retry that skips the phones that never got it
-        var appCurrent = AppVersion is not null && !Newer(_latest!.Version, AppVersion);
+        var appCurrent = AppVersion is not null && !Newer(_latest!.AppNeeds, AppVersion);
         var apk = await VerifiedDownloadAsync(_latest!.Apk!, $"DeckBox-{_latest.Version}.apk", ct);
         var adbExe = AdbReverse.FindAdb(cfg.Get().AdbPath) ?? throw new InvalidOperationException("adb not found");
         var connected = adb.Devices.Split(", ", StringSplitOptions.RemoveEmptyEntries);
@@ -547,6 +568,9 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         catch (Exception) when (!ct.IsCancellationRequested) { return null; }
     }
 
+    /// <summary>The download in progress, for the update card: «2,1 МБ/с · ещё ~3 мин».</summary>
+    private volatile UpdateDownload? _download;
+
     private async Task DownloadToAsync(string url, string? accept, string file, CancellationToken ct, string? token = null)
     {
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -561,7 +585,41 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         var resume = have > 0 && res.StatusCode == System.Net.HttpStatusCode.PartialContent;
         await using var src = await res.Content.ReadAsStreamAsync(ct);
         await using var dst = new FileStream(file, resume ? FileMode.Append : FileMode.Create, FileAccess.Write);
-        await src.CopyToAsync(dst, ct);
+        var part = Path.GetFileName(file).StartsWith("DeckBox-", StringComparison.OrdinalIgnoreCase)
+            && Path.GetFileName(file).Contains(".apk", StringComparison.OrdinalIgnoreCase) ? "phone" : "pc";
+        long done = resume ? have : 0;
+        long? total = res.Content.Headers.ContentLength is { } len ? len + done : null;
+        var meter = new SpeedMeter();
+        var buf = new byte[81920];
+        try
+        {
+            int n;
+            while ((n = await src.ReadAsync(buf, ct)) > 0)
+            {
+                await dst.WriteAsync(buf.AsMemory(0, n), ct);
+                done += n;
+                if (total is not null && !file.EndsWith(".txt.part", StringComparison.OrdinalIgnoreCase))
+                    _download = new UpdateDownload(part, done, total, meter.Add(done, Environment.TickCount64));
+            }
+        }
+        finally { _download = null; }
+    }
+
+    /// <summary>Download speed, smoothed over the last seconds so the card's «осталось» does not jump about.</summary>
+    internal sealed class SpeedMeter
+    {
+        private long _t0 = -1, _b0;
+        private double _bps;
+        public long Add(long bytes, long nowMs)
+        {
+            if (_t0 < 0) { (_t0, _b0) = (nowMs, bytes); return 0; }
+            var dt = nowMs - _t0;
+            if (dt < 1000) return (long)_bps;
+            var now = (bytes - _b0) * 1000.0 / dt;
+            _bps = _bps <= 0 ? now : _bps * 0.7 + now * 0.3;
+            (_t0, _b0) = (nowMs, bytes);
+            return (long)_bps;
+        }
     }
 
     /// <summary>Removes *.old files left behind by the previous update, plus old downloads.</summary>
@@ -636,7 +694,15 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     }
 
     internal sealed record Release(string Version, string? Url, string? Apk, string? AgentZip, string? Sums,
-        string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null, string? Setup = null);
+        string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null, string? Setup = null,
+        string? Parts = null, long? ApkSize = null, long? ZipSize = null, long? SetupSize = null,
+        string? AgentSince = null, string? AppSince = null)
+    {
+        /// <summary>The newest version that changed the computer program (PARTS-x.json); without it, this release.</summary>
+        public string AgentNeeds => AgentSince ?? Version;
+        /// <summary>The newest version that changed the phone app and the panel; without it, this release.</summary>
+        public string AppNeeds => AppSince ?? Version;
+    }
 
     /// <summary>
     /// The verified phone app of the latest release, for a phone that installs it itself over Wi-Fi
@@ -706,15 +772,18 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
     /// </summary>
     internal static Release SelectAssets(JsonElement release, string rid)
     {
-        string? apk = null, zip = null, sums = null, setup = null;
+        string? apk = null, zip = null, sums = null, setup = null, parts = null;
+        long? apkSize = null, zipSize = null, setupSize = null;
         foreach (var a in release.GetProperty("assets").EnumerateArray())
         {
             var name = a.GetProperty("name").GetString() ?? "";
             var url = a.GetProperty("browser_download_url").GetString();
-            if (name.StartsWith("DeckBox-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".apk", StringComparison.OrdinalIgnoreCase)) apk = url;
-            if (name.StartsWith("DeckBoxAgent-", StringComparison.OrdinalIgnoreCase) && name.EndsWith($"-{rid}.zip", StringComparison.OrdinalIgnoreCase)) zip = url;
+            long? size = a.TryGetProperty("size", out var sz) && sz.ValueKind == JsonValueKind.Number ? sz.GetInt64() : null;
+            if (name.StartsWith("DeckBox-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".apk", StringComparison.OrdinalIgnoreCase)) (apk, apkSize) = (url, size);
+            if (name.StartsWith("DeckBoxAgent-", StringComparison.OrdinalIgnoreCase) && name.EndsWith($"-{rid}.zip", StringComparison.OrdinalIgnoreCase)) (zip, zipSize) = (url, size);
             if (name.StartsWith("SHA256SUMS-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) sums = url;
-            if (name.StartsWith("DeckBox-Setup-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) setup = url;
+            if (name.StartsWith("DeckBox-Setup-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) (setup, setupSize) = (url, size);
+            if (name.StartsWith("PARTS-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) parts = url;
         }
         var tag = release.GetProperty("tag_name").GetString() ?? "";
         var relName = release.TryGetProperty("name", out var n) ? n.GetString() : null;
@@ -723,7 +792,21 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         // "DeckBox PRO 1.1.3 — Плашка обновлений" → "Плашка обновлений"
         var dash = relName?.IndexOf(" — ", StringComparison.Ordinal) ?? -1;
         var title = dash >= 0 ? relName![(dash + 3)..].Trim() : null;
-        return new Release(version, release.GetProperty("html_url").GetString(), apk, zip, sums, title, ParseNotes(body), setup);
+        return new Release(version, release.GetProperty("html_url").GetString(), apk, zip, sums, title, ParseNotes(body), setup,
+            parts, apkSize, zipSize, setupSize);
+    }
+
+    /// <summary>PARTS-x.json (tools/release-parts.py) → the newest versions that changed the agent and the app; nulls when unreadable.</summary>
+    internal static (string? Agent, string? App) ParseParts(string? json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json ?? "");
+            static string? V(JsonElement r, string k) =>
+                r.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.String && System.Text.RegularExpressions.Regex.IsMatch(v.GetString()!, @"^\d+\.\d+\.\d+$") ? v.GetString() : null;
+            return (V(doc.RootElement, "agent"), V(doc.RootElement, "app"));
+        }
+        catch (JsonException) { return (null, null); }
     }
 
     /// <summary>

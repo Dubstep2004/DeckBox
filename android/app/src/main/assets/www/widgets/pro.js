@@ -1,4 +1,4 @@
-import { API, D, DEFAULT_AMBIENT, gpusOf, safeFetch, PANEL_HEADERS, PREVIEW, api, applyBrightness, bridge, cfg, curPage, goPage, h, haptic, hooks, pages, store, toast, wxLines } from '../main.js';
+import { API, D, DEFAULT_AMBIENT, fmtDate, zoneNow, gpusOf, safeFetch, PANEL_HEADERS, PREVIEW, api, applyBrightness, bridge, cfg, curPage, goPage, h, haptic, hooks, pages, store, toast, wxLines } from '../main.js';
 import { lines } from './helpers.js';
 import { W } from '../registry.js';
 
@@ -291,7 +291,7 @@ W.weekstats = {
 };
 
 // ---------------------------------------------------------------- «Утренний брифинг»
-function greeting(d = new Date()) {
+function greeting(d = zoneNow()) {
   const x = d.getHours();
   return x < 5 ? 'Доброй ночи' : x < 12 ? 'Доброе утро' : x < 17 ? 'Добрый день' : 'Добрый вечер';
 }
@@ -332,8 +332,8 @@ function briefingCards() {
 
 export function showBriefing() {
   if (document.querySelector('.bf')) return;
-  const d = new Date();
-  const date = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+  const d = zoneNow();
+  const date = fmtDate(d);
   const go = h('button', 'bf-go', 'Начать день');
   const el = h('div', 'bf', h('div', 'bf-hello', greeting(d) + '!'), h('div', 'bf-date', date[0].toUpperCase() + date.slice(1)),
     h('div', 'bf-grid', ...briefingCards()), go);

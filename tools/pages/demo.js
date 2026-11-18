@@ -7,6 +7,9 @@
   const VERSION = document.currentScript.dataset.version || 'demo'; // stamped by tools/pages/build.py from the agent's version
   // ?update=1: a newer release is out, so the «Вышла новая версия» card shows (UI tests)
   const DEMO_UPDATE = new URLSearchParams(location.search).has('update');
+  // ?update=app: the release changes only the phone app and the panel (PARTS-x.json), so the computer downloads nothing
+  const DEMO_APP_ONLY = new URLSearchParams(location.search).get('update') === 'app';
+  let demoApplyAt = 0; // «Обновить» pressed: the computer «downloads» 50 MB at 2 MB/s
   // ?nocc=1: Claude Code is not on the computer (the «Как подключить Claude Code» steps; UI tests)
   const DEMO_NO_CC = new URLSearchParams(location.search).has('nocc');
   const cc = { installed: !DEMO_NO_CC, signedIn: !DEMO_NO_CC, installing: false, error: null, canInstall: true };
@@ -193,10 +196,16 @@
     else return false;
     return true;
   }
+  function demoDownload() {
+    if (!demoApplyAt) return { state: 'idle', download: null };
+    const done = Math.min(49_000_000, (now() - demoApplyAt) * 2100);
+    return { state: 'updating agent', download: { part: 'pc', done, total: 50000000, bps: 2_200_000 } };
+  }
   function state(since) {
     const [title, artist, album, dur] = TRACKS[player.track];
     return {
-      update: DEMO_UPDATE ? { latest: '9.9.9', app: true, agent: true, name: L('Update card', 'Плашка обновлений'), state: 'idle', error: null,
+      update: DEMO_UPDATE ? { latest: '9.9.9', app: true, agent: !DEMO_APP_ONLY, name: L('Update card', 'Плашка обновлений'), error: null,
+        appSize: 1400000, agentSize: DEMO_APP_ONLY ? null : 50000000, ...demoDownload(),
         notes: [{ title: L('✨ New', '✨ Новое'), items: [L('Shows what is new with Update and Later.', 'Показывает, что нового, с кнопками «Обновить» и «Позже».')] },
           { title: L('🛠 Fixed', '🛠 Исправлено'), items: [L('Small fixes.', 'Мелкие исправления.')] }] } : null,
       agentVersion: VERSION, ts: now(),
@@ -782,6 +791,7 @@
     if (path === '/api/pair/status') return json({ claims: 0 });
     if (path === '/api/pair/cancel' && method === 'POST') return json({});
     if (path === '/api/lan') return json({ configured: true, active: true, port: 8766, restartNeeded: false, hosts: ['192.168.1.20', '100.101.102.103'], fingerprint: 'demo' });
+    if (path === '/api/update/apply' && method === 'POST') { if (DEMO_UPDATE) demoApplyAt = now(); return json({ ok: true }); }
     if (path === '/api/update') return json({ status: { agentVersion: VERSION, appVersion: VERSION, latest: VERSION, releaseUrl: 'https://github.com/Dubstep2004/DeckBox/releases/latest', agentUpdate: false, appUpdate: false,
       lastCheck: now() - 3600e3, state: 'idle', error: null }, auto: (await config()).updates?.auto !== false, installed: true });
     if (path === '/api/claude/hook') return json({ installed: false, path: '~/.claude/settings.json' });

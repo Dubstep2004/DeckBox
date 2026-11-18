@@ -15,7 +15,8 @@ import org.json.JSONObject
  * the whole file is checked before Android's own installer gets it. Android only accepts an APK signed with the same
  * key; from Android 12 an app that installed itself before updates without a tap.
  *
- * Progress goes to the panel as {"stage": "download" | "verify" | "install" | "error", "pct": 0..100, "error": "…"}.
+ * Progress goes to the panel as {"stage": "download" | "verify" | "install" | "error", "pct": 0..100, "done": bytes,
+ * "total": bytes, "error": "…"}.
  */
 class AppUpdater(private val context: Context, private val link: AgentLink, private val report: (String) -> Unit) {
 
@@ -103,6 +104,7 @@ class AppUpdater(private val context: Context, private val link: AgentLink, priv
     /** Appends the body to the part file (from = what it already has) and reports the progress. */
     private fun save(input: java.io.InputStream, part: java.io.File, from: Long, total: Long) {
         var last = -1
+        var lastAt = 0L
         var have = from
         val size = if (total > 0) total else 30L * 1024 * 1024
         input.use { src ->
@@ -114,7 +116,9 @@ class AppUpdater(private val context: Context, private val link: AgentLink, priv
                     out.write(buf, 0, n)
                     have += n
                     val pct = (have * 100 / size).toInt().coerceAtMost(99)
-                    if (pct >= last + 5) { last = pct; send("download", pct) }
+                    // every 5 % or every 0,7 s: the card works out the speed and the time left from the bytes
+                    val now = android.os.SystemClock.elapsedRealtime()
+                    if (pct >= last + 5 || now - lastAt >= 700) { last = pct; lastAt = now; send("download", pct, done = have, total = if (total > 0) total else -1) }
                 }
             }
         }
@@ -154,8 +158,10 @@ class AppUpdater(private val context: Context, private val link: AgentLink, priv
         }
     }
 
-    private fun send(stage: String, pct: Int = 0, error: String? = null) {
+    private fun send(stage: String, pct: Int = 0, error: String? = null, done: Long = -1, total: Long = -1) {
         val j = JSONObject().put("stage", stage).put("pct", pct)
+        if (done >= 0) j.put("done", done)
+        if (total > 0) j.put("total", total)
         if (error != null) j.put("error", error)
         report(j.toString())
     }

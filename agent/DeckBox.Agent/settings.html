@@ -493,7 +493,29 @@ dd { margin: 0; word-break: break-all; }
             <div class="field" style="flex:1"><label data-i18n="s.weather.lon">Longitude</label><input type="number" step="0.001" data-bind="weather.lon" data-type="num"></div>
           </div>
         </div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="field"><label>Температура</label>
+            <select data-bind="weather.tempUnit" id="tempUnit"><option value="c">°C — Цельсий</option><option value="f">°F — Фаренгейт</option></select></div>
+          <div class="field"><label>Скорость ветра</label>
+            <select data-bind="weather.windUnit" id="windUnit"><option value="ms">м/с</option><option value="kmh">км/ч</option><option value="mph">миль/ч</option></select></div>
+        </div>
         <p class="hint" style="margin:8px 0 0" data-i18n="s.weather.openMeteoHint">The phone asks Open-Meteo for this location only while a page has a widget that uses the weather (weather, forecast, sun &amp; moon, a clock with its weather line, Custom HTML).</p>
+      </div>
+
+      <div class="card" id="timeCard">
+        <h3>🕒 Время и дата</h3>
+        <p class="hint" style="margin:0 0 10px">Как часы и дата выглядят на панели телефона.</p>
+        <div class="grid2">
+          <div class="field"><label data-i18n="s.display.timeFormat">Time format</label>
+            <select data-bind="display.hour12" data-type="hour12"><option value="false" data-i18n="s.display.h24">24-hour (14:05)</option><option value="true" data-i18n="s.display.h12">12-hour (2:05 PM)</option><option value="auto" data-i18n="s.display.orientation.auto">Follow the phone</option></select></div>
+          <div class="field"><label>Формат даты</label>
+            <select data-bind="display.dateFormat" id="dateFormat"><option value="long">среда, 18 ноября</option><option value="full">среда, 18 ноября 2026 г.</option><option value="short">ср, 18 нояб.</option><option value="numeric">18.11.2026</option></select></div>
+        </div>
+        <div class="field" style="max-width:420px"><label>Часовой пояс</label>
+          <select data-bind="display.timeZone" id="timeZone"><option value="">Как на телефоне</option><option value="Europe/Kaliningrad">Калининград (UTC+2)</option><option value="Europe/Moscow">Москва, Санкт-Петербург (UTC+3)</option><option value="Europe/Samara">Самара, Ижевск (UTC+4)</option><option value="Asia/Yekaterinburg">Екатеринбург, Челябинск, Уфа, Пермь (UTC+5)</option><option value="Asia/Omsk">Омск (UTC+6)</option><option value="Asia/Novosibirsk">Новосибирск, Барнаул, Томск (UTC+7)</option><option value="Asia/Krasnoyarsk">Красноярск, Кемерово (UTC+7)</option><option value="Asia/Irkutsk">Иркутск, Улан-Удэ (UTC+8)</option><option value="Asia/Yakutsk">Якутск, Чита (UTC+9)</option><option value="Asia/Vladivostok">Владивосток, Хабаровск (UTC+10)</option><option value="Asia/Magadan">Магадан, Сахалин (UTC+11)</option><option value="Asia/Kamchatka">Камчатка (UTC+12)</option><option value="Europe/Minsk">Минск (UTC+3)</option><option value="Europe/Kyiv">Киев (UTC+2/+3)</option><option value="Asia/Almaty">Алматы, Астана (UTC+5)</option><option value="Asia/Tashkent">Ташкент (UTC+5)</option><option value="Asia/Tbilisi">Тбилиси (UTC+4)</option><option value="Asia/Yerevan">Ереван (UTC+4)</option><option value="Asia/Baku">Баку (UTC+4)</option><option value="Europe/Istanbul">Стамбул (UTC+3)</option><option value="Asia/Dubai">Дубай (UTC+4)</option><option value="Europe/London">Лондон (UTC+0/+1)</option><option value="Europe/Berlin">Берлин, Париж (UTC+1/+2)</option><option value="America/New_York">Нью-Йорк (UTC−5/−4)</option><option value="America/Los_Angeles">Лос-Анджелес (UTC−8/−7)</option><option value="Asia/Shanghai">Пекин (UTC+8)</option><option value="Asia/Tokyo">Токио (UTC+9)</option><option value="UTC">UTC</option></select>
+          <span class="hint">«Как на телефоне» — время берётся из настроек телефона. Другой пояс нужен, если телефон показывает не то время или вы хотите часы другого города.</span></div>
+        <label class="check"><input type="checkbox" data-bind="display.showSeconds"> <span data-i18n="s.display.showSeconds">Show seconds on the clock</span></label>
+        <p class="hint" id="timePreview" style="margin:8px 0 0"></p>
       </div>
 
       <div class="card">
@@ -599,9 +621,6 @@ dd { margin: 0; word-break: break-all; }
         <div class="field" style="max-width:420px"><label data-i18n="s.display.orientation">Orientation</label>
           <select data-bind="display.orientation"><option value="landscape" data-i18n="s.display.orientation.landscape">Landscape</option><option value="portrait" data-i18n="s.display.orientation.portrait">Portrait</option><option value="auto" data-i18n="s.display.orientation.auto">Follow the phone</option></select>
           <span class="hint" data-i18n="s.display.orientationHint">You design pages in landscape; in portrait the panel arranges the widgets by itself, top to bottom. Tablets use the same pages, just bigger.</span></div>
-        <div class="field" style="max-width:420px"><label data-i18n="s.display.timeFormat">Time format</label>
-          <select data-bind="display.hour12" data-type="hour12"><option value="false" data-i18n="s.display.h24">24-hour (14:05)</option><option value="true" data-i18n="s.display.h12">12-hour (2:05 PM)</option><option value="auto" data-i18n="s.display.orientation.auto">Follow the phone</option></select></div>
-        <label class="check"><input type="checkbox" data-bind="display.showSeconds"> <span data-i18n="s.display.showSeconds">Show seconds on the clock</span></label>
         <label class="check"><input type="checkbox" data-bind="display.vibrate"> <span data-i18n="s.display.vibrate">Vibrate when a session finishes or needs input</span></label>
         <label class="check"><input type="checkbox" data-bind="display.volumeKeys"> <span data-i18n="s.display.volumeKeys">The phone's volume keys switch pages</span></label>
         <label class="check"><input type="checkbox" data-bind="display.autoBrightness"> <span data-i18n="s.display.autoBrightness">Brightness follows the room (light sensor)</span></label>
@@ -2804,6 +2823,22 @@ function bindLanguage() {
   if ($('displayLangSel')) $('displayLangSel').onchange = (e) => onPick(e.target.value);
 }
 
+// «Время и дата»: how the panel's clock and date will look with the chosen settings
+const DATE_FORMATS = { long: { weekday: 'long', day: 'numeric', month: 'long' }, full: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
+  short: { weekday: 'short', day: 'numeric', month: 'short' }, numeric: { day: '2-digit', month: '2-digit', year: 'numeric' } };
+function renderTimePreview() {
+  const el = $('timePreview');
+  if (!el || !cfg?.display) return;
+  const d = cfg.display, tz = d.timeZone || undefined;
+  const h12 = d.hour12 === true || d.hour12 === 'true';
+  try {
+    const time = new Intl.DateTimeFormat('ru-RU', { timeZone: tz, hour: h12 ? 'numeric' : '2-digit', minute: '2-digit', second: d.showSeconds === false ? undefined : '2-digit', hour12: h12 }).format(new Date());
+    const date = new Intl.DateTimeFormat('ru-RU', { timeZone: tz, ...(DATE_FORMATS[d.dateFormat] || DATE_FORMATS.long) }).format(new Date());
+    el.textContent = `Сейчас на панели: ${time} · ${date}`;
+  } catch (_) { el.textContent = ''; }
+}
+setInterval(renderTimePreview, 1000);
+
 function bindForm() {
   renderAppearanceSettings();
   renderControlSettings();
@@ -2824,6 +2859,7 @@ function bindForm() {
       setPath(cfg, p, val);
       $('nbv').textContent = Math.round(cfg.night.brightness * 100) + '%';
       if (p === 'charge.method') renderCharge();
+      renderTimePreview();
       changed();
     };
   });
@@ -2915,7 +2951,7 @@ async function loadInfo() {
 // The form reads every section it binds and renders, so a config without one — an older export, or a
 // hand-trimmed paste in Apply JSON — gets the same defaults a fresh load does before anything renders.
 function fillDefaults() {
-  cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, ask: true, repo: 'Dubstep2004/DeckBox' }; cfg.updates.ask ??= true; cfg.updates.night ??= false; cfg.updates.nightHour ??= 4; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
+  cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.weather.tempUnit ??= 'c'; cfg.weather.windUnit ??= 'ms'; cfg.display.timeZone ??= ''; cfg.display.dateFormat ??= 'long'; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, ask: true, repo: 'Dubstep2004/DeckBox' }; cfg.updates.ask ??= true; cfg.updates.night ??= false; cfg.updates.nightHour ??= 4; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
   cfg.codexBar ??= { providers: ['claude', 'codex', 'antigravity'], rotate: true, pageSize: 2, rotateInterval: 8 };
   for (const [k, v] of Object.entries({ language: 'auto', hour12: false, idleReturnSec: 90, switchCountdownSec: 3, touchGraceSec: 20, minDwellSec: 15, holdMaxMin: 30, keepAwake: true,
     showSeconds: true, vibrate: true, volumeKeys: true, artTint: true, proximityWake: true, orientation: 'landscape', theme: 'pro', accent: '#d4af37' })) cfg.display[k] ??= v;
@@ -3007,7 +3043,9 @@ async function showUpdateOnce(s, force = false) {
   m.showUpdateCard({ latest: s.latest, name: s.name, notes: s.notes, app: s.appUpdate, agent: s.agentUpdate }, {
     versions: [['Компьютер', s.agentVersion], ['Приложение', s.appVersion]],
     parts: [s.agentUpdate && 'pc', s.appUpdate && 'phone'].filter(Boolean),
+    sizes: { pc: s.agentSize, phone: s.appSize },
     apply: async () => {
+      const hadPc = s.agentUpdate;
       await fetch('/api/update/apply', { method: 'POST' });
       let tries = 0, wasDown = false;
       const poll = setInterval(async () => {
@@ -3015,16 +3053,23 @@ async function showUpdateOnce(s, force = false) {
         try {
           const st = (await (await fetch('/api/update')).json()).status;
           if (st.error) { m.setUpdateProgress({ stage: 'error', error: st.error }); clearInterval(poll); }
-          else if (st.state !== 'idle') m.setUpdateProgress({ stage: st.state });
+          else if (st.state !== 'idle') {
+            m.setUpdateProgress({ stage: st.state });
+            // «2,1 МБ/с · ещё ~3 мин» while a file downloads
+            const d = st.download;
+            if (d) m.setUpdateProgress({ stage: 'download', part: d.part, done: d.done, total: d.total, bps: d.bps, pct: d.total ? Math.min(99, Math.floor((d.done * 100) / d.total)) : null });
+          }
           else if (!st.agentUpdate) {
             clearInterval(poll); loadInfo();
-            m.setUpdateProgress({ stage: 'done', part: 'pc', note: st.appUpdate ? 'Компьютер обновлён. Телефон обновится с плашки «Вышла новая версия» в панели.' : undefined });
+            const note = st.appUpdate ? (hadPc ? 'Компьютер обновлён. Телефон обновится с плашки «Вышла новая версия» в панели.'
+              : 'Телефон не подключён по USB: он обновится сам с плашки «Вышла новая версия» в панели.') : undefined;
+            m.setUpdateProgress({ stage: 'done', part: hadPc ? 'pc' : st.appUpdate ? 'none' : undefined, note });
           }
           else if (wasDown) { /* the new agent is starting */ }
-          else if (tries > 8) { m.setUpdateProgress({ stage: 'error', error: 'агент не начал обновление. Скачайте DeckBox-Setup со страницы релизов.' }); clearInterval(poll); }
+          else if (tries > 16) { m.setUpdateProgress({ stage: 'error', error: 'агент не начал обновление. Скачайте DeckBox-Setup со страницы релизов.' }); clearInterval(poll); }
         } catch (_) { wasDown = true; m.setUpdateProgress({ stage: 'restarting' }); }
-        if (tries > 150) clearInterval(poll);
-      }, 2000);
+        if (tries > 300) clearInterval(poll);
+      }, 1000);
     },
   });
 }

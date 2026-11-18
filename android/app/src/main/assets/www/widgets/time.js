@@ -1,4 +1,4 @@
-import { $, LOCALE, buzz, fmtTime, h, haptic, pad, r1, store, t, tick, toast } from '../main.js';
+import { $, LOCALE, buzz, fmtDate, zoneNow, fmtTime, h, haptic, pad, r1, store, t, tick, toast } from '../main.js';
 import { W } from '../registry.js';
 import { dialEl, lines } from './helpers.js';
 
@@ -23,7 +23,7 @@ W.analog = {
       update() {
         let H, M, S;
         if (fmt) { const p = Object.fromEntries(fmt.formatToParts(new Date()).map((x) => [x.type, +x.value])); [H, M, S] = [p.hour, p.minute, p.second]; }
-        else { const d = new Date(); [H, M, S] = [d.getHours(), d.getMinutes(), d.getSeconds()]; }
+        else { const d = zoneNow(); [H, M, S] = [d.getHours(), d.getMinutes(), d.getSeconds()]; }
         hh.setAttribute('transform', `rotate(${(H % 12) * 30 + M * 0.5} 50 50)`);
         mh.setAttribute('transform', `rotate(${M * 6 + S * 0.1} 50 50)`);
         sh?.setAttribute('transform', `rotate(${S * 6} 50 50)`);
@@ -315,14 +315,14 @@ W.wordclock = {
     let shown = '';
     return {
       update() {
-        const now = new Date();
+        const now = zoneNow();
         const t = ruUi() ? timeInWordsRu(now) : timeInWords(now);
         const k = t.lead + t.main.join(' ');
         if (k === shown) return;
         shown = k;
         lead.textContent = t.lead;
         main.replaceChildren(...t.main.map((w, i) => h('span', i === t.main.length - 1 || t.main.length === 1 ? 'hr' : null, w + ' ')));
-        date.textContent = now.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+        date.textContent = fmtDate(now);
       },
     };
   },

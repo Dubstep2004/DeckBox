@@ -195,6 +195,27 @@ export function hour12() {
 }
 export const fmtClock = (H, M) => (hour12() ? `${H % 12 || 12}:${pad(M)} ${H < 12 ? 'AM' : 'PM'}` : `${pad(H)}:${pad(M)}`);
 export const fmtHM = (d) => fmtClock(d.getHours(), d.getMinutes());
+
+// ---- «Время и дата» (Настройки на ПК): the clocks' time zone and the date format
+let zoneFmt = null;
+let zoneFor = null;
+/** Now as a Date whose hours, minutes and day are those of the chosen time zone (display.timeZone; "" = the phone's). */
+export function zoneNow(ms = Date.now()) {
+  const tz = cfg.display?.timeZone;
+  if (!tz) return new Date(ms);
+  try {
+    if (zoneFor !== tz) {
+      zoneFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+      zoneFor = tz;
+    }
+    const p = Object.fromEntries(zoneFmt.formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
+    return new Date(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second, ms % 1000);
+  } catch (_) { return new Date(ms); }
+}
+const DATE_FORMATS = { long: { weekday: 'long', day: 'numeric', month: 'long' }, full: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
+  short: { weekday: 'short', day: 'numeric', month: 'short' }, numeric: { day: '2-digit', month: '2-digit', year: 'numeric' } };
+/** The clocks' date line in the chosen format (display.dateFormat); d is a zoneNow() date. */
+export const fmtDate = (d) => d.toLocaleDateString(LOCALE, DATE_FORMATS[cfg.display?.dateFormat] || DATE_FORMATS.long);
 export const fmtTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + pad(s % 60); };
 // units in the panel language (Russian: ГБ, МБ/с…); other languages keep the international symbols
 const UNIT_RU = { 'GB/s': 'ГБ/с', 'MB/s': 'МБ/с', 'KB/s': 'КБ/с', 'B/s': 'Б/с', GB: 'ГБ', MB: 'МБ', ms: 'мс', W: 'Вт' };
@@ -399,7 +420,10 @@ export const wxText = (code) => { const x = WX[code]; return x ? t(x[0]) : '—'
 
 let weatherRetry = 0;
 let weatherFor = ''; // the location the forecast in D.weather belongs to
-const weatherKey = () => { const { lat, lon } = cfg.weather || DEFAULT_CFG.weather; return `v3:${lat},${lon}`; };
+const tempUnit = () => (cfg.weather?.tempUnit === 'f' ? 'f' : 'c');
+const windUnit = () => (['kmh', 'mph'].includes(cfg.weather?.windUnit) ? cfg.weather.windUnit : 'ms');
+const WIND_LABEL = { ms: 'м/с', kmh: 'км/ч', mph: 'миль/ч' };
+const weatherKey = () => { const { lat, lon } = cfg.weather || DEFAULT_CFG.weather; return `v4:${lat},${lon},${tempUnit()},${windUnit()}`; };
 export async function loadWeather(force = false) {
   const { lat, lon } = cfg.weather || DEFAULT_CFG.weather;
   const key = weatherKey();
@@ -412,10 +436,11 @@ export async function loadWeather(force = false) {
   if (!anyNeeds('weather')) return;
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      '&current=temperature_2m,apparent_temperature,weather_code,is_day' +
+      '&current=temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m' +
       '&hourly=temperature_2m,weather_code,precipitation_probability,is_day' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,daylight_duration,uv_index_max' +
-      '&timezone=auto&forecast_days=7';
+      '&timezone=auto&forecast_days=7' +
+      (tempUnit() === 'f' ? '&temperature_unit=fahrenheit' : '') + `&wind_speed_unit=${windUnit()}`;
     const ctl = new AbortController();
     setTimeout(() => ctl.abort(), 8000);
     const r = await safeFetch(url, { signal: ctl.signal });
@@ -444,9 +469,10 @@ export function wxLines() {
   const lo = d.temperature_2m_min ? Math.round(d.temperature_2m_min[0]) : null;
   return {
     icon: wxIcon(c.weather_code, c.is_day),
-    temp: Math.round(c.temperature_2m) + '°',
+    temp: Math.round(c.temperature_2m) + (tempUnit() === 'f' ? '°F' : '°'),
     desc: `${desc} · ${cfg.weather?.city || ''}`,
-    range: (hi != null ? `↑${hi}° ↓${lo}° · ` : '') + t('wx.feelsLike', { deg: Math.round(c.apparent_temperature) }),
+    range: (hi != null ? `↑${hi}° ↓${lo}° · ` : '') + t('wx.feelsLike', { deg: Math.round(c.apparent_temperature) })
+      + (c.wind_speed_10m != null ? ` · 💨 ${Math.round(c.wind_speed_10m)} ${WIND_LABEL[windUnit()]}` : ''),
   };
 }
 
@@ -1773,8 +1799,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) undi
 export function tick() {
   if (lastHour12 !== null && hour12() !== lastHour12) { buildLayout(); renderRulesBtn(); }
   const now = new Date();
-  $('nClock').textContent = fmtHM(now);
-  $('nDate').textContent = now.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+  const shown = zoneNow(now.getTime());
+  $('nClock').textContent = fmtHM(shown);
+  $('nDate').textContent = fmtDate(shown);
   if (darkSince && Date.now() - darkSince > 30_000) darkRoom = true;
   const dark = darkRoom && cfg.display?.nightWhenDark === true;
   setNight((isNight(now) || dark) && Date.now() > wakeUntil);
@@ -1913,7 +1940,11 @@ async function githubLatest() {
     if (!res.ok) return c?.r || null;
     const j = await res.json();
     const asset = (re) => (j.assets || []).find((a) => re.test(a.name))?.browser_download_url;
-    const r = { ...releaseOf(j), apk: asset(/^DeckBox-[\d.]+\.apk$/), sums: asset(/^SHA256SUMS-[\d.]+\.txt$/) };
+    const r = { ...releaseOf(j), apk: asset(/^DeckBox-[\d.]+\.apk$/), sums: asset(/^SHA256SUMS-[\d.]+\.txt$/),
+      apkSize: (j.assets || []).find((a) => /^DeckBox-[\d.]+\.apk$/.test(a.name))?.size || null, appSince: null };
+    // PARTS-x.json: the newest version that changed the app; a release of the computer program alone is not for the phone
+    const parts = asset(/^PARTS-[\d.]+\.json$/);
+    if (parts) { try { const p = await (await safeFetch(parts)).json(); if (/^\d+\.\d+\.\d+$/.test(p?.app || '')) r.appSince = p.app; } catch (_) {} }
     store.set('gh-latest', { at: Date.now(), r });
     return r;
   } catch (_) { return c?.r || null; }
@@ -1938,6 +1969,7 @@ export function openUpdate(force = false) {
   showUpdateCard(u, {
     versions: [['Компьютер', D.state?.agentVersion], ['Приложение', appVersion()]],
     parts: [u.app && (bridge?.installUpdate || !u.github) ? 'phone' : null, u.agent ? 'pc' : null].filter(Boolean),
+    sizes: { phone: u.appSize, pc: u.agentSize },
     apply: async () => {
       // the computer is out of reach: straight from the GitHub release
       if (u.github) { bridge.installUpdateFrom(u.apk, u.sums); return; }
@@ -1969,6 +2001,11 @@ function followUpdates(s) {
   if (u) {
     openUpdate();
     if (updateViaAgent && u.state && u.state !== 'idle') setUpdateProgress({ stage: u.state });
+    // the computer downloads: its bytes and speed («2,1 МБ/с · ещё ~3 мин»)
+    if (updateViaAgent && u.download) {
+      const d = u.download;
+      setUpdateProgress({ stage: 'download', part: d.part, done: d.done, total: d.total, bps: d.bps, pct: d.total ? Math.min(99, Math.floor((d.done * 100) / d.total)) : null });
+    }
   } else if (updateViaAgent && updateCardOpen()) { updateViaAgent = false; setUpdateProgress({ stage: 'done', part: 'pc' }); }
   // a dot on the app icon while a new version of the app waits
   const want = u?.app ? u.latest : '';
@@ -2003,8 +2040,8 @@ setInterval(async () => {
   if (PREVIEW || online !== false || !bridge?.installUpdateFrom) return;
   const r = await githubLatest();
   const mine = appVersion();
-  ghUpdate = r?.apk && r.sums && mine && newerVersion(r.version, mine)
-    ? { latest: r.version, name: r.name, notes: r.notes, app: true, agent: false, github: true, apk: r.apk, sums: r.sums } : null;
+  ghUpdate = r?.apk && r.sums && mine && newerVersion(r.appSince || r.version, mine)
+    ? { latest: r.version, name: r.name, notes: r.notes, app: true, agent: false, github: true, apk: r.apk, sums: r.sums, appSize: r.apkSize } : null;
   if (ghUpdate) { openUpdate(); if (badgeFor !== ghUpdate.latest) { badgeFor = ghUpdate.latest; try { bridge.updateBadge(ghUpdate.latest); } catch (_) {} } }
 }, 5 * 60_000);
 
@@ -2104,7 +2141,7 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && lastHour12 !== null && hour12() !== lastHour12) {
     buildLayout();
     renderRulesBtn();
-    $('nClock').textContent = fmtHM(new Date());
+    $('nClock').textContent = fmtHM(zoneNow());
   }
 });
 poll();

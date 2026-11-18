@@ -77,7 +77,7 @@ const STYLE = `
 .dbu-ver{margin-left:auto;font-size:12.5px;color:#9d9686;text-align:right}
 .dbu-steps{flex-basis:100%;display:none;flex-direction:column;gap:6px}
 .dbu-row{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px;font-size:13px}
-.dbu-row>b{color:#c9bfa6;font-weight:600}
+.dbu-row>b{color:#c9bfa6;font-weight:600}.dbu-row>b small{display:block;font-weight:400;font-size:11px;color:#8d846f}
 .dbu-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .dbu-chips span{position:relative;padding:5px 4px 7px;border-radius:9px;text-align:center;font-size:12px;color:#7d776a;background:rgba(255,255,255,.04);overflow:hidden}
 .dbu-chips span.on{color:#17130a;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));font-weight:700}
@@ -139,8 +139,39 @@ const titleOf = (text, version) => { const t = el('div', 'dbu-title', text); t.a
 const STEPS = ['Скачиваю', 'Проверяю', 'Ставлю', 'Готово'];
 const PART_NAMES = { phone: 'Телефон', pc: 'Компьютер' };
 
+/** 1,3 МБ · 48 МБ · 820 КБ */
+export function fmtSize(bytes) {
+  if (!(bytes > 0)) return '';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} КБ`;
+  const mb = bytes / 1048576;
+  return `${(mb < 10 ? mb.toFixed(1) : String(Math.round(mb))).replace('.', ',')} МБ`;
+}
+/** «2,1 МБ/с · ещё ~3 мин»: the speed and the time left of a download; '' until the speed is known. */
+export function speedText(bps, left) {
+  if (!(bps > 0)) return '';
+  const speed = bps >= 1048576 ? `${(bps / 1048576).toFixed(1).replace('.', ',')} МБ/с` : `${Math.max(1, Math.round(bps / 1024))} КБ/с`;
+  if (!(left > 0)) return speed;
+  const sec = left / bps;
+  const eta = sec < 60 ? `ещё ~${Math.max(1, Math.ceil(sec / 5) * 5)} с` : sec < 3600 ? `ещё ~${Math.ceil(sec / 60)} мин` : `ещё ~${Math.floor(sec / 3600)} ч ${Math.ceil((sec % 3600) / 60)} мин`;
+  return `${speed} · ${eta}`;
+}
+// the speed of each part's download, measured here when the sender gives only bytes (the phone app)
+const meters = {};
+function measure(part, done) {
+  const now = Date.now();
+  const m = meters[part];
+  if (!m || done < m.done) { meters[part] = { t: now, done, bps: 0 }; return 0; }
+  const dt = (now - m.t) / 1000;
+  if (dt >= 1) {
+    const cur = (done - m.done) / dt;
+    m.bps = m.bps > 0 ? m.bps * 0.7 + cur * 0.3 : cur;
+    m.t = now; m.done = done;
+  }
+  return m.bps;
+}
+
 /** Shows the card (replacing an open one). «Позже», «Не напоминать» and the backdrop close it. */
-export function showUpdateCard(u, { apply, versions = [], parts, onClose } = {}) {
+export function showUpdateCard(u, { apply, versions = [], parts, sizes = {}, onClose } = {}) {
   if (!u?.latest) return;
   const go = el('button', 'dbu-btn go', 'Обновить');
   const wait = el('button', 'dbu-btn', 'Позже');
@@ -154,7 +185,9 @@ export function showUpdateCard(u, { apply, versions = [], parts, onClose } = {})
   for (const p of which.length ? which : ['phone']) {
     const chips = el('div', 'dbu-chips', ...STEPS.map((s) => el('span', null, s, el('i'))));
     rows[p] = chips;
-    steps.append(el('div', 'dbu-row', el('b', null, PART_NAMES[p] || p), chips));
+    // «Телефон · 1,3 МБ»: only the parts this version changes are downloaded, and how much each one is
+    const size = fmtSize(sizes[p]);
+    steps.append(el('div', 'dbu-row', el('b', null, PART_NAMES[p] || p, size ? el('small', null, size) : null), chips));
   }
   const close = () => { closeUpdateCard(); onClose?.(); };
   wait.onclick = () => { write(LATER_KEY, { version: u.latest, at: Date.now() }); close(); };
@@ -168,7 +201,7 @@ export function showUpdateCard(u, { apply, versions = [], parts, onClose } = {})
   };
   const back = frame('⬆ Вышла новая версия', titleOf('DeckBox PRO ', u.latest), u.name, notesBody(u.notes),
     el('div', 'dbu-foot', go, wait, skip, ver, steps, msg), () => close());
-  back._parts = { go, wait, skip, msg, steps, rows };
+  back._parts = { go, wait, skip, msg, steps, rows, sizes };
 }
 
 /** «Обновлено до 1.5.0»: once after an update (also one made at night), with what is new in it. */
@@ -251,7 +284,16 @@ export function setUpdateProgress(p) {
   const part = p.part || 'phone';
   switch (p.stage) {
     case 'start': msg.textContent = 'Начинаю обновление…'; for (const k in card._parts.rows) mark(k, 0, { pct: 2 }); break;
-    case 'download': msg.textContent = `${part === 'pc' ? 'Компьютер скачивает' : 'Скачиваю'} новую версию… ${p.pct || 0}%`; mark(part, 0, { pct: p.pct }); break;
+    case 'download': {
+      const total = p.total > 0 ? p.total : card._parts.sizes?.[part];
+      const done = p.done >= 0 ? p.done : total && p.pct != null ? (total * p.pct) / 100 : null;
+      const pct = p.pct != null ? p.pct : total && done != null ? Math.min(99, Math.floor((done * 100) / total)) : 0;
+      const bps = p.bps > 0 ? p.bps : done != null ? measure(part, done) : 0;
+      const extra = speedText(bps, total && done != null ? total - done : 0);
+      msg.textContent = `${part === 'pc' ? 'Компьютер скачивает' : 'Скачиваю'} новую версию… ${pct}%` + (extra ? ` · ${extra}` : '');
+      mark(part, 0, { pct });
+      break;
+    }
     case 'verify': msg.textContent = 'Проверяю, что файл целый и подписан тем же ключом…'; mark(part, 1); break;
     case 'install': msg.textContent = 'Устанавливаю… Подтвердите установку на телефоне, если Android спросит.'; mark(part, 2); break;
     case 'done':
