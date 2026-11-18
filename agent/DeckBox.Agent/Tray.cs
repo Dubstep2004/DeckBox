@@ -79,6 +79,18 @@ public sealed class Tray : IHostedService
             Visible = true,
         };
         _icon.DoubleClick += (_, _) => OpenUrl(SettingsUrl);
+        // «Вышел DeckBox 1.5.0»: a Windows notification once per new version; a click opens the settings and its card
+        _icon.BalloonTipClicked += (_, _) => OpenUrl(SettingsUrl);
+        UpdateService.NewRelease += (version, name) =>
+        {
+            if (QuietMode.Snapshot().On) return; // «Не беспокоить» keeps it quiet
+            try
+            {
+                host.BeginInvoke(() => _icon.ShowBalloonTip(10_000, $"Вышел DeckBox {version}",
+                    (string.IsNullOrWhiteSpace(name) ? "" : name + ". ") + "Нажмите, чтобы посмотреть, что нового, и обновить.", ToolTipIcon.Info));
+            }
+            catch { }
+        };
         _adb.StateChanged += () =>
         {
             try { host.BeginInvoke(() => _icon.Text = _adb.Connected ? "DeckBox — телефон подключён" : "DeckBox — ждёт телефон"); } catch { }

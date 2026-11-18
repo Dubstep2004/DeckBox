@@ -9,7 +9,13 @@ namespace DeckBox.Agent;
 
 public sealed record UpdateStatus(string AgentVersion, string? AppVersion, string? Latest, string? ReleaseUrl,
     bool AgentUpdate, bool AppUpdate, long? LastCheck, string State, string? Error,
-    string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null);
+    string? Name = null, IReadOnlyList<UpdateNotes>? Notes = null, string? PrevVersion = null);
+
+/// <summary>What the last update of the agent brought: shown once as «Обновлено до …» on the phone and the computer.</summary>
+public sealed record LastUpdate(string Version, string? From, string? Name, IReadOnlyList<UpdateNotes>? Notes, long At, bool Night);
+
+/// <summary>One release for «Все обновления».</summary>
+public sealed record ReleaseInfo(string Version, string? Name, string? Date, IReadOnlyList<UpdateNotes> Notes);
 
 /// <summary>One part of a release description: "✨ Новое", "⚡ Улучшено", "🛠 Исправлено" or "🗑 Удалено", with its items.</summary>
 public sealed record UpdateNotes(string Title, IReadOnlyList<string> Items);
@@ -22,7 +28,7 @@ public sealed record UpdateNotes(string Title, IReadOnlyList<string> Items);
 ///  - agent: files are swapped in place (running files are renamed to *.old, which Windows allows) and the agent
 ///    restarts itself. Only when running from the installed location, never from a build folder.
 /// </summary>
-public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicationLifetime life, ILogger<UpdateService> log) : BackgroundService
+public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicationLifetime life, ILogger<UpdateService> log, PushStore? pushStore = null) : BackgroundService
 {
     private static readonly string InstallDir = AppPaths.InstallDir;
     private static readonly string ExeName = OperatingSystem.IsWindows() ? "DeckBoxAgent.exe" : "DeckBoxAgent";
@@ -73,8 +79,165 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         return new UpdateStatus(AppPaths.Version, AppVersion, latest, _latest?.Url,
             latest is not null && Newer(latest, AppPaths.Version) && _latest!.AgentZip is not null,
             latest is not null && _latest!.Apk is not null && (AppVersion is not null && Newer(latest, AppVersion) || retry),
-            _lastCheck, _state, _error, _latest?.Name, _latest?.Notes);
+            _lastCheck, _state, _error, _latest?.Name, _latest?.Notes, PreviousVersion());
     }
+
+    // ------------------------------------------------------------------ «Обновлено до …», night update, rollback
+
+    /// <summary>Raised once per new version found (the tray shows a Windows notification).</summary>
+    public static event Action<string, string?>? NewRelease;
+    private string? _announced;
+
+    internal static string LastUpdatePath = Path.Combine(AppPaths.ConfigDir, "last-update.json");
+    /// <summary>The copy of the previous agent kept for «Вернуть прошлую версию».</summary>
+    internal static string PrevDir => Path.Combine(Path.GetDirectoryName(InstallDir.TrimEnd(Path.DirectorySeparatorChar))!, "app-prev");
+    private bool _night;
+
+    public static LastUpdate? ReadLastUpdate()
+    {
+        try { return File.Exists(LastUpdatePath) ? System.Text.Json.JsonSerializer.Deserialize<LastUpdate>(File.ReadAllText(LastUpdatePath)) : null; }
+        catch (Exception) { return null; }
+    }
+
+    private void WriteLastUpdate(string version, string? from, bool rollback = false)
+    {
+        try
+        {
+            var r = new LastUpdate(version, from, rollback ? "Возврат на прошлую версию" : _latest?.Name, rollback ? [] : _latest?.Notes,
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), _night && !rollback);
+            Directory.CreateDirectory(AppPaths.ConfigDir);
+            File.WriteAllText(LastUpdatePath, System.Text.Json.JsonSerializer.Serialize(r));
+        }
+        catch (Exception ex) { log.LogDebug("last-update.json: {Msg}", ex.Message); }
+    }
+
+    /// <summary>The version kept in app-prev, or null.</summary>
+    public static string? PreviousVersion()
+    {
+        try { var f = Path.Combine(PrevDir, "VERSION"); return File.Exists(f) ? File.ReadAllText(f).Trim() : null; }
+        catch (Exception) { return null; }
+    }
+
+    /// <summary>Copies the running agent to app-prev before the new one replaces it.</summary>
+    private void KeepPrevious()
+    {
+        try
+        {
+            if (Directory.Exists(PrevDir)) Directory.Delete(PrevDir, true);
+            CopyDir(InstallDir, PrevDir, skipOld: true); // the running exe can be read while it runs
+            File.WriteAllText(Path.Combine(PrevDir, "VERSION"), AppPaths.Version);
+        }
+        catch (Exception ex) { log.LogWarning("could not keep the previous version: {Msg}", ex.Message); }
+    }
+
+    /// <summary>«Вернуть прошлую версию»: puts app-prev back in place and restarts (the phone app cannot go back).</summary>
+    public async Task<string?> RollbackAsync(CancellationToken ct = default)
+    {
+        var prev = PreviousVersion();
+        if (prev is null) return "Прошлой версии нет: она сохраняется при обновлении";
+        if (!RunningInstalled) return "Агент запущен не из папки установки";
+        await _gate.WaitAsync(ct);
+        try
+        {
+            var from = AppPaths.Version;
+            var staging = Path.Combine(Downloads, "rollback-" + prev);
+            if (Directory.Exists(staging)) Directory.Delete(staging, true);
+            CopyDir(PrevDir, staging, skipOld: true);
+            File.Delete(Path.Combine(staging, "VERSION"));
+            Swap(staging);
+            Directory.Delete(PrevDir, true); // the version that was running is not kept: going back is one step
+            WriteLastUpdate(prev, from, rollback: true);
+            log.LogInformation("rolled back from {From} to {To}, restarting", from, prev);
+            _state = "restarting";
+            AppRestart.Requested = true;
+            life.StopApplication();
+            return null;
+        }
+        catch (Exception ex) { _state = "idle"; return "Не удалось вернуть прошлую версию: " + ex.Message; }
+        finally { _gate.Release(); }
+    }
+
+    internal static void CopyDir(string from, string to, bool skipOld)
+    {
+        foreach (var src in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories))
+        {
+            if (skipOld && src.EndsWith(".old", StringComparison.OrdinalIgnoreCase)) continue;
+            var dst = Path.Combine(to, Path.GetRelativePath(from, src));
+            Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
+            File.Copy(src, dst, true);
+        }
+    }
+
+    /// <summary>Moves the files of a staging folder over the install folder (running files are renamed to *.old).</summary>
+    private static void Swap(string staging)
+    {
+        foreach (var src in Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories))
+        {
+            var rel = Path.GetRelativePath(staging, src);
+            var dst = Path.Combine(InstallDir, rel);
+            Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
+            if (File.Exists(dst))
+            {
+                var old = dst + ".old";
+                if (File.Exists(old)) File.Delete(old);
+                File.Move(dst, old); // works even while the file is in use
+            }
+            File.Move(src, dst);
+        }
+        if (!OperatingSystem.IsWindows()) // zip files do not keep the executable bit
+            File.SetUnixFileMode(Path.Combine(InstallDir, ExeName), (UnixFileMode)0b111_101_101);
+    }
+
+    /// <summary>«Обновлять ночью»: true once per night at the set hour, when something is new and no game runs.</summary>
+    internal static bool NightDue(UpdateConfig u, DateTime now, string? doneFor, bool pending, bool gameRunning) =>
+        u.Night && pending && !gameRunning && now.Hour == u.NightHour
+        && doneFor != now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+    private string? _nightDoneFor;
+
+    private static readonly Dictionary<string, (DateTime At, string Hash)> Hashes = [];
+
+    /// <summary>SHA-256 of a file in hex (lower case), cached by its write time.</summary>
+    public static async Task<string> Sha256Async(string path, CancellationToken ct = default)
+    {
+        var at = File.GetLastWriteTimeUtc(path);
+        lock (Hashes) if (Hashes.TryGetValue(path, out var h) && h.At == at) return h.Hash;
+        await using var f = File.OpenRead(path);
+        var hash = Convert.ToHexStringLower(await System.Security.Cryptography.SHA256.HashDataAsync(f, ct));
+        lock (Hashes) Hashes[path] = (at, hash);
+        return hash;
+    }
+
+    private List<ReleaseInfo>? _history;
+    private DateTime _historyAt;
+
+    /// <summary>«Все обновления»: the last releases with what was new in each (cached for an hour).</summary>
+    public async Task<IReadOnlyList<ReleaseInfo>> HistoryAsync(CancellationToken ct = default)
+    {
+        if (_history is not null && DateTime.UtcNow - _historyAt < TimeSpan.FromHours(1)) return _history;
+        var repo = cfg.Get().Updates.Repo;
+        var json = await ApiStringAsync($"https://api.github.com/repos/{repo}/releases?per_page=30", ct);
+        _history = ParseHistory(json);
+        _historyAt = DateTime.UtcNow;
+        return _history;
+    }
+
+    internal static List<ReleaseInfo> ParseHistory(string json)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var list = new List<ReleaseInfo>();
+        foreach (var r in doc.RootElement.EnumerateArray())
+        {
+            if (r.TryGetProperty("draft", out var d) && d.ValueKind == System.Text.Json.JsonValueKind.True) continue;
+            var tag = r.GetProperty("tag_name").GetString() ?? "";
+            var name = r.TryGetProperty("name", out var n) ? n.GetString() : null;
+            var dash = name?.IndexOf(" — ", StringComparison.Ordinal) ?? -1;
+            list.Add(new ReleaseInfo(tag.TrimStart('v'), dash >= 0 ? name![(dash + 3)..].Trim() : null,
+                r.TryGetProperty("published_at", out var p) ? p.GetString() : null,
+                ParseNotes(r.TryGetProperty("body", out var b) ? b.GetString() : null)));
+        }
+        return list;
+    }
+
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
@@ -94,6 +257,17 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
             }
             // "Ask first" (default): the panel and the settings page show what is new, with Update and Later
             if (cfg.Get().Updates is { Auto: true, Ask: false }) await ApplyAsync(ct);
+            // «Обновлять ночью»: at the set hour, once a night, everything new is installed; the phone hears about it
+            // (it installs itself if Android lets it do that without a tap, otherwise its card waits for the morning)
+            var st = Status();
+            if (NightDue(cfg.Get().Updates, DateTime.Now, _nightDoneFor, st.AgentUpdate || st.AppUpdate, GameMonitor.Current is not null))
+            {
+                _nightDoneFor = DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                log.LogInformation("night update to {Version}", st.Latest);
+                if (st.AppUpdate) pushStore?.Emit("night-update");
+                _night = true;
+                try { await ApplyAsync(ct, phone: adb.Connected); } finally { _night = false; }
+            }
             await Task.Delay(TimeSpan.FromMinutes(1), ct);
         }
     }
@@ -118,6 +292,16 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
                 if (a.GetProperty("browser_download_url").GetString() is { } url && a.TryGetProperty("url", out var api) && api.GetString() is { } apiUrl)
                     _apiUrls[url] = apiUrl;
             _latest = SelectAssets(r, AppPaths.Rid);
+            // the Windows notification comes once per version, not at every start of the computer
+            var announcedFile = Path.Combine(AppPaths.ConfigDir, "update-announced.txt");
+            _announced ??= File.Exists(announcedFile) ? File.ReadAllText(announcedFile).Trim() : "";
+            if (_latest is { } found && found.Version != _announced
+                && (Newer(found.Version, AppPaths.Version) || AppVersion is not null && Newer(found.Version, AppVersion)))
+            {
+                _announced = found.Version;
+                try { File.WriteAllText(announcedFile, found.Version); } catch (IOException) { }
+                try { NewRelease?.Invoke(found.Version, found.Name); } catch (Exception) { }
+            }
             _lastCheck = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             _error = null;
             _state = "idle";
@@ -258,21 +442,9 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         ZipFile.ExtractToDirectory(zip, staging);
         if (!File.Exists(Path.Combine(staging, ExeName))) throw new InvalidOperationException($"the agent package has no {ExeName}");
 
-        foreach (var src in Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories))
-        {
-            var rel = Path.GetRelativePath(staging, src);
-            var dst = Path.Combine(InstallDir, rel);
-            Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
-            if (File.Exists(dst))
-            {
-                var old = dst + ".old";
-                if (File.Exists(old)) File.Delete(old);
-                File.Move(dst, old); // works even while the file is in use
-            }
-            File.Move(src, dst);
-        }
-        if (!OperatingSystem.IsWindows()) // zip files do not keep the executable bit
-            File.SetUnixFileMode(Path.Combine(InstallDir, ExeName), (UnixFileMode)0b111_101_101);
+        KeepPrevious();
+        Swap(staging);
+        WriteLastUpdate(_latest.Version, AppPaths.Version);
         log.LogInformation("agent updated to {Version}, restarting", _latest.Version);
         _state = "restarting";
         AppRestart.Requested = true;
@@ -285,6 +457,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         _state = "updating agent";
         var setup = await VerifiedDownloadAsync(_latest!.Setup!, $"DeckBox-Setup-{_latest.Version}.exe", ct);
         log.LogInformation("agent {Version}: running the installer (the agent runs from {Dir}, not {Install})", _latest.Version, AppContext.BaseDirectory, InstallDir);
+        WriteLastUpdate(_latest.Version, AppPaths.Version);
         _state = "restarting";
         Process? p;
         try { p = Process.Start(new ProcessStartInfo(setup, "/S") { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(setup)! }); }
@@ -379,10 +552,15 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         if (accept is not null) { req.Headers.Accept.Clear(); req.Headers.Accept.ParseAdd(accept); }
         if (token is not null && IsGitHubApi(url)) req.Headers.Authorization = new("Bearer", token);
+        // a download cut off half-way goes on from where it stopped (the .part file), if the server can do that
+        var have = File.Exists(file) ? new FileInfo(file).Length : 0;
+        if (have > 0) req.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(have, null);
         using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (have > 0 && res.StatusCode == System.Net.HttpStatusCode.RequestedRangeNotSatisfiable) return; // already whole
         res.EnsureSuccessStatusCode();
+        var resume = have > 0 && res.StatusCode == System.Net.HttpStatusCode.PartialContent;
         await using var src = await res.Content.ReadAsStreamAsync(ct);
-        await using var dst = File.Create(file);
+        await using var dst = new FileStream(file, resume ? FileMode.Append : FileMode.Create, FileAccess.Write);
         await src.CopyToAsync(dst, ct);
     }
 

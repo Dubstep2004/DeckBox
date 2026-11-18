@@ -772,6 +772,13 @@
     if (path === '/api/update') return json({ status: { agentVersion: VERSION, appVersion: VERSION, latest: VERSION, releaseUrl: 'https://github.com/Dubstep2004/DeckBox/releases/latest', agentUpdate: false, appUpdate: false,
       lastCheck: now() - 3600e3, state: 'idle', error: null }, auto: (await config()).updates?.auto !== false, installed: true });
     if (path === '/api/claude/hook') return json({ installed: false, path: '~/.claude/settings.json' });
+    // «Все обновления» and «Обновлено до …»
+    if (path === '/api/update/history') return json([
+      { version: '9.9.9', name: L('Update card', 'Плашка обновлений'), date: '2026-11-18T10:00:00Z', notes: [{ title: L('✨ New', '✨ Новое'), items: [L('Steps for the phone and the computer.', 'Шаги для телефона и компьютера.')] }] },
+      { version: VERSION, name: L('Notes and Home Assistant', 'Заметки и Home Assistant'), date: '2026-11-17T10:00:00Z', notes: [{ title: L('🛠 Fixed', '🛠 Исправлено'), items: [L('Small fixes.', 'Мелкие исправления.')] }] },
+      { version: '1.0.0', name: 'DeckBox', date: '2026-11-01T10:00:00Z', notes: [{ title: L('✨ New', '✨ Новое'), items: [L('The first version.', 'Первая версия.')] }] },
+    ]);
+    if (path === '/api/update/last') return json({ version: VERSION, from: '1.3.1', name: L('Notes and Home Assistant', 'Заметки и Home Assistant'), notes: [{ title: L('✨ New', '✨ Новое'), items: [L('Edit notes from the phone.', 'Заметки правятся с телефона.')] }], at: now(), night: true });
     if (method !== 'GET') return json({ ok: true });
     return json({ error: 'not in the demo' }, 404);
   }

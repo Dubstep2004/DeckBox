@@ -2,7 +2,7 @@
 // they import what they need from here, so this module must not run code that needs them while it loads
 // (the start section at the end runs after every module has loaded).
 import { W } from './registry.js';
-import { showUpdateCard, setUpdateProgress, snoozed, updateCardOpen } from './update-card.js';
+import { showUpdateCard, setUpdateProgress, snoozed, updateCardOpen, showWhatsNew, showHistory, parseNotes } from './update-card.js';
 import './appearance.js';
 import { cached } from './widgets/helpers.js';
 import './widgets/basic.js';
@@ -37,7 +37,7 @@ export const $ = (id) => document.getElementById(id);
 // The native bridge (window.Android) is in every frame, sandboxed widgets included, so each call carries a key that only
 // the panel's own frames receive (MainActivity.bridgeKey). This wrapper adds it.
 const BRIDGE = ['battery', 'buzz', 'haptic', 'is24Hour', 'pcs', 'selectPc', 'forgetPc', 'setBrightness', 'setHomeScreen', 'setOrientation',
-  'setPinned', 'setVolumeKeys', 'transport', 'sensors', 'version', 'canListen', 'listen', 'stopListening', 'cancelListening', 'installUpdate', 'pcAsleep'];
+  'setPinned', 'setVolumeKeys', 'transport', 'sensors', 'version', 'canListen', 'listen', 'stopListening', 'cancelListening', 'installUpdate', 'pcAsleep', 'installUpdateFrom', 'silentUpdate', 'updateBadge'];
 export const bridge = typeof Android === 'undefined' ? null : Object.fromEntries(BRIDGE.filter((m) => typeof Android[m] === 'function')
   .map((m) => [m, (...args) => Android[m](window.__deckboxKey || '', ...args)]));
 // Live preview inside the agent's layout editor: the layout comes from the editor (unsaved), not from the agent.
@@ -984,6 +984,8 @@ export function handleEvent(e) {
   else if (e.kind === 'back' && e.data) requestBack(e.data.rule);
   else if (e.kind === 'refresh') { loadConfig(); loadQuotas(); loadWork(); loadPush(); loadWeather(true); loadCalendar(); }
   else if (e.kind === 'reload') location.reload();
+  // «Обновлять ночью»: the computer updates itself now; the app follows when Android lets it install without a tap
+  else if (e.kind === 'night-update') { try { if (bridge?.silentUpdate?.()) bridge.installUpdate(); } catch (_) {} }
   for (const f of hooks.event) try { f(e); } catch (err) { console.warn(err); }
 }
 
@@ -1505,8 +1507,9 @@ export function openOverview() {
   const av = appVersion(), gv = D.state?.agentVersion, nu = D.state?.update;
   const ovv = $('ovVer');
   ovv.textContent = ['DeckBox PRO', av && 'приложение ' + av, gv && 'компьютер ' + gv].filter(Boolean).join(' · ') + (nu ? ` · ⬆ ${nu.latest}` : '');
-  ovv.classList.toggle('new', !!nu);
-  ovv.onclick = nu ? (e) => { e.stopPropagation(); openUpdate(true); } : null;
+  // a tap: «Все обновления» (with «Обновить» at the top when a new version waits)
+  ovv.onclick = (e) => { e.stopPropagation(); openHistory(); };
+  ovv.classList.add('new');
   $('ovPcs').replaceChildren(...(pcs.length > 1 ? pcs.map((pc) => {
     const b = h('button', 'ov-pc' + (pc.active ? ' on' : ''), '🖥️ ' + (pc.name || t('panel.computer')));
     b.addEventListener('click', (e) => { e.stopPropagation(); switchPc(pc); });
@@ -1877,22 +1880,67 @@ export function setOnline(on) {
   if (changed) for (const f of hooks.online) try { f(on); } catch (err) { console.warn(err); }
 }
 
-// ---------------------------------------------------------------- «Вышла новая версия»
+// ---------------------------------------------------------------- обновления: плашка, «Что нового», история
 /** The phone app's own version (null in a desktop browser). */
 export function appVersion() { try { return bridge?.version?.() || null; } catch (_) { return null; } }
 
+const RELEASES = 'https://api.github.com/repos/Dubstep2004/DeckBox/releases';
+/** a > b for versions like 1.10.2 */
+export function newerVersion(a, b) {
+  const p = (v) => String(v || '').replace(/^v/, '').split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  const x = p(a), y = p(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); }
+  return false;
+}
+const releaseOf = (r) => {
+  const name = r.name || '', dash = name.indexOf(' — ');
+  return { version: String(r.tag_name || '').replace(/^v/, ''), name: dash >= 0 ? name.slice(dash + 3).trim() : null, date: r.published_at, notes: parseNotes(r.body) };
+};
+
+/** «Все обновления»: from the computer (it caches GitHub), or straight from GitHub when it is out of reach. */
+export async function releaseHistory() {
+  try { const l = await api('/update/history', 'GET', 12000); if (Array.isArray(l)) return l; } catch (_) {}
+  try { const r = await fetch(RELEASES + '?per_page=30', { cache: 'no-store' }); if (r.ok) return (await r.json()).filter((x) => !x.draft).map(releaseOf); } catch (_) {}
+  return [];
+}
+
+/** The newest release on GitHub, for a phone whose computer is off or far away (checked at most every 6 hours). */
+async function githubLatest() {
+  const c = store.get('gh-latest', null);
+  if (c && Date.now() - c.at < 6 * 3600_000) return c.r;
+  try {
+    const res = await fetch(RELEASES + '/latest', { cache: 'no-store' });
+    if (!res.ok) return c?.r || null;
+    const j = await res.json();
+    const asset = (re) => (j.assets || []).find((a) => re.test(a.name))?.browser_download_url;
+    const r = { ...releaseOf(j), apk: asset(/^DeckBox-[\d.]+\.apk$/), sums: asset(/^SHA256SUMS-[\d.]+\.txt$/) };
+    store.set('gh-latest', { at: Date.now(), r });
+    return r;
+  } catch (_) { return c?.r || null; }
+}
+
 let updateShownFor = null;
 let updateViaAgent = false; // «Обновить» went to the agent: its state is the progress
+let ghUpdate = null; // an update found on GitHub while the computer is out of reach
 
-/** Opens the card for state.update; on its own only once per version and not after «Позже». */
+/** What there is to update now: the agent's view, or GitHub's while the computer cannot be reached. */
+function pendingUpdate() {
+  if (D.state?.update) return D.state.update;
+  return online === false ? ghUpdate : null;
+}
+
+/** Opens the card; on its own only once per version, not after «Позже» (12 h) or «Не напоминать». */
 export function openUpdate(force = false) {
-  const u = D.state?.update;
+  const u = pendingUpdate();
   if (!u || PREVIEW) return;
   if (!force && (updateShownFor === u.latest || snoozed(u.latest) || updateCardOpen())) return;
   updateShownFor = u.latest;
   showUpdateCard(u, {
     versions: [['Компьютер', D.state?.agentVersion], ['Приложение', appVersion()]],
+    parts: [u.app && (bridge?.installUpdate || !u.github) ? 'phone' : null, u.agent ? 'pc' : null].filter(Boolean),
     apply: async () => {
+      // the computer is out of reach: straight from the GitHub release
+      if (u.github) { bridge.installUpdateFrom(u.apk, u.sums); return; }
       // the phone app installs itself from the computer (USB or Wi-Fi); the agent is updated once the download is in
       if (u.app && bridge?.installUpdate) { bridge.installUpdate(); return; }
       updateViaAgent = true;
@@ -1901,19 +1949,69 @@ export function openUpdate(force = false) {
   });
 }
 
+/** «Все обновления» (a tap on the versions in the page overview). */
+export async function openHistory() {
+  const u = pendingUpdate();
+  showHistory(await releaseHistory(), {
+    current: appVersion() || D.state?.agentVersion, latest: u?.latest, onUpdate: u ? () => openUpdate(true) : null,
+  });
+}
+
 window.addEventListener('deckbox-update', (e) => {
   const p = e.detail || {};
-  setUpdateProgress(p);
-  if (p.stage === 'install' && D.state?.update?.agent) api('/update/apply?phone=0', 'POST', 8000).catch(() => {});
+  setUpdateProgress({ ...p, part: 'phone' });
+  if (p.stage === 'install' && D.state?.update?.agent) { updateViaAgent = true; api('/update/apply?phone=0', 'POST', 8000).catch(() => {}); }
 });
+
+/** Every state: the card, its progress, the icon's dot, «Обновлено до …» once after an update. */
+function followUpdates(s) {
+  const u = s.update;
+  if (u) {
+    openUpdate();
+    if (updateViaAgent && u.state && u.state !== 'idle') setUpdateProgress({ stage: u.state });
+  } else if (updateViaAgent && updateCardOpen()) { updateViaAgent = false; setUpdateProgress({ stage: 'done', part: 'pc' }); }
+  // a dot on the app icon while a new version of the app waits
+  const want = u?.app ? u.latest : '';
+  if (want !== badgeFor) { badgeFor = want; try { bridge?.updateBadge?.(want); } catch (_) {} }
+  whatsNew(s);
+}
+let badgeFor = null;
+
+/** «Обновлено до 1.5.0»: once, the first time the panel sees a newer app or agent than before. */
+async function whatsNew(s) {
+  if (PREVIEW || !s.agentVersion) return;
+  const now = { app: appVersion(), agent: s.agentVersion };
+  const seen = store.get('seen-versions', null);
+  const key = JSON.stringify(now);
+  if (seen && JSON.stringify(seen) === key) return;
+  store.set('seen-versions', now);
+  if (!seen) return; // the first start: nothing to tell
+  const app = now.app && seen.app && newerVersion(now.app, seen.app), agent = newerVersion(now.agent, seen.agent);
+  if (!app && !agent) return;
+  let info = null;
+  if (agent) { try { const l = await api('/update/last', 'GET', 6000); if (l?.version === now.agent) info = l; } catch (_) {} }
+  if (!info) {
+    const v = app ? now.app : now.agent;
+    const r = (await releaseHistory()).find((x) => x.version === v);
+    info = { version: v, from: app ? seen.app : seen.agent, name: r?.name, notes: r?.notes || [] };
+  }
+  if (!updateCardOpen()) showWhatsNew(info);
+}
+
+// the computer is out of reach: look on GitHub for a newer app (every 6 hours at most)
+setInterval(async () => {
+  if (PREVIEW || online !== false || !bridge?.installUpdateFrom) return;
+  const r = await githubLatest();
+  const mine = appVersion();
+  ghUpdate = r?.apk && r.sums && mine && newerVersion(r.version, mine)
+    ? { latest: r.version, name: r.name, notes: r.notes, app: true, agent: false, github: true, apk: r.apk, sums: r.sums } : null;
+  if (ghUpdate) { openUpdate(); if (badgeFor !== ghUpdate.latest) { badgeFor = ghUpdate.latest; try { bridge.updateBadge(ghUpdate.latest); } catch (_) {} } }
+}, 5 * 60_000);
 
 export function applyState(s, replayGen = null) {
   lastStateAt = Date.now();
   D.state = s;
-  if (s.update) {
-    openUpdate();
-    if (updateViaAgent && s.update.state && s.update.state !== 'idle') setUpdateProgress({ stage: s.update.state });
-  } else if (updateViaAgent && updateCardOpen()) { updateViaAgent = false; setUpdateProgress({ stage: 'done' }); }
+  followUpdates(s);
   for (const f of hooks.state) try { f(s); } catch (err) { console.warn(err); }
   media = s.media ? { ...s.media, at: performance.now() } : null;
   setOnline(true);

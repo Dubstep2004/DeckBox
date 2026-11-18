@@ -1,14 +1,19 @@
-// DeckBox: «Вышла новая версия» — a card with what is new in the release and two buttons, «Обновить» and «Позже».
-// Shared by the panel on the phone and the settings page on the computer (served there as /panel/update-card.js).
+// DeckBox: everything about updates that the person sees. Shared by the panel on the phone and the settings page on
+// the computer (served there as /panel/update-card.js).
 //
-//   showUpdateCard(update, { apply, versions, onClose })
-//     update   — state.update from the agent: { latest, name, notes: [{ title, items }], app, agent, state, error }
+//   showUpdateCard(update, { apply, versions, parts, onClose })
+//     update   — { latest, name, notes: [{ title, items }], app, agent }
 //     apply()  — starts the update; may return a promise. Progress comes back through setUpdateProgress().
-//     versions — [['Агент', '1.1.2'], ['Приложение', '1.1.2']] shown at the bottom
+//     versions — [['Компьютер', '1.4.0'], ['Приложение', '1.4.0']] shown at the bottom
+//     parts    — which parts get updated: ['phone', 'pc'] (a row of steps each)
+//   showWhatsNew(info)        — «Обновлено до 1.5.0» once after an update, with what is new
+//   showHistory(list, opts)   — «Все обновления»: every release with what was new in it
+//   parseNotes(markdown)      — the ✨ / ⚡ / 🛠 / 🗑 sections of a release description
 //
-// «Позже» hides the card for this version for 12 hours; the small «⬆ 1.1.3» in the status line opens it again.
+// «Позже» hides the card for 12 hours, «Не напоминать» until the next version; «⬆ 1.5.0» in the status line opens it.
 
 const LATER_KEY = 'deckbox-update-later';
+const SKIP_KEY = 'deckbox-update-skip';
 const LATER_MS = 12 * 3600 * 1000;
 let card = null;
 
@@ -19,42 +24,72 @@ function el(tag, cls, ...kids) {
   return e;
 }
 
-function readLater() {
-  try { return JSON.parse(localStorage.getItem(LATER_KEY) || 'null'); } catch (_) { return null; }
-}
+const read = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (_) { return null; } };
+const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
 
-/** True while «Позже» was pressed for this version less than 12 hours ago. */
+/** «Не напоминать» was pressed for exactly this version. */
+export function skipped(version) { return read(SKIP_KEY) === version; }
+
+/** True while «Позже» was pressed for this version less than 12 hours ago, or «Не напоминать» for it. */
 export function snoozed(version) {
-  const l = readLater();
-  return !!l && l.version === version && Date.now() - l.at < LATER_MS;
+  const l = read(LATER_KEY);
+  return skipped(version) || (!!l && l.version === version && Date.now() - l.at < LATER_MS);
 }
 
-function later(version) {
-  try { localStorage.setItem(LATER_KEY, JSON.stringify({ version, at: Date.now() })); } catch (_) {}
+/** Splits a release description into its sections, up to the download table (as the agent's ParseNotes does). */
+export function parseNotes(md) {
+  const out = [];
+  let cur = null, last = null;
+  for (const raw of String(md || '').replace(/\r/g, '').split('\n')) {
+    const line = raw.trimEnd();
+    if (/^---\s*$/.test(line) || /^###\s*⬇/.test(line)) break;
+    const h = line.match(/^###\s+(.+)$/);
+    if (h) { cur = { title: h[1].trim(), items: [] }; out.push(cur); last = null; continue; }
+    if (!cur) continue;
+    const li = line.match(/^\s*[-*]\s+(.+)$/);
+    const clean = (s) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim();
+    if (li) { cur.items.push(clean(li[1])); last = cur.items.length - 1; } else if (line.trim() && last != null) {
+      cur.items[last] = (cur.items[last] + ' ' + clean(line)).trim();
+    } else last = null;
+  }
+  return out.filter((s) => s.items.length);
 }
 
 const STYLE = `
 .dbu-back{position:fixed;inset:0;z-index:9000;background:rgba(5,5,7,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:4vmin;animation:dbu-in .25s ease}
-.dbu{position:relative;width:min(620px,100%);max-height:100%;display:flex;flex-direction:column;background:linear-gradient(160deg,#1a1814,#0e0e10 60%);border:1px solid rgba(var(--ambient, 212, 175, 55),.45);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(var(--ambient, 212, 175, 55),.08) inset;color:#f1ece1;font-family:inherit;overflow:hidden}
-.dbu-head{padding:22px 26px 14px;border-bottom:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
+.dbu{position:relative;width:min(640px,100%);max-height:100%;display:flex;flex-direction:column;background:linear-gradient(160deg,#1a1814,#0e0e10 60%);border:1px solid rgba(var(--ambient, 212, 175, 55),.45);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(var(--ambient, 212, 175, 55),.08) inset;color:#f1ece1;font-family:inherit;overflow:hidden}
+.dbu-head{padding:20px 26px 12px;border-bottom:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
 .dbu-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#17130a;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));padding:4px 10px;border-radius:999px;font-weight:700}
-.dbu-title{margin:12px 0 2px;font-size:26px;font-weight:800;letter-spacing:-.01em}
+.dbu-title{margin:10px 0 2px;font-size:26px;font-weight:800;letter-spacing:-.01em}
 .dbu-title b{background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));-webkit-background-clip:text;background-clip:text;color:transparent}
 .dbu-name{color:#c9bfa6;font-size:16px}
 .dbu-body{padding:6px 26px 8px;overflow:auto;flex:1}
 .dbu-sec{margin:14px 0 4px;font-size:15px;font-weight:700;color:var(--gold-hi, #f2d675)}
 .dbu-body ul{margin:0;padding-left:20px}
 .dbu-body li{margin:5px 0;font-size:14.5px;line-height:1.4;color:#e6dfcf}
-.dbu-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 26px 20px;border-top:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
-.dbu-btn{appearance:none;border:1px solid rgba(var(--ambient, 212, 175, 55),.5);background:transparent;color:#f1ece1;font:inherit;font-size:16px;font-weight:700;padding:12px 22px;border-radius:14px;cursor:pointer}
+.dbu-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 26px 18px;border-top:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
+.dbu-btn{appearance:none;border:1px solid rgba(var(--ambient, 212, 175, 55),.5);background:transparent;color:#f1ece1;font:inherit;font-size:16px;font-weight:700;padding:11px 20px;border-radius:14px;cursor:pointer}
 .dbu-btn.go{background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));color:#17130a;border-color:transparent;box-shadow:0 6px 20px rgba(var(--ambient, 212, 175, 55),.3)}
+.dbu-btn.link{border-color:transparent;font-weight:600;font-size:14px;color:#9d9686;padding:11px 6px}
 .dbu-btn:disabled{opacity:.55;cursor:default}
 .dbu-ver{margin-left:auto;font-size:12.5px;color:#9d9686;text-align:right}
-.dbu-bar{height:4px;background:rgba(var(--ambient, 212, 175, 55),.15);border-radius:4px;overflow:hidden;flex-basis:100%;display:none}
-.dbu-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));transition:width .3s}
+.dbu-steps{flex-basis:100%;display:none;flex-direction:column;gap:6px}
+.dbu-row{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px;font-size:13px}
+.dbu-row>b{color:#c9bfa6;font-weight:600}
+.dbu-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.dbu-chips span{position:relative;padding:5px 4px 7px;border-radius:9px;text-align:center;font-size:12px;color:#7d776a;background:rgba(255,255,255,.04);overflow:hidden}
+.dbu-chips span.on{color:#17130a;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));font-weight:700}
+.dbu-chips span.ok{color:var(--gold-hi, #f2d675);background:rgba(var(--ambient, 212, 175, 55),.14)}
+.dbu-chips span.bad{color:#fff;background:#b4372f}
+.dbu-chips span i{position:absolute;left:0;bottom:0;height:3px;width:0;background:rgba(23,19,10,.55);transition:width .3s}
 .dbu-msg{flex-basis:100%;font-size:13.5px;color:#c9bfa6}
 .dbu-msg:empty{display:none}
 .dbu-msg.err{color:#f87171}
+.dbu-rel{margin:14px 0 18px;padding-bottom:12px;border-bottom:1px solid rgba(var(--ambient, 212, 175, 55),.12)}
+.dbu-rel:last-child{border-bottom:0}
+.dbu-rel h4{margin:0;font-size:17px;font-weight:800;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.dbu-rel h4 small{font-size:12.5px;color:#9d9686;font-weight:500}
+.dbu-rel h4 em{font-style:normal;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(var(--ambient, 212, 175, 55),.2);color:var(--gold-hi, #f2d675)}
 @keyframes dbu-in{from{opacity:0;transform:scale(.97)}to{opacity:1}}
 `;
 
@@ -71,78 +106,164 @@ export function closeUpdateCard() {
   card = null;
 }
 
-/** Shows the card (replacing an open one). Returns nothing; «Позже» and the backdrop close it. */
-export function showUpdateCard(u, { apply, versions = [], onClose } = {}) {
-  if (!u?.latest) return;
-  ensureStyle();
-  closeUpdateCard();
-  const notes = Array.isArray(u.notes) ? u.notes : [];
+function notesBody(notes) {
   const body = el('div', 'dbu-body');
-  for (const s of notes) {
+  for (const s of notes || []) {
     body.append(el('div', 'dbu-sec', s.title));
     const ul = el('ul');
     for (const it of s.items || []) ul.append(el('li', null, it));
     body.append(ul);
   }
-  if (!notes.length) body.append(el('p', 'dbu-name', 'Исправления и улучшения.'));
+  if (!notes?.length) body.append(el('p', 'dbu-name', 'Исправления и улучшения.'));
+  return body;
+}
 
+function frame(tag, title, name, body, foot, onBack) {
+  ensureStyle();
+  closeUpdateCard();
+  const back = el('div', 'dbu-back',
+    el('div', 'dbu',
+      el('div', 'dbu-head', el('span', 'dbu-tag', tag), title, name ? el('div', 'dbu-name', name) : null),
+      body, foot));
+  back.onclick = (e) => { if (e.target === back) onBack(); };
+  back.addEventListener('pointerdown', (e) => e.stopPropagation());
+  card = back;
+  document.body.append(back);
+  return back;
+}
+
+const titleOf = (text, version) => { const t = el('div', 'dbu-title', text); t.append(el('b', null, version)); return t; };
+
+const STEPS = ['Скачиваю', 'Проверяю', 'Ставлю', 'Готово'];
+const PART_NAMES = { phone: 'Телефон', pc: 'Компьютер' };
+
+/** Shows the card (replacing an open one). «Позже», «Не напоминать» and the backdrop close it. */
+export function showUpdateCard(u, { apply, versions = [], parts, onClose } = {}) {
+  if (!u?.latest) return;
   const go = el('button', 'dbu-btn go', 'Обновить');
   const wait = el('button', 'dbu-btn', 'Позже');
-  const bar = el('div', 'dbu-bar', el('i'));
+  const skip = el('button', 'dbu-btn link', 'Не напоминать');
   const msg = el('div', 'dbu-msg');
   const ver = el('div', 'dbu-ver', versions.filter((v) => v[1]).map((v) => `${v[0]}: ${v[1]}`).join(' · '));
+  // one row of steps for each part that gets the new version
+  const which = parts || [u.app !== false && 'phone', u.agent !== false && 'pc'].filter(Boolean);
+  const steps = el('div', 'dbu-steps');
+  const rows = {};
+  for (const p of which.length ? which : ['phone']) {
+    const chips = el('div', 'dbu-chips', ...STEPS.map((s) => el('span', null, s, el('i'))));
+    rows[p] = chips;
+    steps.append(el('div', 'dbu-row', el('b', null, PART_NAMES[p] || p), chips));
+  }
   const close = () => { closeUpdateCard(); onClose?.(); };
-  wait.onclick = () => { later(u.latest); close(); };
+  wait.onclick = () => { write(LATER_KEY, { version: u.latest, at: Date.now() }); close(); };
+  skip.onclick = () => { write(SKIP_KEY, u.latest); close(); };
   go.onclick = async () => {
     go.disabled = true;
+    skip.hidden = true;
     wait.textContent = 'Скрыть';
     setUpdateProgress({ stage: 'start' });
     try { await apply?.(); } catch (e) { setUpdateProgress({ stage: 'error', error: e?.message || String(e) }); }
   };
-  const back = el('div', 'dbu-back',
-    el('div', 'dbu',
-      el('div', 'dbu-head',
-        el('span', 'dbu-tag', '⬆ Вышла новая версия'),
-        (() => { const t = el('div', 'dbu-title', 'DeckBox PRO '); t.append(el('b', null, u.latest)); return t; })(),
-        u.name ? el('div', 'dbu-name', u.name) : null),
-      body,
-      el('div', 'dbu-foot', go, wait, ver, bar, msg)));
-  back.onclick = (e) => { if (e.target === back) close(); };
-  back.addEventListener('pointerdown', (e) => e.stopPropagation());
-  card = back;
-  card._parts = { go, wait, bar, msg };
-  document.body.append(back);
+  const back = frame('⬆ Вышла новая версия', titleOf('DeckBox PRO ', u.latest), u.name, notesBody(u.notes),
+    el('div', 'dbu-foot', go, wait, skip, ver, steps, msg), () => close());
+  back._parts = { go, wait, skip, msg, steps, rows };
 }
 
-const STATES = {
-  'checking': 'Проверяю обновления…',
-  'updating phone app': 'Ставлю приложение на телефон по USB…',
-  'updating agent': 'Обновляю агент на компьютере…',
-  'restarting': 'Агент перезапускается…',
-  'installing the phone app': 'Ставлю приложение на телефон…',
-};
+/** «Обновлено до 1.5.0»: once after an update (also one made at night), with what is new in it. */
+export function showWhatsNew(info, { onClose } = {}) {
+  if (!info?.version) return;
+  const ok = el('button', 'dbu-btn go', 'Отлично');
+  const close = () => { closeUpdateCard(); onClose?.(); };
+  ok.onclick = close;
+  const when = info.night ? 'Обновлено ночью' : 'Обновлено';
+  const name = [info.name, info.from ? `было ${info.from}` : null].filter(Boolean).join(' · ');
+  frame('✓ ' + when, titleOf('DeckBox PRO ', info.version), name, notesBody(info.notes), el('div', 'dbu-foot', ok), close);
+}
 
 /**
- * Progress on the open card: { stage: 'start' | 'download' | 'install' | 'done' | 'error' | <agent state>, pct, error }.
+ * «Все обновления»: [{ version, name, date, notes }] newest first. current = the installed version (marked);
+ * onUpdate, when given, adds «Обновить» at the top for a newer release.
+ */
+export function showHistory(list, { current, latest, onUpdate, onClose } = {}) {
+  const body = el('div', 'dbu-body');
+  if (!list?.length) body.append(el('p', 'dbu-name', 'Список версий сейчас недоступен: нет связи с GitHub.'));
+  for (const r of list || []) {
+    const d = r.date ? new Date(r.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    const h = el('h4', null, 'DeckBox PRO ' + r.version, r.name ? el('small', null, r.name) : null, d ? el('small', null, d) : null,
+      r.version === current ? el('em', null, 'у вас') : null);
+    const sec = el('div', 'dbu-rel', h);
+    for (const s of r.notes || []) {
+      sec.append(el('div', 'dbu-sec', s.title));
+      const ul = el('ul');
+      for (const it of s.items || []) ul.append(el('li', null, it));
+      sec.append(ul);
+    }
+    body.append(sec);
+  }
+  const shut = el('button', 'dbu-btn', 'Закрыть');
+  const close = () => { closeUpdateCard(); onClose?.(); };
+  shut.onclick = close;
+  const foot = el('div', 'dbu-foot');
+  if (onUpdate && latest) {
+    const go = el('button', 'dbu-btn go', 'Обновить до ' + latest);
+    go.onclick = () => { closeUpdateCard(); onUpdate(); };
+    foot.append(go);
+  }
+  foot.append(shut, el('div', 'dbu-ver', current ? 'Установлена ' + current : ''));
+  frame('🕘 Все обновления', el('div', 'dbu-title', 'История версий'), null, body, foot, close);
+}
+
+const AGENT_STATES = {
+  'checking': ['pc', 0, 'Проверяю обновления…'],
+  'updating agent': ['pc', 0, 'Компьютер скачивает и проверяет новую версию…'],
+  'restarting': ['pc', 2, 'Компьютер ставит новую версию и перезапускается…'],
+  'updating phone app': ['phone', 2, 'Ставлю приложение на телефон по USB…'],
+  'installing the phone app': ['phone', 2, 'Ставлю приложение на телефон…'],
+};
+const PHONE_STAGES = { download: 0, verify: 1, install: 2, done: 3 };
+
+function mark(part, step, { pct, bad } = {}) {
+  const chips = card?._parts?.rows?.[part];
+  if (!chips) return;
+  card._parts.steps.style.display = 'flex';
+  [...chips.children].forEach((c, i) => {
+    c.className = bad && i === step ? 'bad' : i < step || (i === step && step === 3) ? 'ok' : i === step ? 'on' : '';
+    c.lastChild.style.width = i === step && pct != null && step < 3 ? Math.max(0, Math.min(100, pct)) + '%' : '0';
+  });
+}
+
+/**
+ * Progress on the open card: { part: 'phone' | 'pc', stage: 'start' | 'download' | 'verify' | 'install' | 'done' |
+ * 'error' | <agent state>, pct, error, note }. Without a part, phone stages go to the phone row and agent states to theirs.
  */
 export function setUpdateProgress(p) {
-  if (!card || !p) return;
-  const { go, bar, msg } = card._parts;
+  if (!card?._parts || !p) return;
+  const { go, msg, wait, skip } = card._parts;
   msg.classList.remove('err');
-  const pct = (n) => { bar.style.display = 'block'; bar.firstChild.style.width = Math.max(0, Math.min(100, n)) + '%'; };
+  if (p.stage in AGENT_STATES) {
+    const [part, step, text] = AGENT_STATES[p.stage];
+    mark(p.part || part, step);
+    msg.textContent = text;
+    return;
+  }
+  const part = p.part || 'phone';
   switch (p.stage) {
-    case 'start': msg.textContent = 'Начинаю обновление…'; pct(3); break;
-    case 'download': msg.textContent = `Скачиваю новую версию… ${p.pct || 0}%`; pct(p.pct || 0); break;
-    case 'install': msg.textContent = 'Устанавливаю… Подтвердите установку на телефоне, если Android спросит.'; pct(100); break;
-    case 'done': msg.textContent = p.note || 'Готово! DeckBox обновлён.'; pct(100); go.hidden = true; card._parts.wait.textContent = 'Закрыть'; break;
+    case 'start': msg.textContent = 'Начинаю обновление…'; for (const k in card._parts.rows) mark(k, 0, { pct: 2 }); break;
+    case 'download': msg.textContent = `${part === 'pc' ? 'Компьютер скачивает' : 'Скачиваю'} новую версию… ${p.pct || 0}%`; mark(part, 0, { pct: p.pct }); break;
+    case 'verify': msg.textContent = 'Проверяю, что файл целый и подписан тем же ключом…'; mark(part, 1); break;
+    case 'install': msg.textContent = 'Устанавливаю… Подтвердите установку на телефоне, если Android спросит.'; mark(part, 2); break;
+    case 'done':
+      if (p.part) mark(p.part, 3); else for (const k in card._parts.rows) mark(k, 3);
+      msg.textContent = p.note || 'Готово! DeckBox обновлён.';
+      go.hidden = true; skip.hidden = true; wait.textContent = 'Закрыть';
+      break;
     case 'error':
+      mark(part, Math.max(0, [...(card._parts.rows[part]?.children || [])].findIndex((c) => c.className === 'on')), { bad: true });
       msg.textContent = 'Не получилось: ' + (p.error || 'неизвестная ошибка');
       msg.classList.add('err');
       go.disabled = false;
       go.textContent = 'Повторить';
       break;
-    default:
-      if (STATES[p.stage]) { msg.textContent = STATES[p.stage]; pct(60); }
   }
 }
 

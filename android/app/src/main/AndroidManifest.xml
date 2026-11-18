@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- «Компьютер спит»: the screen comes back on when the computer wakes up -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- a dot on the app icon while a new version waits (Android 13+ asks once) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- "Обновить" on the update card: the app installs its own new version (Android asks once to confirm) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />

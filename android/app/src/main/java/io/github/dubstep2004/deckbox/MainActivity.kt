@@ -388,6 +388,32 @@ class MainActivity : Activity(), SensorEventListener {
         @JavascriptInterface
         fun installUpdate(key: String) { if (ok(key)) updater.start() }
 
+        /** Downloads the new app from the GitHub release (the computer is off or far away), then installs it. */
+        @JavascriptInterface
+        fun installUpdateFrom(key: String, apkUrl: String, sumsUrl: String) { if (ok(key)) updater.startFromGitHub(apkUrl, sumsUrl) }
+
+        /** True when Android lets the app update itself without a tap (night updates use it). */
+        @JavascriptInterface
+        fun silentUpdate(key: String): Boolean = ok(key) && updater.silent()
+
+        /** A dot on the app icon while a new version waits ("" removes it). Asks once for notifications on Android 13+. */
+        @JavascriptInterface
+        fun updateBadge(key: String, version: String) {
+            if (!ok(key)) return
+            runOnUiThread {
+                if (version.isEmpty()) { UpdateBadge.clear(this@MainActivity); return@runOnUiThread }
+                if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                    checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    val prefs = getSharedPreferences("deckbox-update", MODE_PRIVATE)
+                    if (!prefs.getBoolean("asked-notify", false)) {
+                        prefs.edit().putBoolean("asked-notify", true).apply()
+                        requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 42)
+                    }
+                }
+                UpdateBadge.show(this@MainActivity, version)
+            }
+        }
+
         /** "usb", "wifi" or "none": how the last agent request was delivered. */
         @JavascriptInterface
         fun transport(key: String): String = if (ok(key)) link.route.name.lowercase() else ""

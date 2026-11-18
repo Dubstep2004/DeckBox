@@ -725,11 +725,12 @@ dd { margin: 0; word-break: break-all; }
         <h3 data-i18n="s.updates.title">Updates</h3>
         <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="updates.auto"><span></span></label> <span data-i18n="s.updates.auto">Install new releases automatically</span></div>
         <div class="row" style="margin-bottom:8px"><label class="switch"><input type="checkbox" data-bind="updates.ask"><span></span></label> <span>Спрашивать перед обновлением: показать, что нового, с кнопками «Обновить» и «Позже»</span></div>
+        <div class="row" style="margin-bottom:8px;gap:10px;flex-wrap:wrap"><label class="switch"><input type="checkbox" data-bind="updates.night"><span></span></label> <span>Обновлять ночью сам, в</span><select data-bind="updates.nightHour" data-type="int" style="width:auto"><option value="0">00:00</option><option value="1">01:00</option><option value="2">02:00</option><option value="3">03:00</option><option value="4">04:00</option><option value="5">05:00</option><option value="6">06:00</option><option value="7">07:00</option><option value="8">08:00</option><option value="9">09:00</option><option value="10">10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option></select><span class="hint" style="margin:0">когда никто не играет; утром панель покажет «Обновлено ночью»</span></div>
         <p class="hint" style="margin:0 0 12px"><span data-i18n="s.updates.hintChecks">Checks the DeckBox releases on GitHub every 6 hours:</span>
           <a id="updRepo" target="_blank" rel="noopener"></a>. <span data-i18n="s.updates.hintHow">The phone app is installed over USB without a prompt
           on the phone; the agent replaces its own files and restarts.</span></p>
         <dl id="updInfo"></dl>
-        <div class="row" style="margin-top:12px"><button class="btn" id="updCheck" data-i18n="s.updates.check">Check now</button><button class="btn primary" id="updApply" hidden data-i18n="s.updates.apply">Update now</button><span class="hint" id="updState"></span></div>
+        <div class="row" style="margin-top:12px"><button class="btn" id="updCheck" data-i18n="s.updates.check">Check now</button><button class="btn primary" id="updApply" hidden data-i18n="s.updates.apply">Update now</button><button class="btn" id="updHistory" type="button">🕘 Все обновления</button><button class="btn" id="updRollback" type="button" hidden></button><span class="hint" id="updState"></span></div>
       </div>
     </section>
 
@@ -2914,7 +2915,7 @@ async function loadInfo() {
 // The form reads every section it binds and renders, so a config without one — an older export, or a
 // hand-trimmed paste in Apply JSON — gets the same defaults a fresh load does before anything renders.
 function fillDefaults() {
-  cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, ask: true, repo: 'Dubstep2004/DeckBox' }; cfg.updates.ask ??= true; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
+  cfg.pages = fitPages(cfg.pages); cfg.shortcuts ??= []; cfg.rules ??= []; cfg.display ??= {}; cfg.night = { enabled: true, start: '00:30', end: '07:30', brightness: 0.02, ...cfg.night }; cfg.weather ??= {}; cfg.photos ??= { folder: '', subfolders: true }; cfg.lan ??= { enabled: false, port: 8766 }; cfg.updates ??= { auto: true, ask: true, repo: 'Dubstep2004/DeckBox' }; cfg.updates.ask ??= true; cfg.updates.night ??= false; cfg.updates.nightHour ??= 4; cfg.claude ??= { phoneApprovals: true, timeoutSec: 90, onlyWhenAway: false };
   cfg.codexBar ??= { providers: ['claude', 'codex', 'antigravity'], rotate: true, pageSize: 2, rotateInterval: 8 };
   for (const [k, v] of Object.entries({ language: 'auto', hour12: false, idleReturnSec: 90, switchCountdownSec: 3, touchGraceSec: 20, minDwellSec: 15, holdMaxMin: 30, keepAwake: true,
     showSeconds: true, vibrate: true, volumeKeys: true, artTint: true, proximityWake: true, orientation: 'landscape', theme: 'pro', accent: '#d4af37' })) cfg.display[k] ??= v;
@@ -2990,6 +2991,10 @@ function renderUpdate(u) {
     ...line(t('s.upd.lastCheck'), s.lastCheck ? new Date(s.lastCheck).toLocaleString(window.DeckBoxI18n?.getLocale?.()) : t('s.upd.notYet')));
   $('updApply').hidden = !(s.agentUpdate || s.appUpdate);
   if (s.agentUpdate || s.appUpdate) showUpdateOnce(s);
+  // «Вернуть прошлую версию»: the agent keeps the version it replaced
+  $('updRollback').hidden = !s.prevVersion || !u.installed;
+  $('updRollback').textContent = '↩ Вернуть версию ' + (s.prevVersion || '');
+  whatsNewOnce(s);
   $('updState').textContent = s.error ? s.error : s.state !== 'idle' ? s.state + '…' : '';
 }
 // «Вышла новая версия»: the same card as on the phone, once per version (and not after «Позже»)
@@ -2999,8 +3004,9 @@ async function showUpdateOnce(s, force = false) {
   try { m = await import('../panel/update-card.js'); } catch (_) { return; }
   if (!force && (updShown === s.latest || m.snoozed(s.latest))) return;
   updShown = s.latest;
-  m.showUpdateCard({ latest: s.latest, name: s.name, notes: s.notes }, {
+  m.showUpdateCard({ latest: s.latest, name: s.name, notes: s.notes, app: s.appUpdate, agent: s.agentUpdate }, {
     versions: [['Компьютер', s.agentVersion], ['Приложение', s.appVersion]],
+    parts: [s.agentUpdate && 'pc', s.appUpdate && 'phone'].filter(Boolean),
     apply: async () => {
       await fetch('/api/update/apply', { method: 'POST' });
       let tries = 0, wasDown = false;
@@ -3012,8 +3018,7 @@ async function showUpdateOnce(s, force = false) {
           else if (st.state !== 'idle') m.setUpdateProgress({ stage: st.state });
           else if (!st.agentUpdate) {
             clearInterval(poll); loadInfo();
-            m.setUpdateProgress({ stage: 'done' });
-            if (st.appUpdate) m.setUpdateProgress({ stage: 'done', note: 'Компьютер обновлён. Телефон обновится с плашки «Вышла новая версия» в панели.' });
+            m.setUpdateProgress({ stage: 'done', part: 'pc', note: st.appUpdate ? 'Компьютер обновлён. Телефон обновится с плашки «Вышла новая версия» в панели.' : undefined });
           }
           else if (wasDown) { /* the new agent is starting */ }
           else if (tries > 8) { m.setUpdateProgress({ stage: 'error', error: 'агент не начал обновление. Скачайте DeckBox-Setup со страницы релизов.' }); clearInterval(poll); }
@@ -3023,6 +3028,36 @@ async function showUpdateOnce(s, force = false) {
     },
   });
 }
+// «Обновлено до 1.5.0»: once on this computer after the agent was updated (also at night, or back to the last version)
+async function whatsNewOnce(s) {
+  let seen = null; try { seen = localStorage.getItem('deckbox-whatsnew'); } catch (_) {}
+  if (seen === s.agentVersion) return;
+  try { localStorage.setItem('deckbox-whatsnew', s.agentVersion); } catch (_) {}
+  if (!seen) return; // the first visit: nothing to tell
+  try {
+    const r = await fetch('/api/update/last');
+    if (r.status !== 200) return;
+    const l = await r.json();
+    if (l.version !== s.agentVersion) return;
+    (await import('../panel/update-card.js')).showWhatsNew(l);
+  } catch (_) {}
+}
+$('updHistory').onclick = async () => {
+  const m = await import('../panel/update-card.js');
+  let list = [];
+  try { const r = await fetch('/api/update/history'); if (r.ok) list = await r.json(); } catch (_) {}
+  const st = (await (await fetch('/api/update')).json()).status;
+  m.showHistory(list, { current: st.agentVersion, latest: st.agentUpdate || st.appUpdate ? st.latest : null,
+    onUpdate: st.agentUpdate || st.appUpdate ? () => showUpdateOnce(st, true) : null });
+};
+$('updRollback').onclick = async () => {
+  const st = (await (await fetch('/api/update')).json()).status;
+  if (!st.prevVersion || !confirm(`Вернуть DeckBox на компьютере к версии ${st.prevVersion}? Агент перезапустится. Приложение на телефоне останется как есть: Android не ставит версию старше.`)) return;
+  const r = await fetch('/api/update/rollback', { method: 'POST' });
+  if (!r.ok) { toast((await r.json().catch(() => ({}))).error || 'Не получилось', true); return; }
+  toast('Возвращаю прошлую версию — агент перезапустится');
+  setTimeout(() => location.reload(), 8000);
+};
 $('updCheck').onclick = async () => {
   $('updState').textContent = t('s.upd.checking');
   await fetch('/api/update/check', { method: 'POST' });

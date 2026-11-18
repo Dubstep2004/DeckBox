@@ -234,6 +234,10 @@ public sealed class UpdateConfig
     /// </summary>
     public bool Ask { get; set; } = true;
     public string Repo { get; set; } = "Dubstep2004/DeckBox";
+    /// <summary>«Обновлять ночью»: install a new version by itself at <see cref="NightHour"/> (not while a game runs).</summary>
+    public bool Night { get; set; }
+    /// <summary>The hour (0–23, the computer's time) of the night update.</summary>
+    public int NightHour { get; set; } = 4;
 }
 
 public sealed class ClaudeConfig
@@ -561,6 +565,8 @@ public sealed partial class ConfigStore(string path)
         c.Briefing ??= new();
         c.Briefing.Minutes = Math.Clamp(c.Briefing.Minutes, 1, 240);
         c.Briefing.Tasks = (c.Briefing.Tasks ?? []).Select(x => (x ?? "").Trim()).Where(x => x.Length > 0).Take(12).Select(x => x.Length > 120 ? x[..120] : x).ToList();
+        c.Updates ??= new();
+        c.Updates.NightHour = Math.Clamp(c.Updates.NightHour, 0, 23);
         c.Lock ??= new();
         c.Lock.PinHash = System.Text.RegularExpressions.Regex.IsMatch(c.Lock.PinHash ?? "", "^[0-9a-f]{64}$") ? c.Lock.PinHash! : "";
         c.Lock.AfterMin = Math.Clamp(c.Lock.AfterMin, 0, 1440);

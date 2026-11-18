@@ -301,7 +301,18 @@ app.MapGet("/api/lan", (ConfigStore cfg) => Results.Json(new
     fingerprint = lanCert is null ? null : Lan.Fingerprint(lanCert),
 }));
 
-app.MapGet("/api/update", (UpdateService upd, ConfigStore cfg) => Results.Json(new { status = upd.Status(), auto = cfg.Get().Updates.Auto, ask = cfg.Get().Updates.Ask, installed = UpdateService.RunningInstalled }));
+app.MapGet("/api/update", (UpdateService upd, ConfigStore cfg) => Results.Json(new { status = upd.Status(), auto = cfg.Get().Updates.Auto, ask = cfg.Get().Updates.Ask, night = cfg.Get().Updates.Night, nightHour = cfg.Get().Updates.NightHour, installed = UpdateService.RunningInstalled }));
+// «Обновлено до …»: what the last update of the agent brought (the phone and the settings show it once)
+app.MapGet("/api/update/last", () => UpdateService.ReadLastUpdate() is { } l ? Results.Json(l) : Results.NoContent());
+// «Все обновления»: the releases with what was new in each
+app.MapGet("/api/update/history", async (UpdateService upd, CancellationToken ct) =>
+{
+    try { return Results.Json(await upd.HistoryAsync(ct)); }
+    catch (Exception ex) when (ex is not OperationCanceledException) { return Results.Problem("Нет связи с GitHub: " + ex.Message, statusCode: 502); }
+});
+// «Вернуть прошлую версию» (settings page only)
+app.MapPost("/api/update/rollback", async (UpdateService upd) =>
+    await upd.RollbackAsync() is { } err ? Results.BadRequest(new { error = err }) : Results.Accepted());
 // Settings › General: install the phone app on a phone that does not have it yet (local only).
 app.MapPost("/api/phone/install", async (UpdateService upd) =>
     await upd.InstallAppAsync() is { } error ? Results.BadRequest(new { error }) : Results.Ok(new { ok = true }));
@@ -314,12 +325,22 @@ app.MapPost("/api/update/apply", (UpdateService upd, HttpRequest req) =>
     return Results.Accepted();
 });
 // The phone installs the new app itself (over Wi-Fi too): the agent hands over the APK it checked against SHA256SUMS.
-app.MapGet("/api/update/apk", async (UpdateService upd, CancellationToken ct) =>
+app.MapGet("/api/update/apk", async (UpdateService upd, HttpRequest req, CancellationToken ct) =>
 {
     string? apk;
     try { apk = await upd.AppPackageAsync(ct); }
     catch (Exception ex) when (ex is not OperationCanceledException) { return Results.Problem(ex.Message, statusCode: 502); }
-    return apk is null ? Results.NotFound() : Results.File(apk, "application/vnd.android.package-archive", Path.GetFileName(apk));
+    if (apk is null) return Results.NotFound();
+    // ?from=N goes on with a download the phone lost half-way; the length and the checksum let the phone check the
+    // whole file it put together before Android installs it
+    var len = new FileInfo(apk).Length;
+    long.TryParse(req.Query["from"], out var from);
+    if (from < 0 || from > len) from = 0;
+    req.HttpContext.Response.Headers["X-Apk-Length"] = len.ToString(CultureInfo.InvariantCulture);
+    req.HttpContext.Response.Headers["X-Apk-Sha256"] = await UpdateService.Sha256Async(apk, ct);
+    var fs = new FileStream(apk, FileMode.Open, FileAccess.Read, FileShare.Read);
+    fs.Seek(from, SeekOrigin.Begin);
+    return Results.Stream(fs, "application/vnd.android.package-archive", Path.GetFileName(apk));
 });
 
 app.MapPost("/api/restart", (IHostApplicationLifetime life) =>
