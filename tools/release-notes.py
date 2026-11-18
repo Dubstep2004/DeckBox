@@ -42,7 +42,7 @@ def notes(version):
 | Файл | Для чего |
 |---|---|
 | **DeckBox-Setup-{version}.exe** | Установщик для Windows 10/11: агент, adb и приложение на телефон. Ставится поверх старой версии |
-| DeckBox-{version}.apk | Приложение для телефона отдельно (Android 7+) |
+| DeckBox-{version}.apk | Приложение для телефона отдельно (Android 5+) |
 | DeckBoxAgent-{version}-win-x64.zip | Агент для встроенного обновления |
 | SHA256SUMS-{version}.txt | Контрольные суммы файлов |
 
