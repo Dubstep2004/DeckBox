@@ -678,11 +678,20 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
             }
             if (line.StartsWith("---")) { Flush(); title = null; continue; }
             if (title is null) continue;
-            if (line.StartsWith("- ") || line.StartsWith("* ")) items.Add(Plain(line[2..]));
+            if (line.StartsWith("- ") || line.StartsWith("* ")) items.Add(Plain(Labels(line[2..])));
             else if (line.StartsWith("  ") && items.Count > 0 && line.Trim().Length > 0) items[^1] += " " + Plain(line.Trim());
         }
         Flush();
         return result;
+    }
+
+    /// <summary>The leading place labels of an item, `📱 Панель` `💻 Компьютер` → "📱 Панель · 💻 Компьютер — ".</summary>
+    internal static string Labels(string s)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(s, @"^((?:`[^\x00-\x7F`][^`]*`\s*)+)(?=\S)");
+        if (!m.Success) return s;
+        var labels = System.Text.RegularExpressions.Regex.Matches(m.Value, "`([^`]+)`").Select(x => x.Groups[1].Value);
+        return string.Join(" · ", labels) + " — " + s[m.Length..];
     }
 
     private static string Plain(string s)

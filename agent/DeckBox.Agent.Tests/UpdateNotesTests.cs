@@ -30,5 +30,13 @@ public class UpdateNotesTests
     }
 
     [Fact]
+    public void PlaceLabelsComeFirstAndReadable()
+    {
+        var notes = UpdateService.ParseNotes("### ✨ Новое\n- `📱 Панель` `💻 Компьютер` **Шаги** обновления.\n- Без метки.\n");
+        Assert.Equal("📱 Панель · 💻 Компьютер — Шаги обновления.", notes[0].Items[0]);
+        Assert.Equal("Без метки.", notes[0].Items[1]);
+    }
+
+    [Fact]
     public void AnEmptyDescriptionHasNoSections() => Assert.Empty(UpdateService.ParseNotes(null));
 }

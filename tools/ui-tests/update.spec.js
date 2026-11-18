@@ -76,6 +76,6 @@ test('«Все обновления» lists every release, marks the installed o
 test('a release description becomes the card\'s sections', async ({ page }) => {
   await page.goto('/panel/');
   const notes = await page.evaluate(async () => (await import('/panel/update-card.js')).parseNotes(
-    '![b](x)\n\n### ✨ Новое\n- **Плашка**: что [нового](https://x).\n- Вторая\n  строка.\n\n### 🛠 Исправлено\n- `adb`\n\n---\n\n### ⬇ Что скачать\n- нет'));
-  expect(notes).toEqual([{ title: '✨ Новое', items: ['Плашка: что нового.', 'Вторая строка.'] }, { title: '🛠 Исправлено', items: ['adb'] }]);
+    '![b](x)\n\n### ✨ Новое\n- `📱 Панель` `💻 Компьютер` **Плашка**: что [нового](https://x).\n- Вторая\n  строка.\n\n### 🛠 Исправлено\n- `adb`\n\n---\n\n### ⬇ Что скачать\n- нет'));
+  expect(notes).toEqual([{ title: '✨ Новое', items: ['📱 Панель · 💻 Компьютер — Плашка: что нового.', 'Вторая строка.'] }, { title: '🛠 Исправлено', items: ['adb'] }]);
 });

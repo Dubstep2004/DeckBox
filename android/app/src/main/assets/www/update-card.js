@@ -48,7 +48,9 @@ export function parseNotes(md) {
     if (!cur) continue;
     const li = line.match(/^\s*[-*]\s+(.+)$/);
     const clean = (s) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim();
-    if (li) { cur.items.push(clean(li[1])); last = cur.items.length - 1; } else if (line.trim() && last != null) {
+    // the place labels at the start, `📱 Панель` `💻 Компьютер`, become "📱 Панель · 💻 Компьютер — "
+    const labels = (s) => s.replace(/^((?:`[^\x00-\x7F`][^`]*`\s*)+)(?=\S)/, (m) => [...m.matchAll(/`([^`]+)`/g)].map((x) => x[1]).join(' · ') + ' — ');
+    if (li) { cur.items.push(clean(labels(li[1]))); last = cur.items.length - 1; } else if (line.trim() && last != null) {
       cur.items[last] = (cur.items[last] + ' ' + clean(line)).trim();
     } else last = null;
   }

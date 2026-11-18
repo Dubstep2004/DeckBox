@@ -23,6 +23,7 @@ DeckBox основан на [ersinkoc/phonebox](https://github.com/ersinkoc/phon
 5. Проверки: `dotnet test agent/DeckBox.Agent.Tests`, сборка под Windows
    (`-p:TargetFrameworks=net10.0-windows10.0.19041.0 -p:EnableWindowsTargeting=true`), `./gradlew lintDebug`
    (если есть Android SDK), Playwright в `tools/ui-tests`.
-6. Записать SHA последней перенесённой правки в `LAST`, запись в CHANGELOG (разделы ✨ / ⚡ / 🛠 / 🗑, без слова PhoneBox),
+6. Записать SHA последней перенесённой правки в `LAST`, запись в CHANGELOG (разделы ✨ / ⚡ / 🛠 / 🗑, без слова PhoneBox;
+   каждый пункт начинается с меток места: `📱 Панель`, `🤖 Приложение`, `💻 Компьютер`, `🌐 Сайт`),
    поднять версию (`agent/DeckBox.Agent/DeckBox.Agent.csproj` `<Version>`, `android/app/build.gradle.kts`
    `versionCode` и `versionName`), push в `main`, запустить workflow `deckbox-release.yml`.

@@ -33,6 +33,9 @@ def notes(version):
   <img src="https://raw.githubusercontent.com/Dubstep2004/DeckBox/main/docs/brand/banner.png" width="720" alt="DeckBox PRO">
 </p>
 
+> Где изменение: `📱 Панель` — экран на телефоне · `🤖 Приложение` — само приложение Android ·
+> `💻 Компьютер` — программа и настройки на ПК · `🌐 Сайт` — страницы на GitHub
+
 {body}
 
 ---
