@@ -6,7 +6,7 @@
   <a href="https://github.com/Dubstep2004/DeckBox/releases/latest"><img src="https://img.shields.io/github/v/release/Dubstep2004/DeckBox?style=for-the-badge&label=%D1%80%D0%B5%D0%BB%D0%B8%D0%B7&labelColor=141417&color=d4af37" alt="Последний релиз"></a>
   <a href="https://github.com/Dubstep2004/DeckBox/releases"><img src="https://img.shields.io/github/downloads/Dubstep2004/DeckBox/total?style=for-the-badge&label=%D1%81%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D0%B9&labelColor=141417&color=d4af37" alt="Скачивания"></a>
   <img src="https://img.shields.io/badge/Windows%20%C2%B7%20Linux%20%C2%B7%20macOS-141417?style=for-the-badge&logoColor=d4af37" alt="Windows, Linux, macOS">
-  <img src="https://img.shields.io/badge/Android-7%2B-d4af37?style=for-the-badge&labelColor=141417" alt="Android 7+">
+  <img src="https://img.shields.io/badge/Android-5%2B-d4af37?style=for-the-badge&labelColor=141417" alt="Android 5+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F-MIT-d4af37?style=for-the-badge&labelColor=141417" alt="Лицензия MIT"></a>
 </p>
 

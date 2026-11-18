@@ -459,6 +459,8 @@
     ["Install or update Android System WebView (or Google Chrome), then select it in Developer options › WebView implementation.", "Установите или обновите Android System WebView (или Google Chrome) и выберите его в «Для разработчиков» › «Сервис WebView»."],
     [" has an outdated WebView (", ": устаревший WebView ("],
     ["); widget scaling needs Chromium ", "); для масштабирования виджетов нужен Chromium "],
+    ["); the panel needs Chromium ", "); для работы панели нужен Chromium "],
+    ["+ to run at all", "+"],
     ["The phone", "Телефон"],
     ["Configure the OBS connection in desktop settings", "Настройте подключение к OBS в настройках на компьютере"],
     ["Discovering OBS controls; waiting for OBS", "Ищу элементы OBS; жду OBS"],

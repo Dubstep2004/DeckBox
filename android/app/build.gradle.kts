@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.dubstep2004.deckbox"
-        minSdk = 24
+        minSdk = 21 // Android 5.0; see CONTRIBUTING.md before changing it
         targetSdk = 35
         versionCode = 48
         versionName = "1.3.1"
