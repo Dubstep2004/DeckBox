@@ -6,6 +6,18 @@
 <title>DeckBox — живое демо</title>
 <meta name="description" content="Превратите старый Android-телефон в настольную панель для компьютера. Попробуйте панель и редактор прямо в браузере.">
 <link rel="icon" href="favicon.ico">
+<meta name="theme-color" content="#0b0b0d">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DeckBox PRO">
+<meta property="og:title" content="DeckBox PRO — старый телефон как панель для компьютера">
+<meta property="og:description" content="{{widgets}} виджетов, {{templates}} шаблонов, темы, пульт, ИИ-квоты и музыка. Бесплатно, без облака и аккаунтов. Попробуйте прямо в браузере.">
+<meta property="og:url" content="https://dubstep2004.github.io/DeckBox/">
+<meta property="og:image" content="https://dubstep2004.github.io/DeckBox/og.png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="560">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dubstep2004.github.io/DeckBox/og.png">
 <style>
 :root { --bg: #0b0b0d; --panel: #141417; --line: #2a2822; --text: #f1ece1; --muted: #9d9686; --accent: #d4af37; --accent-hi: #f2d675; color-scheme: dark; }
 * { box-sizing: border-box; margin: 0; }
@@ -43,7 +55,7 @@ header .gh:hover { border-color: var(--accent); }
 .controls .primary { background: linear-gradient(180deg, var(--accent-hi), var(--accent) 70%); color: #17130a; border-color: transparent; font-weight: 700; box-shadow: 0 6px 18px rgba(212,175,55,.25); }
 .hint { text-align: center; color: var(--muted); font-size: 13px; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 40px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .card { background: linear-gradient(180deg, rgba(255,244,214,.04), rgba(255,244,214,0) 80px), var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: inset 0 1px 0 rgba(242,214,117,.18); }
 .card h3 { font-size: 15px; margin-bottom: 6px; color: var(--accent-hi); }
 .card p { color: var(--muted); font-size: 14px; }
@@ -54,22 +66,103 @@ header .gh:hover { border-color: var(--accent); }
 .policy ul { margin-top: 6px; padding-left: 18px; }
 .policy li { margin-top: 4px; }
 .policy code { font-size: 13px; }
+nav.top { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 4px; font-size: 14px; }
+nav.top a { color: var(--muted); text-decoration: none; }
+nav.top a:hover { color: var(--accent-hi); }
+h2.sec { font-size: 21px; margin: 52px 0 14px; letter-spacing: .01em; }
+h2.sec small { display: block; font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.dl { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: stretch; margin: 4px 0 30px; }
+.dl a.big { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 14px; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); }
+.dl a.big:hover { border-color: var(--accent); }
+.dl a.big.gold { color: #17130a; background: linear-gradient(180deg, var(--accent-hi), var(--accent) 70%); border-color: transparent; box-shadow: 0 8px 22px rgba(212,175,55,.25); }
+.dl a.big .ic { font-size: 30px; line-height: 1; }
+.dl a.big b { display: block; font-size: 16px; }
+.dl a.big span.meta { display: block; font-size: 13px; opacity: .75; }
+.qr { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.qr img { width: 96px; height: 96px; background: #fff; border-radius: 8px; padding: 4px; }
+.qr p { font-size: 13px; color: var(--muted); max-width: 150px; }
+.themes { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin: 6px 0 4px; font-size: 14px; color: var(--muted); }
+.themes button { font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px 6px 8px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.themes button i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.themes button.on { border-color: var(--accent-hi); box-shadow: 0 0 0 1px var(--accent-hi) inset; }
+.full { display: none; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 6px; background: rgba(212,175,55,.12); color: var(--accent-hi); margin-right: 4px; white-space: nowrap; }
+.news { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; }
+.news ul { padding-left: 18px; }
+.news li { margin: 6px 0; color: var(--muted); }
+.news li b { color: var(--text); }
+.news .all { margin-top: 10px; font-size: 14px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; counter-reset: st; }
+.step { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.step .ic { font-size: 34px; }
+.step h3 { font-size: 16px; margin: 6px 0; }
+.step h3::before { counter-increment: st; content: counter(st) ". "; color: var(--accent); }
+.step p { color: var(--muted); font-size: 14px; }
+.pro .card { border-color: rgba(212,175,55,.35); }
+.shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.shots a { display: block; text-decoration: none; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #000; }
+.shots a:hover { border-color: var(--accent); }
+.shots img { display: block; width: 100%; aspect-ratio: 780 / 360; object-fit: cover; }
+.shots span { display: block; font-size: 13px; color: var(--muted); padding: 6px 10px; background: var(--panel); }
+.req { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 14px; }
+.req th, .req td { text-align: left; padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+.req tr:first-child th, .req tr:first-child td { border-top: 0; }
+.req th { color: var(--accent-hi); font-weight: 600; width: 32%; }
+.req td { color: var(--muted); }
+.faq details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq details p { color: var(--muted); font-size: 14px; margin-top: 8px; }
 footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 13px; }
-@media (max-width: 600px) { header .gh span { display: none; } .lead { font-size: 15px; } }
+@media (max-width: 820px) {
+  .dl { grid-template-columns: 1fr 1fr; } .dl .qr { grid-column: 1 / -1; justify-content: center; }
+  .steps { grid-template-columns: 1fr; }
+  .grid, .shots { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .wrap { padding: 20px 12px 44px; }
+  header .gh span { display: none; } .lead { font-size: 15px; margin-bottom: 18px; }
+  .dl { grid-template-columns: 1fr; }
+  .dl .qr { display: none; } /* already on the phone: the button downloads directly */
+  .grid, .shots { grid-template-columns: 1fr; }
+  /* on a phone the framed demo is tiny: a big button opens the panel on the whole screen */
+  .full { display: flex; justify-content: center; margin: 14px 0 4px; }
+  .full a { font-weight: 700; text-decoration: none; padding: 12px 18px; border-radius: 12px; color: #17130a; background: linear-gradient(180deg, var(--accent-hi), var(--accent) 70%); }
+  .phone { padding: 2.2% 2.4%; }
+  .controls { gap: 6px; } .controls button, .controls a { padding: 8px 10px; font-size: 13px; }
+  .controls #prev, .controls #next { flex: 1 1 40%; justify-content: center; }
+  h2.sec { font-size: 19px; margin-top: 40px; }
+  .req th { width: 40%; }
+  .qr img { width: 84px; height: 84px; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <img src="favicon.ico" alt="">
+    <img src="icon.png" alt="">
     <h1>DeckBox<span class="pro">PRO</span></h1>
     <a class="gh" href="https://github.com/Dubstep2004/DeckBox">★ <span>GitHub</span></a>
   </header>
-  <p class="lead">Превратите старый Android-телефон в <b>настольную панель для компьютера</b> (Windows, Linux или macOS): {{widgets}} виджетов, визуальный редактор,
-    сессии и квоты ИИ, музыка, пульт управления, вебхуки и правила. Ниже — настоящая панель DeckBox {{version}}, работающая в вашем браузере
-    на придуманных данных: листайте и нажимайте.</p>
+  <nav class="top" aria-label="Разделы">
+    <a href="#download">Скачать</a><a href="#demo">Демо</a><a href="#news">Что нового</a><a href="#start">Как начать</a>
+    <a href="#pro">PRO</a><a href="#shots">Скриншоты</a><a href="#req">Требования</a><a href="#faq">Вопросы</a>
+  </nav>
+  <p class="lead">Превратите старый Android-телефон в <b>настольную панель для компьютера</b>: {{widgets}} виджетов, визуальный редактор,
+    сессии и квоты ИИ, музыка, пульт управления, вебхуки и правила. <b>Бесплатно</b>, без облака и аккаунтов.</p>
 
+  <div class="dl" id="download">
+    <a class="big gold" id="dlWin" href="https://github.com/Dubstep2004/DeckBox/releases/download/v{{version}}/DeckBox-Setup-{{version}}.exe">
+      <span class="ic">💻</span><span><b>Скачать для Windows</b><span class="meta" id="dlWinMeta">DeckBox-Setup {{version}} · Windows 10/11</span></span></a>
+    <a class="big" id="dlApk" href="https://github.com/Dubstep2004/DeckBox/releases/download/v{{version}}/DeckBox-{{version}}.apk">
+      <span class="ic">📱</span><span><b>Скачать для телефона</b><span class="meta" id="dlApkMeta">DeckBox {{version}} · APK · Android 5+</span></span></a>
+    <div class="qr"><img src="apk-qr.svg" alt="QR-код для скачивания приложения на телефон"><p>Наведите камеру телефона, чтобы скачать приложение</p></div>
+  </div>
+
+  <h2 class="sec" id="demo">Живое демо<small>Настоящая панель DeckBox {{version}} в вашем браузере, на придуманных данных: листайте и нажимайте.</small></h2>
   <div class="stage"><div class="phone"><div class="screen"><iframe id="panel" src="panel/" title="Панель DeckBox"></iframe></div></div></div>
+  <div class="full"><a href="panel/" target="_blank" rel="noopener">⤢ Открыть панель на весь экран</a></div>
 
   <div class="controls">
     <button id="prev">◀ Предыдущая страница</button>
@@ -79,8 +172,34 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 1
     <button id="approval">✳ Claude просит разрешение</button>
     <a class="primary" href="settings/#pages" target="_blank" rel="noopener">✎ Открыть редактор страниц ↗</a>
   </div>
-  <p class="hint">Изменения в редакторе сразу появляются здесь. Всё остаётся в вашем браузере.</p>
+  <div class="themes" id="themes">Тема PRO:
+    <button data-theme="pro"><i style="background:#d4af37"></i>Золото</button>
+    <button data-theme="silver"><i style="background:#c3cad5"></i>Серебро</button>
+    <button data-theme="emerald"><i style="background:#2fbf8a"></i>Изумруд</button>
+    <button data-theme="ruby"><i style="background:#e0455f"></i>Рубин</button>
+  </div>
+  <p class="hint">Изменения в редакторе сразу появляются здесь. Всё остаётся в вашем браузере. На телефоне поверните его боком.</p>
 
+  <h2 class="sec" id="news">Что нового в {{newsVersion}}<small>{{newsTitle}}</small></h2>
+  <div class="news">
+    <ul>
+{{news}}
+    </ul>
+    <p class="all"><a href="https://github.com/Dubstep2004/DeckBox/blob/main/CHANGELOG.md">Вся история изменений →</a> ·
+      <span class="tag">📱 Панель</span> экран телефона <span class="tag">🤖 Приложение</span> само приложение <span class="tag">💻 Компьютер</span> программа на ПК</p>
+  </div>
+
+  <h2 class="sec" id="start">Как начать<small>Три шага, около пяти минут.</small></h2>
+  <div class="steps">
+    <div class="step"><div class="ic">💻</div><h3>Поставьте на компьютер</h3><p>Скачайте <a href="#download">DeckBox-Setup</a> и запустите. Права администратора не нужны.
+      Если Windows SmartScreen предупредит, нажмите «Подробнее» → «Выполнить в любом случае».</p></div>
+    <div class="step"><div class="ic">🔌</div><h3>Подключите телефон</h3><p>По USB-кабелю: включите на телефоне «Отладку по USB», и установщик сам поставит приложение.
+      Или по Wi-Fi: поставьте <a href="#download">APK</a> и отсканируйте QR-код в настройках DeckBox на ПК.</p></div>
+    <div class="step"><div class="ic">▦</div><h3>Выберите шаблон</h3><p>В настройках на ПК откройте «Страницы» и добавьте любой из {{templates}} шаблонов
+      или соберите свою страницу из виджетов. Панель обновится сразу.</p></div>
+  </div>
+
+  <h2 class="sec">Возможности</h2>
   <div class="grid">
     <div class="card"><h3>{{widgets}} виджетов, {{templates}} шаблонов</h3><p>Смарт-стопка, часы, погода, календари, медиа, шкалы, графики, процессы, Docker / Podman, OBS, Home Assistant, таймеры, чек-листы, курсы… на сетке 12 × 6 и сколько угодно страниц. Каждый шаблон — отдельная страница в этом демо.</p></div>
     <div class="card"><h3>ИИ-программирование на виду</h3><p>Квоты Claude, Codex и Antigravity с прогнозом расхода, сессии Claude Code и Codex, ревью GitHub, а также «Разрешить / Запретить» для запросов Claude Code прямо на телефоне.</p></div>
@@ -89,14 +208,47 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 1
     <div class="card"><h3>USB или Wi-Fi, без облака</h3><p>По USB-кабелю или по Wi-Fi / Tailscale с закреплённым сертификатом и ключом. Без аккаунтов и телеметрии — подробнее в <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">политике конфиденциальности</a>.</p></div>
   </div>
 
-  <div class="cta">
-    <p><b>Установка на Windows 10/11:</b> скачайте <a href="https://github.com/Dubstep2004/DeckBox/releases/latest">DeckBox-Setup</a> со страницы последнего релиза и запустите.
-      Права администратора не нужны. Установщик поставит агент, adb и приложение на телефон, подключённый по USB.</p>
-    <p>Уже установленный DeckBox обновляется сам: Настройки › Общие › Обновления.
-      Подробнее — в <a href="https://github.com/Dubstep2004/DeckBox#установка">инструкции по установке</a>.</p>
+  <h2 class="sec" id="pro">⭐ Только в DeckBox PRO<small>То, чего нет в обычной версии.</small></h2>
+  <div class="grid pro">
+    <div class="card"><h3>🎨 Четыре темы</h3><p>Золото, серебро, изумруд и рубин — попробуйте переключатель под демо. Свой цвет акцента тоже можно выбрать.</p></div>
+    <div class="card"><h3>🔒 PIN-код</h3><p>Кнопки не нажимаются, пока не введён код из 4–8 цифр: при запуске и после простоя. Чужой человек ничего не включит на вашем компьютере.</p></div>
+    <div class="card"><h3>🌙 «Не беспокоить» и 🎮 игровой режим</h3><p>Одна кнопка выключает звук и уведомления Windows. Когда запущена игра, панель сама открывает страницу с FPS, температурой и временем в игре.</p></div>
+    <div class="card"><h3>☀️ Утренняя сводка и 📊 итоги недели</h3><p>После включения ПК — погода, события, задачи и курс валют на одном экране. Статистика: сколько работал компьютер по дням, время в играх, любимые программы.</p></div>
+    <div class="card"><h3>⬆ Умные обновления</h3><p>Одна кнопка обновляет и телефон, и компьютер, с шагами «Скачиваю → Проверяю → Ставлю». Можно обновляться ночью и откатиться назад.</p></div>
+    <div class="card"><h3>🧭 Мастер, магазин, копии</h3><p>Мастер первого запуска, магазин шаблонов, резервная копия настроек, курс ЦБ РФ, голосовые команды, жесты, живые обои и экран, который гаснет вместе с ПК.</p></div>
   </div>
 
-  <footer>DeckBox {{version}} · лицензия MIT · <a href="https://github.com/Dubstep2004/DeckBox">github.com/Dubstep2004/DeckBox</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/CHANGELOG.md">история изменений</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">конфиденциальность</a> · основан на <a href="https://github.com/ersinkoc/phonebox">PhoneBox</a> (автор ersinkoc)</footer>
+  <h2 class="sec" id="shots">Скриншоты<small>Нажмите, чтобы открыть в полном размере.</small></h2>
+  <div class="shots">
+{{shots}}
+  </div>
+
+  <h2 class="sec" id="req">Требования</h2>
+  <table class="req">
+    <tr><th>Компьютер</th><td>Windows 10 или 11 — готовый установщик. Linux и macOS — сборка из исходников (<a href="https://github.com/Dubstep2004/DeckBox#установка">инструкция</a>).</td></tr>
+    <tr><th>Телефон</th><td>Любой Android 5.0 или новее. Подойдёт старый телефон или планшет, даже с разбитым корпусом.</td></tr>
+    <tr><th>Подключение</th><td>USB-кабель с передачей данных (не только зарядка) или общая сеть Wi-Fi / Tailscale. Интернет нужен только для погоды, курсов, новостей и обновлений.</td></tr>
+    <tr><th>Размер</th><td>Установщик для Windows — <span id="reqWin">около 50 МБ</span>, приложение для телефона — <span id="reqApk">около 1,5 МБ</span>.</td></tr>
+    <tr><th>Цена</th><td>Бесплатно, открытый код (лицензия MIT). Без рекламы, аккаунтов и телеметрии.</td></tr>
+  </table>
+
+  <h2 class="sec" id="faq">Вопросы и ответы</h2>
+  <div class="faq">
+    <details><summary>Это бесплатно?</summary><p>Да, полностью. Никаких подписок, аккаунтов и рекламы. Исходный код открыт на GitHub.</p></details>
+    <details><summary>Нужен ли интернет?</summary><p>Нет: телефон и компьютер связываются напрямую, по кабелю или по домашней сети. Интернет нужен только виджетам, которые берут данные из сети (погода, курсы, новости), и для обновлений.</p></details>
+    <details><summary>Какой нужен телефон?</summary><p>Любой с Android 5.0 или новее. Чем больше экран, тем больше виджетов поместится, поэтому старый планшет тоже отлично подходит. iPhone не поддерживается.</p></details>
+    <details><summary>Телефон можно держать на зарядке всё время?</summary><p>Да. Панель показывает заряд и температуру батареи. Если телефон умеет ограничивать заряд (например, до 80%), включите это в его настройках.</p></details>
+    <details><summary>Панель пишет «ПК не подключён». Что делать?</summary><p>Проверьте, что DeckBox запущен на компьютере (значок в трее). По USB: на телефоне должен быть разрешён запрос «Отладка по USB», а кабель должен передавать данные — попробуйте другой кабель или порт прямо на компьютере. По Wi-Fi: сопрягите телефон по QR-коду и разрешите DeckBox доступ в частной сети в брандмауэре Windows.</p></details>
+    <details><summary>Windows предупреждает о неизвестной программе.</summary><p>Установщик не подписан платным сертификатом, поэтому SmartScreen его не знает. Нажмите «Подробнее» → «Выполнить в любом случае».</p></details>
+    <details><summary>Как обновиться?</summary><p>Ничего скачивать заново не нужно: когда выходит новая версия, на телефоне и в настройках на ПК появляется плашка «Вышла новая версия». Нажмите «Обновить», и DeckBox обновит и компьютер, и телефон.</p></details>
+    <details><summary>Мои данные куда-нибудь отправляются?</summary><p>Нет. Всё остаётся на вашем компьютере и телефоне, без облака и телеметрии. Подробнее — в <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">политике конфиденциальности</a>.</p></details>
+  </div>
+
+  <div class="cta">
+    <p>Подробная инструкция — в <a href="https://github.com/Dubstep2004/DeckBox#установка">README</a> и <a href="https://github.com/Dubstep2004/DeckBox/blob/main/docs/SETUP.md">руководстве по установке</a>.</p>
+  </div>
+
+  <footer>DeckBox {{version}} · лицензия MIT · <a href="https://github.com/Dubstep2004/DeckBox">github.com/Dubstep2004/DeckBox</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/CHANGELOG.md">история изменений</a> · <a href="https://github.com/Dubstep2004/DeckBox/blob/main/PRIVACY.md">конфиденциальность</a></footer>
 </div>
 
 <script>
@@ -118,6 +270,28 @@ const notes = [
 let n = 0;
 document.getElementById('notify').onclick = () => panel().DeckBoxDemo?.emit('notify', notes[n++ % notes.length]);
 document.getElementById('approval').onclick = () => panel().DeckBoxDemo?.ask();
+
+// PRO themes: the demo saves the theme into its layout, the panel repaints at once
+const themeBtns = [...document.querySelectorAll('#themes button')];
+const markTheme = (t) => themeBtns.forEach((b) => b.classList.toggle('on', b.dataset.theme === t));
+themeBtns.forEach((b) => (b.onclick = () => { panel().DeckBoxDemo?.setTheme(b.dataset.theme); markTheme(b.dataset.theme); }));
+frame.addEventListener('load', () => markTheme(panel().DeckBoxDemo?.theme?.() || 'pro'));
+markTheme('pro');
+
+// the download buttons: the newest release's files and sizes (the links above already point at this version)
+(async () => {
+  const mb = (n) => `${(n / 1048576).toFixed(n < 10485760 ? 1 : 0).replace('.', ',')} МБ`;
+  try {
+    const r = await fetch('https://api.github.com/repos/Dubstep2004/DeckBox/releases/latest');
+    if (!r.ok) return;
+    const rel = await r.json();
+    const v = String(rel.tag_name || '').replace(/^v/, '');
+    const find = (re) => (rel.assets || []).find((a) => re.test(a.name));
+    const win = find(/^DeckBox-Setup-.*\.exe$/i), apk = find(/\.apk$/i);
+    if (win) { document.getElementById('dlWin').href = win.browser_download_url; document.getElementById('dlWinMeta').textContent = `DeckBox-Setup ${v} · ${mb(win.size)} · Windows 10/11`; document.getElementById('reqWin').textContent = mb(win.size); }
+    if (apk) { document.getElementById('dlApk').href = apk.browser_download_url; document.getElementById('dlApkMeta').textContent = `DeckBox ${v} · ${mb(apk.size)} · Android 5+`; document.getElementById('reqApk').textContent = mb(apk.size); }
+  } catch (_) {}
+})();
 </script>
 </body>
 </html>

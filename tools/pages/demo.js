@@ -828,7 +828,16 @@
   }
 
   window.DeckBoxDemo = { emit, ask,
-    reset() { localStorage.removeItem('pb-demo-config'); store.set('pb-demo-version', cfgVersion() + 1); },
+    reset() { localStorage.removeItem(CONFIG_KEY); store.set('pb-demo-version', cfgVersion() + 1); },
+    // the landing page's PRO theme buttons: save the theme into the layout and repaint the panel
+    theme() { return store.get(CONFIG_KEY, null)?.display?.theme || 'pro'; },
+    async setTheme(t) {
+      const c = await loadConfig();
+      c.display = { ...(c.display || {}), theme: t };
+      store.set(CONFIG_KEY, c);
+      store.set('pb-demo-version', cfgVersion() + 1);
+      emit('refresh');
+    },
     // the agent restarted: PushStore keeps events in memory only, so its counter and backlog start over
     restart() { seq = 0; events.length = 0; } };
 })();

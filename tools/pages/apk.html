@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeckBox — скачать приложение</title>
+<link rel="icon" href="../favicon.ico">
+<style>
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0b0d; color: #f1ece1;
+  font: 16px/1.6 "Inter", "Segoe UI", system-ui, sans-serif; text-align: center; padding: 24px; box-sizing: border-box; }
+a.btn { display: inline-block; margin-top: 14px; padding: 13px 22px; border-radius: 12px; font-weight: 700; text-decoration: none;
+  color: #17130a; background: linear-gradient(180deg, #f2d675, #d4af37 70%); }
+p { color: #9d9686; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DeckBox для телефона</h1>
+  <p id="state">Ищу последнюю версию…</p>
+  <a class="btn" id="get" href="https://github.com/Dubstep2004/DeckBox/releases/latest">⬇ Скачать APK</a>
+  <p>После загрузки откройте файл и нажмите «Установить». Нужен Android 5 или новее.</p>
+</main>
+<script>
+// The QR code on the site leads here: find the newest APK of the latest release and start the download.
+(async () => {
+  const state = document.getElementById('state');
+  const get = document.getElementById('get');
+  try {
+    const r = await fetch('https://api.github.com/repos/Dubstep2004/DeckBox/releases/latest');
+    const rel = await r.json();
+    const apk = (rel.assets || []).find((a) => /\.apk$/i.test(a.name));
+    if (!apk) throw new Error('no apk');
+    get.href = apk.browser_download_url;
+    get.textContent = `⬇ Скачать DeckBox ${String(rel.tag_name || '').replace(/^v/, '')} (${(apk.size / 1048576).toFixed(1).replace('.', ',')} МБ)`;
+    state.textContent = 'Загрузка начнётся сама. Если нет — нажмите кнопку.';
+    location.replace(apk.browser_download_url);
+  } catch (_) {
+    state.textContent = 'Откройте страницу релиза и скачайте файл .apk.';
+  }
+})();
+</script>
+</body>
+</html>

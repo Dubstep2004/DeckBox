@@ -5,7 +5,7 @@ name: DeckBox pages
 on:
   push:
     branches: [main]
-    paths: ['android/app/src/main/assets/www/**', 'agent/DeckBox.Agent/settings.html', 'agent/DeckBox.Agent/*.json', 'agent/DeckBox.Agent/DeckBox.Agent.csproj', 'tools/pages/**', '.github/workflows/deckbox-pages.yml']
+    paths: ['android/app/src/main/assets/www/**', 'CHANGELOG.md', 'docs/screenshots/**', 'docs/brand/**', 'agent/DeckBox.Agent/settings.html', 'agent/DeckBox.Agent/*.json', 'agent/DeckBox.Agent/DeckBox.Agent.csproj', 'tools/pages/**', '.github/workflows/deckbox-pages.yml']
   workflow_dispatch:
 
 permissions:

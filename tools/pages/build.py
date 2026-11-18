@@ -18,12 +18,55 @@ def demo_tag(panel=False, relay=False):
     return f'<script src="../demo.js" data-version="{version()}"{" data-panel" if panel else ""}{" data-relay" if relay else ""}></script>\n'
 
 
+# the screenshots the landing page shows (docs/screenshots), with their captions
+SHOTS = [('home', 'Главная'), ('dashboard', 'Дашборд'), ('ai', 'ИИ-программирование'), ('deck', 'Пульт управления'), ('music', 'Музыка'),
+         ('system', 'Система'), ('planner', 'Планировщик'), ('overview', 'Все страницы'), ('settings-editor', 'Редактор страниц на ПК')]
+
+
+def esc(t):
+    return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+def inline(md):
+    """One changelog item as HTML: place labels as tags, **bold**, `code` and [links](url)."""
+    out = esc(md)
+    out = re.sub(r'`([^\x00-\x7F`][^`]*)`\s*', r'<span class="tag">\1</span>', out)
+    out = re.sub(r'`([^`]+)`', r'<code>\1</code>', out)
+    out = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', out)
+    return re.sub(r'\[([^\]]+)\]\((https?://[^)\s]+)\)', r'<a href="\2">\1</a>', out)
+
+
+def news(limit=5):
+    """The newest CHANGELOG section: its version, title and first items, for «Что нового»."""
+    text = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
+    m = re.search(r'^## (\S+) — (.+)$', text, re.M)
+    assert m, 'CHANGELOG.md has no version section'
+    body = text[m.end():]
+    nxt = re.search(r'^## ', body, re.M)
+    body = body[:nxt.start()] if nxt else body
+    items = []
+    for line in body.splitlines():
+        if line.startswith('- '): items.append(line[2:].strip())
+        elif items and line.startswith('  ') and line.strip(): items[-1] += ' ' + line.strip()
+        elif line.startswith('#'): pass
+    assert items, 'the newest CHANGELOG section has no items'
+    li = '\n'.join(f'      <li>{inline(i)}</li>' for i in items[:limit])
+    return m[1], m[2].strip(), li
+
+
+def shots_html():
+    return '\n'.join(f'    <a href="shots/{n}.png" target="_blank" rel="noopener"><img src="shots/{n}.png" alt="{c}" loading="lazy"><span>{c}</span></a>'
+                     for n, c in SHOTS)
+
+
 def landing_html():
-    """The landing page with the catalog counts and the version taken from the sources."""
+    """The landing page with the catalog counts, the version and the newest changes taken from the sources."""
     import json
     count = lambda name: len(json.loads((AGENT / name).read_text(encoding='utf-8')))
     html = (PAGES / 'index.html').read_text(encoding='utf-8')
-    for key, value in (('widgets', count('widgets.json')), ('templates', count('templates.json')), ('version', version())):
+    nv, nt, ni = news()
+    for key, value in (('widgets', count('widgets.json')), ('templates', count('templates.json')), ('version', version()),
+                       ('newsVersion', nv), ('newsTitle', esc(nt)), ('news', ni), ('shots', shots_html())):
         assert '{{' + key + '}}' in html, key
         html = html.replace('{{' + key + '}}', str(value))
     assert '{{' not in html
@@ -61,6 +104,15 @@ def build(out):
     # the target of the pairing QR code (Settings › Wi-Fi › Pair a phone over Wi-Fi): hands the link to the app
     (out / 'pair').mkdir()
     shutil.copy(PAGES / 'pair.html', out / 'pair' / 'index.html')
+    # the target of the landing page's QR code: starts the newest APK's download on the phone
+    (out / 'apk').mkdir()
+    shutil.copy(PAGES / 'apk.html', out / 'apk' / 'index.html')
+    shutil.copy(PAGES / 'apk-qr.svg', out / 'apk-qr.svg')
+    # the picture a link to the site shows in messengers (og:image) and the screenshots
+    shutil.copy(ROOT / 'docs' / 'brand' / 'banner.png', out / 'og.png')
+    shutil.copy(ROOT / 'docs' / 'brand' / 'deckbox-icon-1024.png', out / 'icon.png')
+    (out / 'shots').mkdir()
+    for n, _ in SHOTS: shutil.copy(ROOT / 'docs' / 'screenshots' / f'{n}.png', out / 'shots' / f'{n}.png')
     print(f'web demo written to {out}')
 
 
