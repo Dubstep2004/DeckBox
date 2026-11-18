@@ -2362,8 +2362,8 @@ function actionFields(s, upd, text, cmdIn, preset) {
       area((s.steps || []).join('\n'), 'keys:ctrl+c\nwait:200\ntext:Hello\nshortcut:terminal', 6, (e) => upd('steps', e.target.value.split('\n').map((x) => x.trim()).filter(Boolean), false)),
       h('span', { class: 'hint' }, t('s.k.macroHint'))));
   }
-  if (osName === 'macos' && kind !== 'run') fields.push(h('p', { class: 'hint' }, 'macOS asks once to allow DeckBoxAgent in System Settings › Privacy & Security › Accessibility.'));
-  if (osName === 'linux' && kind !== 'run') fields.push(h('p', { class: 'hint' }, 'Needs xdotool (X11) or wtype (Wayland).'));
+  if (osName === 'macos' && kind !== 'run') fields.push(h('p', { class: 'hint' }, t('s.k.macosPermission')));
+  if (osName === 'linux' && kind !== 'run') fields.push(h('p', { class: 'hint' }, t('s.k.linuxNeedsXdotool')));
 
   const isMute = s.cmd === 'builtin:mute';
   fields.push(h('label', { class: 'check', style: { marginTop: '4px' } },

@@ -212,7 +212,7 @@ class AgentLink(private val context: Context) {
             return Reply(502, "application/json", ByteArrayInputStream("""{"error":"unexpected response"}""".toByteArray()))
         }
         val body = (if (code >= 400) c.errorStream else c.inputStream) ?: ByteArrayInputStream(ByteArray(0))
-        return Reply(code, c.contentType, body, c.contentLengthLong)
+        return Reply(code, c.contentType, body, c.getHeaderField("Content-Length")?.toLongOrNull() ?: -1L) // getContentLengthLong is API 24
     }
 
     /** While on USB, refresh the Wi-Fi pairing data about once a minute. */

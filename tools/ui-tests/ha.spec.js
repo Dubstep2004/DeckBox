@@ -6,7 +6,8 @@ const haConfig = (options, extra = {}) => ({ night: { enabled: false }, shortcut
 
 async function open(page, url, options, extra) {
   await page.goto(url);
-  await page.evaluate((c) => { localStorage.clear(); localStorage.setItem('pb-demo-config', JSON.stringify(c)); }, haConfig(options, extra));
+  // the Russian demo (what people see) keeps its settings under its own key
+  await page.evaluate((c) => { localStorage.clear(); for (const k of ['pb-demo-config', 'pb-demo-config-ru']) localStorage.setItem(k, JSON.stringify(c)); }, haConfig(options, extra));
   await page.reload();
 }
 
@@ -138,14 +139,16 @@ test('a hand-edited numeric id does not break saving', async ({ page }) => {
 });
 
 test('the editor and the empty panel are translated', async ({ page }) => {
+  // DeckBox is Russian only; the demo shows Russian to anyone but a test browser, so look like a person here
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'webdriver', { get: () => false }); try { localStorage.setItem('deckbox-wizard', '1'); } catch (_) {} });
   await page.setViewportSize({ width: 1280, height: 860 });
-  await open(page, '/settings/#pages', { control: true, items: [{ id: 'light.desk' }] }, { display: { language: 'de' } });
+  await open(page, '/settings/#pages', { control: true, items: [{ id: 'light.desk' }] });
   await page.locator('#canvas .wb').first().click();
-  await expect(page.getByRole('button', { name: 'Symbol wählen' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Entität hinzufügen/ })).toBeVisible();
-  await expect(page.locator('.ha-row').getByLabel('Namen anzeigen')).toBeChecked();
-  await open(page, '/panel/', { control: true, items: [] }, { display: { language: 'de' } });
-  await expect(page.locator('.empty')).toContainText('Entitäten in den Widget-Einstellungen hinzufügen');
+  await expect(page.getByRole('button', { name: 'Выбрать значок' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Добавить сущность/ })).toBeVisible();
+  await expect(page.locator('.ha-row').getByLabel('Показывать имя')).toBeChecked();
+  await open(page, '/panel/', { control: true, items: [] });
+  await expect(page.locator('.empty')).toContainText('Добавьте сущности в настройках виджета');
 });
 
 // Wraps window.fetch before the demo installs its own, so a test can see (or fail) the /api/ha/* calls the page makes.

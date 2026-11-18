@@ -2070,6 +2070,8 @@
       "Show the feed's name": "Показывать название ленты",
       "Show how old each headline is": "Показывать возраст заголовка",
       "Lines per headline": "Строк на заголовок",
+      "Entities": "Сущности",
+      "Allow switching from the phone (default for entities that do not set their own)": "Разрешить переключение с телефона (для сущностей без своей настройки)",
       "Open articles on the PC when tapped (starts the PC's browser)": "Открывать статьи на ПК по касанию (запускает браузер ПК)",
       "Top stories, refreshed every 15 minutes.": "Главные новости, обновляются каждые 15 минут.",
       "Exchange rates": "Курсы валют",

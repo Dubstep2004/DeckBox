@@ -31,9 +31,11 @@ const DEMO_NAMES = [
   'Mute in meeting', 'Raise hand',
   // placeholder paths shown as example values inside inputs
   'C:\\Users\\you\\Pictures\\Frame', 'C:\\ffmpeg\\bin\\ffmpeg.exe',
+  // product names
+  '⭐ DeckBox PRO', 'Client ID Spotify',
 ];
 
-// Any run of two English words with no Vietnamese diacritics. Ids, codes, units, urls and single words (product names
+// Any run of two English words with no Russian letters (DeckBox is Russian only; upstream checked Vietnamese). Ids, codes, units, urls and single words (product names
 // like "Control Deck", "Spotify", "Claude") are allowed to stay English.
 function englishLeftovers(texts, allowed) {
   const allow = new Set(allowed);
@@ -43,7 +45,7 @@ function englishLeftovers(texts, allowed) {
     if (allow.has(t)) return false;
     // a list bullet prefixes data the machine reported (adapter and device names), not interface text
     if (allow.has(t.replace(/^[·•]\s*/, ''))) return false;
-    if (/[\u00c0-\u1ef9]/i.test(t)) return false;               // Vietnamese diacritics
+    if (/[а-яё]/i.test(t)) return false;                        // Russian
     if (!/[A-Za-z]{3,}/.test(t)) return false;
     // Exempt only real identifier, code and numeric/unit forms. The earlier pattern allowed letters and spaces, so an
     // ordinary label like "Save all settings" counted as an identifier and slipped through.
@@ -53,18 +55,11 @@ function englishLeftovers(texts, allowed) {
   return [...new Set(texts.map(norm))].filter(isEnglish);
 }
 
-test('the settings page shows no English left in Vietnamese, with every section open', async ({ page }) => {
+test('the settings page shows no English left in Russian, with every section open', async ({ page }) => {
+  // Russian is the only language: the demo shows it to anyone but a test browser, so look like a person here
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'webdriver', { get: () => false }); try { localStorage.setItem('deckbox-wizard', '1'); } catch (_) {} });
   await page.goto('/settings/');
-  // A page-level fetch mock would hide the real /api/settings answer, so switch the language through the UI contract:
-  // the settings editor reads display.language from the file it loads, and the demo server serves a config we can set.
-  await page.evaluate(async () => {
-    const r = await fetch('/api/settings');
-    const cfg = await r.json();
-    cfg.display = { ...(cfg.display || {}), language: 'vi' };
-    await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) });
-  });
-  await page.goto('/settings/');
-  await expect(page.locator('#langSel')).toHaveValue('vi', { timeout: 15000 });
+  await page.waitForFunction(() => window.DeckBoxRuDom);
 
   // <details> hides its contents from a text scan until it is open, which is how the Control Deck hints and the audio
   // profile labels escaped earlier sweeps: open every one, then read the visible text of every leaf element.
@@ -123,7 +118,7 @@ test('the settings page shows no English left in Vietnamese, with every section 
   expect(leftoversKept, `untranslated text still on the settings page:\n${leftoversKept.join('\n')}`).toEqual([]);
 });
 
-test('every string in widgets.json and templates.json has a Vietnamese catalog entry', async ({ page }) => {
+test('every string in widgets.json and templates.json has a Russian catalog entry', async ({ page }) => {
   await page.goto('/panel/');
   const out = await page.evaluate(async () => {
     const I18n = window.DeckBoxI18n;
@@ -131,7 +126,7 @@ test('every string in widgets.json and templates.json has a Vietnamese catalog e
     const tpl = await (await fetch('/templates.json', { cache: 'no-store' })).json();
     const widgets = Array.isArray(cat) ? cat : (cat.widgets || []);
     const templates = Array.isArray(tpl) ? tpl : (tpl.templates || []);
-    const vi = I18n.CATALOG.vi || {};
+    const vi = I18n.CATALOG.ru || {};
 
     const wanted = new Set();
     for (const w of widgets) {
@@ -147,8 +142,9 @@ test('every string in widgets.json and templates.json has a Vietnamese catalog e
     // A choice whose label is a plain number ("1", "2", "3" for the feeds line count) is the value itself, not text.
     const isValue = (s) => /^[\d.,%\-/+ ]+$/.test(s);
     // TRY is the Turkish lira code, used as a currency label: translating it would turn the code into a word.
-    const NOT_TRANSLATED = new Set(['TRY']);
-    const missing = [...wanted].filter((s) => !(s in vi) && !NOT_TRANSLATED.has(s) && !isValue(s));
+    const NOT_TRANSLATED = new Set(['TRY', 'Docker', 'Discord', 'OBS Studio', 'Claude', 'Codex', 'Antigravity', 'CodexBar', 'GitHub', 'Home Assistant', 'Hacker News', 'USD', 'EUR', 'GBP', 'DevOps']);
+    // the PRO widgets are written in Russian in the catalog itself
+    const missing = [...wanted].filter((s) => !(s in vi) && !/[а-яё]/i.test(s) && !NOT_TRANSLATED.has(s) && !isValue(s));
     return { widgets: widgets.length, templates: templates.length, wanted: wanted.size, missing };
   });
 
@@ -177,7 +173,7 @@ test('settings.html keeps no English literal in a position that reaches the scre
   for (const re of PATTERNS) {
     for (const m of script.matchAll(re)) {
       const s = m[1];
-      if (/[\u00c0-\u1ef9]/i.test(s)) continue;                // already Vietnamese
+      if (/[а-яё]/i.test(s)) continue;                         // already Russian
       if (!/[A-Za-z]{3,}/.test(s)) continue;
       if (/(=>|\$\{|document\.|querySelector|addEventListener)/.test(s)) continue;
       if (/^[\w.\-+#/:%=]+$/.test(s)) continue;                 // ids and codes

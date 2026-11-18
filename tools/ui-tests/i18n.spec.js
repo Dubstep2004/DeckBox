@@ -125,6 +125,6 @@ test('i18n.js defines every key once per language', () => {
     if (seen.has(key)) dupes.push(`${block} ${k[1]} (lines ${seen.get(key)} and ${i + 1})`);
     else seen.set(key, i + 1);
   });
-  expect(spaces.size).toBeGreaterThanOrEqual(13); // the parser still finds the language blocks (12 languages + catalog)
+  expect(spaces.size).toBeGreaterThanOrEqual(2); // the parser still finds the language blocks (en, ru)
   expect(dupes).toEqual([]);
 });

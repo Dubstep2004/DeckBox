@@ -517,7 +517,7 @@ class MainActivity : Activity(), SensorEventListener {
 
     @Suppress("DEPRECATION")
     private fun wakeScreen() {
-        val pm = getSystemService(android.os.PowerManager::class.java) ?: return
+        val pm = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager ?: return // the Class overload is API 23
         val lock = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK or android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP, "deckbox:pcawake")
         lock.acquire(10_000)
         runOnUiThread {
