@@ -7,6 +7,9 @@
   const VERSION = document.currentScript.dataset.version || 'demo'; // stamped by tools/pages/build.py from the agent's version
   // ?update=1: a newer release is out, so the «Вышла новая версия» card shows (UI tests)
   const DEMO_UPDATE = new URLSearchParams(location.search).has('update');
+  // ?nocc=1: Claude Code is not on the computer (the «Как подключить Claude Code» steps; UI tests)
+  const DEMO_NO_CC = new URLSearchParams(location.search).has('nocc');
+  const cc = { installed: !DEMO_NO_CC, signedIn: !DEMO_NO_CC, installing: false, error: null, canInstall: true };
   // ?game=1: a game runs (the «Игровой режим» widget and page)
   const DEMO_GAME = new URLSearchParams(location.search).has('game');
   window.__deckboxDemo = true;
@@ -577,7 +580,17 @@
       else if (sc.toggle) toggles[id] = !toggles[id];
       return json({});
     }
-    if (path === '/api/quotas') return json(quotas());
+    if (path === '/api/claude-code') return json(cc);
+    if (path === '/api/claude-code/install' && method === 'POST') {
+      if (!cc.installed && !cc.installing) { cc.installing = true; setTimeout(() => { cc.installing = false; cc.installed = true; }, 1500); }
+      return json(cc);
+    }
+    if (path === '/api/claude-code/signin' && method === 'POST') {
+      if (!cc.installed) return json({ error: L('Claude Code is not installed yet', 'Claude Code ещё не установлен') }, 400);
+      setTimeout(() => { cc.signedIn = true; }, 1500);
+      return json({ ok: true });
+    }
+    if (path === '/api/quotas') return json(DEMO_NO_CC && !cc.signedIn ? { providers: [{ id: 'claude', name: 'Claude', plan: 'Claude', updatedAt: null, extra: '', error: 'Not signed in to Claude Code', codex: null, source: 'local', limits: [] }], overview: null } : quotas());
     if (path === '/api/calendar') return json(calendar());
     if (path === '/api/docker') return json({ ...docker(), control: allows(await config(), (t) => t === 'docker') });
     if (path === '/api/obs') { const c = await config(); return json({ ...obsState(), enabled: c.obs?.enabled !== false, control: widgets(c).some((w) => w.type === 'obs' && w.options?.control === true) }); }
@@ -681,7 +694,7 @@
       if (c && (action === 'start' || action === 'restart')) Object.assign(c, { state: 'running', status: 'Up 1 second', cpu: 2, mem: '40MiB', health: null });
       return json({ ok: true });
     }
-    if (path === '/api/work') return json(work());
+    if (path === '/api/work') return json(DEMO_NO_CC ? { ...work(), sessions: [] } : work());
     if (path === '/api/procs') return json(procs());
     if (path === '/api/procs/detail') return json(procDetail(q.get('name')));
     if (path.startsWith('/api/widget/')) return json({ output: String(3 + Math.floor(Math.random() * 3)), at: now() - 8000, ok: true, running: false, durationMs: 412 });

@@ -109,9 +109,26 @@ Section "Установить приложение на телефон (USB)" Se
   ExecWait '"$SYSDIR\cmd.exe" /c ""$INSTDIR\install-phone.cmd""'
 SectionEnd
 
+Section /o "Claude Code (ИИ-помощник, нужна подписка Claude)" SecClaude
+  ; optional, off by default: Anthropic's official installer; the panel's «Сеансы» and «Квоты ИИ» read it
+  IfSilent 0 +2
+    Return
+  IfFileExists "$PROFILE\.local\bin\claude.exe" claude_ready
+  DetailPrint "Устанавливаю Claude Code с официального сайта (1–2 минуты)..."
+  nsExec::ExecToLog 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm https://claude.ai/install.ps1 | iex"'
+  Pop $0
+  IfFileExists "$PROFILE\.local\bin\claude.exe" claude_ready
+    DetailPrint "Claude Code не установился (нет интернета или Claude недоступен в вашей стране). Это можно сделать позже с панели."
+    Return
+  claude_ready:
+  DetailPrint "Claude Code установлен. Войдите в аккаунт: Пуск › DeckBox › Войти в Claude Code."
+  CreateShortCut "$SMPROGRAMS\DeckBox\Войти в Claude Code.lnk" "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" "-NoExit -NoProfile -Command $\"& '$PROFILE\.local\bin\claude.exe'$\"" "$INSTDIR\deckbox.ico"
+SectionEnd
+
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "Агент, который передаёт данные на телефон, и страница настроек."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} "Агент будет запускаться сам при входе в Windows."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecClaude} "ИИ-помощник для программирования от Anthropic. Тогда на панели появятся сеансы и лимиты Claude. Нужна платная подписка Claude (Pro или Max). Можно поставить позже с панели."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecPhone} "Поставить приложение DeckBox на телефон, подключённый по USB. Можно сделать позже из меню Пуск."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 

@@ -1,6 +1,7 @@
 import { $, API, D, LEVEL_COLOR, LOCALE, mediaHtml, METRICS, PANEL_HEADERS, PREVIEW, Q_STYLE, S_ORDER, ago, api, averageColor, buzz, cfg, cfgVersion, chart, color, cssVar, currentProcessesSort, emit, fillIcon, fmtClock, fmtDur, fmtHM, fmtMem, fmtReset, fmtTime, fmtValue, gotoProcesses, gpuMem, gpusOf, h, haptic, hasProcessesPage, hist, hour12, keyButton, levelOf, media, metricText, online, openSheet, paceInfo, pad, prRow, pushView, quotaProviders, r1, registerProcessesSorter, renderStatus, ringSvg, setArtColor, setMediaState, setVolDragging, shortDur, shortGpu, store, t, tick, toast, volDragging, wxBlock, wxIcon } from '../main.js';
 import { W } from '../registry.js';
 import { invalidateDeckState } from './controls.js';
+import { claudeCodeKnown, claudeCodeReady, claudeCodeStatus, claudeHelpNote } from './claude-help.js';
 
 // metric names (CPU, NETWORK…) follow the panel language through the catalog dictionary
 const metricLabel = (m) => (window.DeckBoxI18n?.tc ? window.DeckBoxI18n.tc(m.label) : m.label);
@@ -496,7 +497,11 @@ W.quotas = {
           rings.appendChild(h('div', 'q-ring', dial, h('div', 'q-label', l.label), p.id === 'codex' ? h('div', 'q-left', `${Math.max(0, Math.round(100 - l.percent))}% left`) : null, h('div', 'q-reset', fmtReset(l.resetsAt)),
             pace ? h('div', 'q-pace ' + pace.cls, pace.text) : null));
         }
-        if (!p.limits.length) rings.appendChild(h('div', 'q-reset', 'No data'));
+        // Claude without its sign-in on the computer: the steps to connect it instead of «Нет данных»
+        if (!p.limits.length && p.id === 'claude' && /not signed in/i.test(p.error || '')) {
+          rings.appendChild(claudeHelpNote(claudeCodeKnown() || { installed: false }));
+          claudeCodeStatus();
+        } else if (!p.limits.length) rings.appendChild(h('div', 'q-reset', 'No data'));
         card.append(rings);
         if (p.id === 'codex' && p.codex) {
           const c = p.codex;
@@ -639,8 +644,15 @@ W.sessions = {
           row.type = 'button';
           row.addEventListener('click', () => openDetails(s));
           return row;
-        }) : [h('div', 'empty', t('w.noAiSessions'))];
-        list.replaceChildren(...rows);
+        }) : null;
+        if (rows) { list.replaceChildren(...rows); return; }
+        // no sessions: if Claude Code is missing or not signed in on the computer, say how to connect it
+        const empty = () => {
+          const cc = claudeCodeKnown();
+          list.replaceChildren(cc && !claudeCodeReady(cc) ? claudeHelpNote(cc) : h('div', 'empty', t('w.noAiSessions')));
+        };
+        empty();
+        claudeCodeStatus().then(() => { if (!(D.work?.sessions || []).length) empty(); });
       },
     };
   },

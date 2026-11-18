@@ -829,6 +829,15 @@ app.MapPost("/api/volume", (int? level, string? op, AudioControl audio) =>
     return ok ? Results.Json(audio.Current()) : Results.BadRequest();
 });
 
+// Claude Code on this computer: the «Сеансы» / «Квоты ИИ» widgets show how to install it and sign in
+app.MapGet("/api/claude-code", (QuotaMonitor q) => Results.Json(ClaudeCode.Status(q)));
+app.MapPost("/api/claude-code/install", (QuotaMonitor q, ILogger<Program> log) =>
+{
+    if (ClaudeCode.Find() is null) ClaudeCode.StartInstall(log);
+    return Results.Json(ClaudeCode.Status(q));
+});
+app.MapPost("/api/claude-code/signin", () => ClaudeCode.OpenSignIn() is { } error ? Results.Json(new { error }, statusCode: 400) : Results.Json(new { ok = true }));
+
 app.MapGet("/api/quotas", (QuotaMonitor q) => Results.Json(new { providers = q.Snapshot(), overview = q.Overview() }));
 
 app.MapGet("/api/work", (SessionMonitor s, GitHubMonitor gh) => Results.Json(new
