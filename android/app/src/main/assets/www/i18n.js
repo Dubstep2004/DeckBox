@@ -1487,6 +1487,7 @@
       "Only this feed (its name in Settings; empty = all feeds)": "Только эта лента (её название в настройках; пусто = все ленты)",
       "Show the feed's name": "Показывать название ленты",
       "Show how old each headline is": "Показывать возраст заголовка",
+      "Lines per headline": "Строк на заголовок",
       "Open articles on the PC when tapped (starts the PC's browser)": "Открывать статьи на ПК по касанию (запускает браузер ПК)",
       "Top stories, refreshed every 15 minutes.": "Главные новости, обновляются каждые 15 минут.",
       "Exchange rates": "Курсы валют",
