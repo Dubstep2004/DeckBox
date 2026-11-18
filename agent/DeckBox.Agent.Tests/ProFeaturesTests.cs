@@ -80,6 +80,15 @@ public class ProFeaturesTests : IDisposable
         Assert.Contains("не резервная копия", error);
     }
 
+    [Fact]
+    public void AGameRunningRuleSurvivesSaving()
+    {
+        var store = new ConfigStore(Path.Combine(_dir, "config.json"));
+        var json = """{"rules":[{"when":"game-running","then":"goto","page":"game"}]}""";
+        Assert.Null(store.Save(json, null));
+        Assert.Contains(store.Get().Rules, r => r.When == "game-running");
+    }
+
     [Theory]
     [InlineData("Cyberpunk2077", @"D:\SteamLibrary\steamapps\common\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe", false, true)]
     [InlineData("chrome", @"C:\Program Files\Google\Chrome\Application\chrome.exe", true, false)]
@@ -87,6 +96,10 @@ public class ProFeaturesTests : IDisposable
     [InlineData("SomeIndie", @"C:\Indie\SomeIndie.exe", true, true)]
     [InlineData("SomeIndie", @"C:\Indie\SomeIndie.exe", false, false)]
     [InlineData("eldenring", @"E:\Elden\eldenring.exe", false, true)] // listed in the settings
+    [InlineData("Battle.net", @"C:\Program Files (x86)\Battle.net\Battle.net.exe", false, false)] // launchers are not games
+    [InlineData("RiotClientServices", @"C:\Riot Games\Riot Client\RiotClientServices.exe", false, false)]
+    [InlineData("EADesktop", @"C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EADesktop.exe", false, false)]
+    [InlineData("VALORANT-Win64-Shipping", @"C:\Riot Games\VALORANT\live\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe", false, true)]
     public void GamesAreRecognised(string process, string path, bool fullscreen, bool game) =>
         Assert.Equal(game, GameMonitor.IsGame(new FrontApp(process, path, fullscreen), ["eldenring.exe"]));
 }

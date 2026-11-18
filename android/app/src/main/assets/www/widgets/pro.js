@@ -391,7 +391,8 @@ const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/
 /** Runs one spoken command; returns what was done (for the screen) or null. */
 export async function runVoice(text) {
   let s = norm(text).replace(/^(deckbox|дек бокс|декбокс|дэк бокс)\s*/, '');
-  const has = (...w) => w.some((x) => s === x || s.startsWith(x + ' ') || s.includes(' ' + x));
+  // whole words only: «звук» is not «звуковую», «плей» is not «плейлисты»
+  const has = (...w) => w.some((x) => (' ' + s + ' ').includes(' ' + x + ' '));
   const target = s.replace(/^(пожалуйста\s+)?(открой|открыть|запусти|запустить|включи|включить|покажи|показать|перейди на|перейди|страница|страницу)\s+/, '');
   if (has('не беспокоить', 'тихий режим')) { await setQuiet(!D.state?.quiet); return 'Не беспокоить'; }
   if (has('брифинг', 'утро')) { showBriefing(); return 'Утренний брифинг'; }

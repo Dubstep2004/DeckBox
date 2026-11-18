@@ -35,6 +35,10 @@ public sealed class GameMonitor(ConfigStore config, ILogger<GameMonitor> log) : 
         "obs64", "discord", "telegram", "zoom", "teams", "ms-teams", "steamwebhelper", "steam", "epicgameslauncher", "devenv",
         "code", "rider64", "lockapp", "searchhost", "shellexperiencehost", "startmenuexperiencehost", "textinputhost",
         "deckboxagent", "mstsc", "vmconnect", "kmplayer", "aimp", "spotify",
+        // the launchers live in the same folders as their games
+        "battle.net", "agent", "blizzard error", "riotclientservices", "riotclientux", "riotclientuxrender", "riot client",
+        "eadesktop", "eabackgroundservice", "origin", "upc", "ubisoftconnect", "uplaywebcore", "galaxyclient",
+        "galaxyclient helper", "gameoverlayui", "wgc", "wargaming.net game center", "xboxpcapp", "gamingservices",
     };
 
     private static volatile GameSnapshot? _game;

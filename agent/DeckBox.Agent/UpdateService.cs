@@ -143,6 +143,7 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
             // the agent was just replaced and is restarting: this (old) process still sees the update as pending,
             // and a second swap would trip over its own files
             if (_state == "restarting") return;
+            _error = null;
             if (phone && s.AppUpdate && adb.Connected)
             {
                 // a phone that refuses the app must not keep the agent itself from updating
@@ -153,7 +154,6 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
                     log.LogWarning("phone update failed: {Msg}", ex.Message);
                 }
             }
-            _error = null;
             if (s.AgentUpdate && RunningInstalled) await UpdateAgentAsync(ct);
             // an agent started from another folder (an unpacked zip, an old PhoneBox install) cannot replace itself:
             // the Windows installer puts the new version in the right place and starts it

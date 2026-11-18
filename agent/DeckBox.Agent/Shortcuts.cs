@@ -111,6 +111,10 @@ public static class Shortcuts
                     new AudioControl().ToggleMute();
                     break;
 #endif
+                // «Не беспокоить» from a test press in the settings or a macro step (the panel's press goes through Run)
+                case "builtin:quiet":
+                    QuietMode.Toggle(new AudioControl());
+                    break;
                 default:
                     Start(sc);
                     break;

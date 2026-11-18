@@ -129,3 +129,15 @@ test('a PIN locks the panel: taps do nothing until the right code', async ({ pag
   await page.locator('.w-quiet .q-btn').click();
   await expect(page.locator('.pro-dnd')).toBeVisible();
 });
+
+test('voice commands match whole words: «плейлисты» opens the page, it does not toggle playback', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('pb-demo-config', JSON.stringify({ night: { enabled: false }, rules: [], shortcuts: [], pages: [
+      { id: 'a', title: 'Дом', enabled: true, widgets: [] }, { id: 'b', title: 'Плейлисты', enabled: true, widgets: [] }] }));
+  });
+  await page.goto('/panel/');
+  const said = (t) => page.evaluate(async (t) => (await import('/panel/widgets/pro.js')).runVoice(t), t);
+  expect(await said('покажи плейлисты')).toBe('Страница «Плейлисты»');
+  expect(await said('пауза')).toBe('Пауза / воспроизведение');
+  expect(await said('выключи звук')).toBe('Звук переключён');
+});

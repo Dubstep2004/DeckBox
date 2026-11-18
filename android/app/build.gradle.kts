@@ -17,8 +17,8 @@ android {
         applicationId = "io.github.dubstep2004.deckbox"
         minSdk = 24
         targetSdk = 35
-        versionCode = 47
-        versionName = "1.3.0"
+        versionCode = 48
+        versionName = "1.3.1"
     }
 
     signingConfigs {
