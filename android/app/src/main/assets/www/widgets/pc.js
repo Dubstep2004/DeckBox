@@ -52,7 +52,7 @@ W.batteries = {
     const render = () => {
       const devices = [...(data?.devices || [])];
       if (o.phone !== false && bridge) {
-        try { const b = JSON.parse(bridge.battery()); if (b.level >= 0) devices.push({ name: 'This phone', level: b.level, kind: 'phone', charging: b.plugged }); } catch (_) {}
+        try { const b = JSON.parse(bridge.battery()); if (b.level >= 0) devices.push({ name: 'Этот телефон', level: b.level, kind: 'phone', charging: b.plugged }); } catch (_) {}
       }
       const key = JSON.stringify([devices, box.clientHeight]);
       if (key === lastKey) return;
@@ -407,7 +407,7 @@ W.apps = {
       }, { once: true });
       const isArmed = armed === a.id;
       const t = h('button', 'ap-tile' + (busy === a.id ? ' busy' : '') + (isArmed ? ' armed' : ''), img,
-        h('span', 'ap-name', isArmed ? 'Tap again to open' : a.name));
+        h('span', 'ap-name', isArmed ? 'Нажмите ещё раз, чтобы открыть' : a.name));
       t.title = a.name;
       t.addEventListener('click', () => {
         if (!confirm || armed === a.id) { clearTimeout(armTimer); armed = null; open(a); return; }
@@ -477,7 +477,7 @@ W.agenda = {
       const next = timed.find((e) => e.start > now);
       if (small) {
         const e = cur || next || list[0];
-        if (!e) { box.replaceChildren(h('div', 'ag-big-t', 'No events'), h('div', 'ag-big-s', `next ${days} days`)); return; }
+        if (!e) { box.replaceChildren(h('div', 'ag-big-t', 'Событий нет'), h('div', 'ag-big-s', `на ${days} дн. вперёд`)); return; }
         box.style.setProperty('--c', e.color);
         box.replaceChildren(
           h('div', 'ag-big-s', e === cur ? `Now · until ${hm(e.end)}` : e.allDay ? dayName(e.start) + ' · all day' : `${dayName(e.start) === t('time.today') ? inMin(e.start) || t('time.today') : dayName(e.start)} · ${hm(e.start)}`),
@@ -517,7 +517,7 @@ W.agenda = {
 W.onair = {
   needs: ['state', 'push'],
   create(box, { o }) {
-    const sign = h('div', 'oa-sign', o.text || 'ON AIR'), sub = h('div', 'oa-sub');
+    const sign = h('div', 'oa-sign', o.text || 'В ЭФИРЕ'), sub = h('div', 'oa-sub');
     box.append(sign, sub);
     const src = o.source || 'both';
     return {
@@ -535,7 +535,7 @@ W.onair = {
         box.classList.toggle('on', on);
         const apps = [...new Set([...(mic ? p.micApps || [] : []), ...(cam ? p.cameraApps || [] : [])])];
         sub.textContent = on
-          ? [mic ? '🎙️' : '', cam ? '📷' : '', obsLive ? (obs.streaming ? 'OBS live' : 'OBS recording') : '', apps.join(', ') || (pushed && typeof pv === 'string' ? pv : '')].filter(Boolean).join(' ')
+          ? [mic ? '🎙️' : '', cam ? '📷' : '', obsLive ? (obs.streaming ? 'OBS в эфире' : 'OBS пишет') : '', apps.join(', ') || (pushed && typeof pv === 'string' ? pv : '')].filter(Boolean).join(' ')
           : (src === 'mic' || src === 'camera') && p && p.mic == null ? 'Not detectable on this computer' : 'Off air';
       },
     };
@@ -788,7 +788,7 @@ W.nextup = {
         track.hidden = !cur;
         if (!ev) {
           when.textContent = ''; meta.textContent = '';
-          title.textContent = !cal ? t('w.loading') : cal.updated || evs.length ? t('w.noEvents') : 'Add a calendar in Settings › General';
+          title.textContent = !cal ? t('w.loading') : cal.updated || evs.length ? t('w.noEvents') : 'Добавьте календарь: Настройки › Общие';
           return;
         }
         const left = Math.round(((cur ? ev.end : ev.start) - now) / 60000);

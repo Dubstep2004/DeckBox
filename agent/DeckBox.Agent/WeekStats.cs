@@ -39,7 +39,7 @@ public sealed class WeekStats(SystemMonitor system, ILogger<WeekStats> log) : Ba
         lock (_gate)
         {
             var days = Load();
-            var date = now.ToString("yyyy-MM-dd");
+            var date = Day(now);
             var day = days.FirstOrDefault(d => d.Date == date);
             if (day is null) { day = new StatsDay { Date = date }; days.Add(day); }
             day.Minutes++;
@@ -49,7 +49,7 @@ public sealed class WeekStats(SystemMonitor system, ILogger<WeekStats> log) : Ba
                 day.Apps[app] = day.Apps.GetValueOrDefault(app) + 1;
             // the 40 busiest apps of a day are plenty for the top 5 of a week
             if (day.Apps.Count > 60) day.Apps = day.Apps.OrderByDescending(a => a.Value).Take(40).ToDictionary();
-            days.RemoveAll(d => string.CompareOrdinal(d.Date, now.AddDays(-7).ToString("yyyy-MM-dd")) < 0);
+            days.RemoveAll(d => string.CompareOrdinal(d.Date, Day(now.AddDays(-7))) < 0);
             Save(days);
         }
     }
@@ -63,10 +63,10 @@ public sealed class WeekStats(SystemMonitor system, ILogger<WeekStats> log) : Ba
             var days = Load();
             var week = Enumerable.Range(0, 7).Select(i => now.Date.AddDays(i - 6)).Select(d =>
             {
-                var s = days.FirstOrDefault(x => x.Date == d.ToString("yyyy-MM-dd"));
+                var s = days.FirstOrDefault(x => x.Date == Day(d));
                 return new
                 {
-                    date = d.ToString("yyyy-MM-dd"),
+                    date = Day(d),
                     minutes = s?.Minutes ?? 0,
                     cpu = s is { CpuSamples: > 0 } ? Math.Round(s.CpuSum / s.CpuSamples, 1) : (double?)null,
                     game = s?.GameMinutes ?? 0,
@@ -86,6 +86,9 @@ public sealed class WeekStats(SystemMonitor system, ILogger<WeekStats> log) : Ba
             };
         }
     }
+
+    /// <summary>"2026-11-18" in the Gregorian calendar whatever the culture (th-TH would give 2569, ar-SA the Hijri year).</summary>
+    internal static string Day(DateTime d) => d.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
     private List<StatsDay> Load()
     {

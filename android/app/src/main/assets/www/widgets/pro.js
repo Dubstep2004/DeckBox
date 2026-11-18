@@ -1,4 +1,4 @@
-import { API, D, DEFAULT_AMBIENT, gpusOf, PANEL_HEADERS, PREVIEW, api, applyBrightness, bridge, cfg, curPage, goPage, h, haptic, hooks, pages, store, toast, wxLines } from '../main.js';
+import { API, D, DEFAULT_AMBIENT, gpusOf, safeFetch, PANEL_HEADERS, PREVIEW, api, applyBrightness, bridge, cfg, curPage, goPage, h, haptic, hooks, pages, store, toast, wxLines } from '../main.js';
 import { lines } from './helpers.js';
 import { W } from '../registry.js';
 
@@ -8,7 +8,6 @@ import { W } from '../registry.js';
 const pad = (n) => String(n).padStart(2, '0');
 const hm = (ms) => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dur = (min) => (min >= 60 ? `${Math.floor(min / 60)} ч ${pad(min % 60)} мин` : `${min} мин`);
-const plural = (n, one, few, many) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b > 1 && b < 5 ? few : b === 1 ? one : many; };
 const dsp = () => cfg.display || {};
 
 const css = document.createElement('style');
@@ -133,7 +132,8 @@ export async function loadCbr(force = false) {
   if (cbrLoading) return cbrLoading;
   cbrLoading = (async () => {
     try {
-      const r = await fetch(CBR_URL, { cache: 'no-store' });
+      // straight from the phone, or through the computer when the phone cannot reach the site
+      const r = await safeFetch(CBR_URL, { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       cbrData = await r.json(); cbrAt = Date.now();
       store.set('cbr', cbrData);

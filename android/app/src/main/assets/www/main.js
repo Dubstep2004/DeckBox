@@ -661,7 +661,7 @@ export function prRow(p, mine) {
   }
   row.append(h('span', 'rp', `${p.repo.split('/')[1]}#${p.number}`), h('span', 'tt', p.title));
   if (mine && (p.review === 'APPROVED' || p.review === 'CHANGES_REQUESTED'))
-    row.appendChild(h('span', 'rv ' + p.review, p.review === 'APPROVED' ? 'approved' : 'changes'));
+    row.appendChild(h('span', 'rv ' + p.review, p.review === 'APPROVED' ? 'одобрено' : 'нужны правки'));
   return row;
 }
 
@@ -835,7 +835,7 @@ export function pushView(item) {
 
 export function fmtValue(x) {
   if (typeof x === 'number') return Math.abs(x) >= 100 ? String(Math.round(x)) : String(Math.round(x * 10) / 10);
-  if (typeof x === 'boolean') return x ? 'On' : 'Off';
+  if (typeof x === 'boolean') return x ? 'Вкл.' : 'Выкл.';
   return x == null ? '—' : String(x);
 }
 export const LEVEL_COLOR = { ok: '#22c55e', success: '#22c55e', warn: '#f59e0b', warning: '#f59e0b', error: '#ef4444', fail: '#ef4444', failure: '#ef4444', info: '#60a5fa' };
@@ -1882,7 +1882,6 @@ export function setOnline(on) {
 export function appVersion() { try { return bridge?.version?.() || null; } catch (_) { return null; } }
 
 let updateShownFor = null;
-let updateSelf = false; // the app is installing itself: the agent's own progress must not overwrite it
 let updateViaAgent = false; // «Обновить» went to the agent: its state is the progress
 
 /** Opens the card for state.update; on its own only once per version and not after «Позже». */
@@ -1895,7 +1894,7 @@ export function openUpdate(force = false) {
     versions: [['Компьютер', D.state?.agentVersion], ['Приложение', appVersion()]],
     apply: async () => {
       // the phone app installs itself from the computer (USB or Wi-Fi); the agent is updated once the download is in
-      if (u.app && bridge?.installUpdate) { updateSelf = true; bridge.installUpdate(); return; }
+      if (u.app && bridge?.installUpdate) { bridge.installUpdate(); return; }
       updateViaAgent = true;
       await api('/update/apply', 'POST', 8000);
     },
@@ -1906,7 +1905,6 @@ window.addEventListener('deckbox-update', (e) => {
   const p = e.detail || {};
   setUpdateProgress(p);
   if (p.stage === 'install' && D.state?.update?.agent) api('/update/apply?phone=0', 'POST', 8000).catch(() => {});
-  if (p.stage === 'error') updateSelf = false;
 });
 
 export function applyState(s, replayGen = null) {

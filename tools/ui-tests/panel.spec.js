@@ -44,6 +44,8 @@ test('no widget fails to build on any page', async ({ page }) => {
 test('every widget in the catalogue builds and runs without errors', async ({ page }) => {
   test.setTimeout(90_000); // Each catalog page runs its render and polling lifecycle; the catalog now exceeds 100 types.
   const errors = watchErrors(page);
+  // «Курс ЦБ РФ» reads the Bank of Russia rates from the internet: answer it here, as the other tests do for their sites
+  await page.route('https://www.cbr-xml-daily.ru/**', (r) => r.fulfill({ json: { Date: '2026-11-18T11:30:00+03:00', Valute: { USD: { Nominal: 1, Name: 'Доллар', Value: 81, Previous: 80 } } } }));
   await page.goto('/panel/');
   // one page per widget type, at its default size, through the demo's stored settings
   const count = await page.evaluate(async () => {

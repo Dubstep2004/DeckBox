@@ -36,8 +36,12 @@ public static class Backup
                 if (!e.FullName.StartsWith("icons/", StringComparison.Ordinal)) continue;
                 var name = Path.GetFileName(e.FullName);
                 // only plain file names: nothing outside the icons folder
-                if (name.Length == 0 || name != e.FullName[6..] || name.StartsWith('.') || e.Length > 4 * 1024 * 1024) continue;
-                e.ExtractToFile(Path.Combine(iconsDir, name), overwrite: true);
+                // "icons/C:evil.dll" is rooted on Windows (Path.Combine would drop the icons folder): no drive, no separators
+                if (name.Length == 0 || name != e.FullName[6..] || name.StartsWith('.') || name.Contains(':') || Path.IsPathRooted(name)
+                    || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || e.Length > 4 * 1024 * 1024) continue;
+                var target = Path.GetFullPath(Path.Combine(iconsDir, name));
+                if (!target.StartsWith(Path.GetFullPath(iconsDir) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue;
+                e.ExtractToFile(target, overwrite: true);
                 count++;
             }
             return (null, count);

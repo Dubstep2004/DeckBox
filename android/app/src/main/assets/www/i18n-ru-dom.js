@@ -557,18 +557,29 @@
   }
 
   const ATTRS = ['title', 'placeholder', 'aria-label'];
+  // Your own data stays as it is: a song called «Hold», a headline ending in «memory», an event «Driver Ed».
+  // translate="no" marks such text anywhere; these are the widgets' places for titles, names and notes.
+  const RAW = [
+    '[translate="no"]', '.m-title', '.m-artist', '.p-t', '.q-name', '.q-plan', '.nm', '.sess-main', '.sess h2', '.gh-pr',
+    '.ib-h b', '.ib-t', '.bt-name', '.dc-member', '.dc-chan', '.dc-note', '.ha-name', '.ap-name', '.ag-big-t', '.ag-title',
+    '.tp-n', '.ru-name', '.nu-title', '.nu-meta', '.fd-t', '.fd-m', '.hn-t', '.hn-m', '.dk-name', '.deck-channel-name',
+    '.radio-name', '.sq-name', '.sq-artist', '.sq-item', '.cbr-name', '.ws-apps', '.lbl-t', '.pl-l', '.note-t', '.cl-t',
+    '.gm-head b', '.bf-card .li', '.oa-sign', '.mo-name', '.session-panel h2', '.ov-name', '.ov-pc', '.ap-tile',
+  ].join(',');
+  const raw = (el) => !!el?.closest?.(RAW);
   const active = () => window.DeckBoxI18n?.getLang?.() === 'ru';
 
   function textNode(n) {
-    const raw = n.nodeValue;
-    if (!raw || !/[A-Za-z]/.test(raw)) return;
-    const hit = RU[norm(raw)] ?? rule(norm(raw));
+    const text = n.nodeValue;
+    if (!text || !/[A-Za-z]/.test(text) || raw(n.parentElement)) return;
+    const hit = RU[norm(text)] ?? rule(norm(text));
     if (hit === undefined) return;
-    const lead = raw.match(/^\s*/)[0], tail = raw.match(/\s*$/)[0];
+    const lead = text.match(/^\s*/)[0], tail = text.match(/\s*$/)[0];
     const next = lead + hit + tail;
-    if (next !== raw) n.nodeValue = next; // never rewrite a node to itself: that would notify the observer again
+    if (next !== text) n.nodeValue = next; // never rewrite a node to itself: that would notify the observer again
   }
   function element(el) {
+    if (raw(el)) return;
     for (const a of ATTRS) {
       const v = el.getAttribute?.(a);
       const hit = v ? (RU[norm(v)] ?? rule(norm(v))) : undefined;

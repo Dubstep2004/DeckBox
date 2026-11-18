@@ -201,7 +201,7 @@ W.media = {
         box.classList.toggle('playing', m.playing);
         q('.m-app-name').textContent = m.app || 'Media';
         sourceIcon.innerHTML = sourceIcons[m.app] || '';
-        q('.m-title').textContent = m.title || 'Unknown track';
+        q('.m-title').textContent = m.title || 'Неизвестный трек';
         q('.m-artist').textContent = [m.artist, m.album].filter(Boolean).join(' · ') || '—';
         if (m.app === 'Internet Radio' && !(m.durMs > 0)) {
           q('.fill').style.width = m.playing ? '100%' : '0';
@@ -420,8 +420,8 @@ W.quotas = {
       const updStr = age != null ? `checked ${age < 60_000 ? 'just now' : fmtDur(age) + ' ago'}` : '';
       card.appendChild(h('div', 'q-head',
         h('span', 'q-logo', '📊'),
-        h('span', 'q-name', 'Overview'),
-        h('span', 'q-plan', `${days}-day spend`),
+        h('span', 'q-name', 'Обзор'),
+        h('span', 'q-plan', `расходы за ${days} дн.`),
         updStr ? h('span', 'q-upd', updStr) : null
       ));
       const summary = h('div', 'q-ov-hero',
@@ -584,7 +584,7 @@ W.sessions = {
     box.style.setProperty('--c', '#d97757');
     const tokens = (n) => n == null ? '—' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n);
     const statusText = (s) => s.status === 'busy' ? t('sess.working') : s.status === 'waiting' ? t('sess.waiting') : s.status === 'shell' ? t('sess.shell') : s.outcome === 'completed' ? t('sess.completed') : s.outcome === 'aborted' ? t('sess.aborted') : t('sess.idle');
-    const ageText = (since) => Date.now() - since < 60_000 ? 'just now' : shortDur(Date.now() - since) + ' ago';
+    const ageText = (since) => Date.now() - since < 60_000 ? 'только что' : shortDur(Date.now() - since) + ' назад';
     const openDetails = (s) => {
       haptic();
       const backdrop = h('div', 'session-backdrop');

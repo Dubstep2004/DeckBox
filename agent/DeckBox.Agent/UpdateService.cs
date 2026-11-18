@@ -286,7 +286,24 @@ public sealed class UpdateService(ConfigStore cfg, AdbReverse adb, IHostApplicat
         var setup = await VerifiedDownloadAsync(_latest!.Setup!, $"DeckBox-Setup-{_latest.Version}.exe", ct);
         log.LogInformation("agent {Version}: running the installer (the agent runs from {Dir}, not {Install})", _latest.Version, AppContext.BaseDirectory, InstallDir);
         _state = "restarting";
-        Process.Start(new ProcessStartInfo(setup, "/S") { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(setup)! });
+        Process? p;
+        try { p = Process.Start(new ProcessStartInfo(setup, "/S") { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(setup)! }); }
+        catch (Exception ex)
+        {
+            // blocked by an antivirus or SmartScreen: say so instead of "restarting" for ever
+            _state = "idle";
+            throw new InvalidOperationException("Не удалось запустить установщик: " + ex.Message, ex);
+        }
+        // a working installer stops this agent within seconds; one that ends without doing so failed
+        using (p)
+        {
+            if (p is not null && await Task.Run(() => p.WaitForExit(TimeSpan.FromMinutes(3)), ct) && p.ExitCode != 0)
+            {
+                _state = "idle";
+                throw new InvalidOperationException($"Установщик завершился с ошибкой (код {p.ExitCode})");
+            }
+        }
+        _state = "idle";
     }
 
     /// <summary>Release asset download links → the same assets on api.github.com (filled by <see cref="CheckAsync"/>).</summary>

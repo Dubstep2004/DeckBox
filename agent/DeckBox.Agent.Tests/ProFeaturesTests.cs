@@ -61,6 +61,7 @@ public class ProFeaturesTests : IDisposable
             using (var w = new StreamWriter(zip.CreateEntry("config.json").Open())) w.Write(json);
             using (var w = zip.CreateEntry("icons/terminal.png").Open()) w.Write([1, 2, 3]);
             using (var w = zip.CreateEntry("icons/../../evil.txt").Open()) w.Write([1]);
+            using (var w = zip.CreateEntry("icons/C:evil.dll").Open()) w.Write([1]); // rooted on Windows
         }
         ms.Position = 0;
         var (error, count) = await Backup.RestoreAsync(ms, store, icons);
@@ -70,6 +71,18 @@ public class ProFeaturesTests : IDisposable
         Assert.False(File.Exists(Path.Combine(_dir, "evil.txt")));
         Assert.Contains(store.Get().Pages, p => p.Title == "Из копии");
         Assert.NotNull(cfg);
+    }
+
+    [Fact]
+    public void StatsDaysAreGregorianInAnyCulture()
+    {
+        var before = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("th-TH");
+            Assert.Equal("2026-11-18", WeekStats.Day(new DateTime(2026, 11, 18)));
+        }
+        finally { System.Globalization.CultureInfo.CurrentCulture = before; }
     }
 
     [Fact]

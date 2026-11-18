@@ -19,6 +19,7 @@ public sealed class WidgetFeedProxyTests
     [InlineData("https://hacker-news.firebaseio.com/v0/topstories.json", true)]
     [InlineData("https://api.frankfurter.dev/v1/latest", true)]
     [InlineData("https://api.coingecko.com/api/v3/coins/markets", true)]
+    [InlineData("https://www.cbr-xml-daily.ru/daily_json.js", true)] // «Курс ЦБ РФ»
     [InlineData("http://api.open-meteo.com/v1/forecast", false)]
     [InlineData("https://api.open-meteo.com:8443/v1/forecast", false)]
     [InlineData("https://user:pass@api.open-meteo.com/v1/forecast", false)]

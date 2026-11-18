@@ -17,6 +17,7 @@ public static class WidgetFeedProxy
         "hacker-news.firebaseio.com",
         "api.frankfurter.dev",
         "api.coingecko.com",
+        "www.cbr-xml-daily.ru", // «Курс ЦБ РФ»
     };
 
     private static readonly HttpClient SharedClient = CreateHttpClient();

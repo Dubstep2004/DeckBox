@@ -18,6 +18,7 @@ public static class Lan
     /// <summary>Loads the agent's TLS certificate, creating it on first use.</summary>
     public static X509Certificate2 Certificate()
     {
+        AppPaths.RestrictToOwner(CertPath); // a key written by an older version with the default mode
         if (File.Exists(CertPath))
         {
             try { return X509CertificateLoader.LoadPkcs12FromFile(CertPath, null, X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable); }
@@ -30,7 +31,8 @@ public static class Lan
         req.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension([new Oid("1.3.6.1.5.5.7.3.1")], false)); // server auth
         using var cert = req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(20));
         Directory.CreateDirectory(AppPaths.ConfigDir);
-        File.WriteAllBytes(CertPath, cert.Export(X509ContentType.Pfx));
+        // the private key of the pinned certificate: only the owner may read it (0600 on Linux/macOS)
+        using (var f = AppPaths.CreatePrivate(CertPath)) f.Write(cert.Export(X509ContentType.Pfx));
         // Re-import so Windows TLS (SChannel) gets a persisted key.
         return X509CertificateLoader.LoadPkcs12FromFile(CertPath, null, X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
     }
