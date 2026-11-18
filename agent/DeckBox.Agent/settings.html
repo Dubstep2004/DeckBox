@@ -1966,7 +1966,7 @@ $('calAdd').onclick = () => {
 // ---------------------------------------------------------------- rules
 // The trigger, action, priority and preset tables below are English text that the phone's dictionary cannot key by
 // name: they are translated by their English text through the same catalog lookup the widget catalog uses.
-const tl = (s) => (window.PhoneBoxI18n?.tc ? window.PhoneBoxI18n.tc(s) : s);
+const tl = (s) => (window.DeckBoxI18n?.tc ? window.DeckBoxI18n.tc(s) : s);
 const TRIGGERS = {
   'session-waiting': { label: 'an AI session needs me', match: 'any project (or: api|docs, codex)' },
   'session-busy': { label: 'an AI session is working', match: 'any project (or: api|docs, codex)' },
