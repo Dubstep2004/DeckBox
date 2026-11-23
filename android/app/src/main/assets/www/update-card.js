@@ -58,14 +58,14 @@ export function parseNotes(md) {
 }
 
 const STYLE = `
-.dbu-back{position:fixed;inset:0;z-index:9000;background:rgba(5,5,7,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:4vmin;animation:dbu-in .25s ease}
+.dbu-back{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9000;background:rgba(5,5,7,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:4vmin;animation:dbu-in .25s ease}
 .dbu{position:relative;width:min(640px,100%);max-height:100%;display:flex;flex-direction:column;background:linear-gradient(160deg,#1a1814,#0e0e10 60%);border:1px solid rgba(var(--ambient, 212, 175, 55),.45);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(var(--ambient, 212, 175, 55),.08) inset;color:#f1ece1;font-family:inherit;overflow:hidden}
 .dbu-head{padding:20px 26px 12px;border-bottom:1px solid rgba(var(--ambient, 212, 175, 55),.18)}
 .dbu-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#17130a;background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));padding:4px 10px;border-radius:999px;font-weight:700}
 .dbu-title{margin:10px 0 2px;font-size:26px;font-weight:800;letter-spacing:-.01em}
 .dbu-title b{background:linear-gradient(90deg,var(--gold, #d4af37),var(--gold-hi, #f2d675));-webkit-background-clip:text;background-clip:text;color:transparent}
 .dbu-name{color:#c9bfa6;font-size:16px}
-.dbu-body{padding:6px 26px 8px;overflow:auto;flex:1}
+.dbu-body{padding:6px 26px 8px;overflow-y:auto;flex:1 1 auto;min-height:0;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(var(--ambient, 212, 175, 55),.5) transparent}.dbu-body::-webkit-scrollbar{width:5px}.dbu-body::-webkit-scrollbar-thumb{background:rgba(var(--ambient, 212, 175, 55),.5);border-radius:9px}.dbu-more{position:sticky;bottom:-8px;display:block;margin:0 -26px -8px;padding:18px 0 6px;text-align:center;font-size:12px;color:var(--gold-hi, #f2d675);background:linear-gradient(transparent,#100f10 60%);pointer-events:none;transition:opacity .2s}.dbu-more.off{opacity:0}
 .dbu-sec{margin:14px 0 4px;font-size:15px;font-weight:700;color:var(--gold-hi, #f2d675)}
 .dbu-body ul{margin:0;padding-left:20px}
 .dbu-body li{margin:5px 0;font-size:14.5px;line-height:1.4;color:#e6dfcf}
@@ -92,6 +92,9 @@ const STYLE = `
 .dbu-rel h4 small{font-size:12.5px;color:#9d9686;font-weight:500}
 .dbu-rel h4 em{font-style:normal;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(var(--ambient, 212, 175, 55),.2);color:var(--gold-hi, #f2d675)}
 @keyframes dbu-in{from{opacity:0;transform:scale(.97)}to{opacity:1}}
+/* a phone on its side: little height, so a smaller head and foot leave room for the text */
+@media (max-height:520px){.dbu-back{padding:2vmin}.dbu-head{padding:12px 20px 8px}.dbu-title{font-size:22px}.dbu-name{font-size:13px}.dbu-tag{font-size:10px;padding:3px 10px}
+.dbu-body{padding:4px 20px 6px;font-size:13px}.dbu-body li{margin:2px 0}.dbu-foot{padding:8px 20px 10px;gap:8px}.dbu-foot button{padding:8px 16px;font-size:14px}.dbu-more{margin:0 -20px -6px}}
 `;
 
 function ensureStyle() {
@@ -130,6 +133,12 @@ function frame(tag, title, name, body, foot, onBack) {
   back.addEventListener('pointerdown', (e) => e.stopPropagation());
   card = back;
   document.body.append(back);
+  // more text than fits: «↓ ещё — листайте» at the bottom until the end is reached
+  if (body?.classList?.contains('dbu-body')) {
+    const more = el('div', 'dbu-more', '↓ ещё — листайте');
+    const check = () => more.classList.toggle('off', body.scrollTop + body.clientHeight >= body.scrollHeight - 4);
+    if (body.scrollHeight > body.clientHeight + 4) { body.append(more); check(); body.addEventListener('scroll', check, { passive: true }); }
+  }
   return back;
 }
 

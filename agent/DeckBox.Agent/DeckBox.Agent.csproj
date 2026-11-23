@@ -13,7 +13,7 @@
     <Product>DeckBox</Product>
     <Company>DeckBox</Company>
     <Description>DeckBox desktop agent: feeds the DeckBox Android desk panel over USB or Wi-Fi.</Description>
-    <Version>1.10.0</Version>
+    <Version>1.10.1</Version>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 

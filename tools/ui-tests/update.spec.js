@@ -99,3 +99,20 @@ test('a release of the panel alone downloads only the phone app', async ({ page 
   await expect(card.locator('.dbu-row')).toContainText('Телефон');
   await expect(card.locator('.dbu-row')).toContainText('1,3 МБ');
 });
+
+test('on a phone on its side the card text scrolls and says there is more', async ({ page }) => {
+  await page.setViewportSize({ width: 780, height: 360 });
+  await page.goto('/panel/?update=1');
+  await page.evaluate(() => import('/panel/update-card.js').then((m) => m.showUpdateCard({ latest: '9.9.9', name: 'Длинные заметки', app: true, agent: true,
+    notes: [{ title: '✨ Новое', items: Array.from({ length: 12 }, (_, i) => `Пункт ${i + 1}: длинное описание изменения, чтобы текст точно не поместился на экране телефона.`) }] },
+  { parts: ['phone', 'pc'], sizes: { phone: 1400000, pc: 50000000 } })));
+  const body = page.locator('.dbu-body');
+  await expect(page.locator('.dbu-more')).toBeVisible();
+  const box = await page.locator('.dbu').boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(361); // the card fits the screen, buttons included
+  await expect(page.locator('.dbu').getByRole('button', { name: 'Обновить' })).toBeInViewport();
+  await body.evaluate((b) => { b.scrollTop = b.scrollHeight; });
+  await expect(body).toContainText('Пункт 12');
+  await expect(page.locator('.dbu-more')).toHaveClass(/off/);
+  expect(await body.evaluate((b) => b.scrollTop)).toBeGreaterThan(0);
+});
