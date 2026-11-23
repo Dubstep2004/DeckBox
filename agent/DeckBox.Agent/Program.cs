@@ -26,6 +26,9 @@ if (!firstInstance)
 if (!args.Contains("--config")) AppPaths.EnsureConfig();
 // the old PhoneBox would hold the same port and come back at every sign-in: stop it before DeckBox starts listening
 var legacyStopped = OperatingSystem.IsWindows() ? LegacyPhoneBox.StopOnPc() : [];
+// Claude Code installed but «claude» unknown in PowerShell: its folder was not on PATH; put it there once
+try { if (OperatingSystem.IsWindows() && ClaudeCode.EnsureOnPath()) legacyStopped.Add("claude: папка ~/.local/bin добавлена в PATH"); }
+catch (Exception e) when (e is System.Security.SecurityException or UnauthorizedAccessException or IOException) { }
 // absolute from here on: a bare file name ("--config profile.json") has no folder, and the files kept next to the
 // config (the Spotify login, backups) need one
 var configPath = Path.GetFullPath(args.SkipWhile(a => a != "--config").Skip(1).FirstOrDefault() ?? AppPaths.ConfigPath);
@@ -855,11 +858,32 @@ app.MapPost("/api/volume", (int? level, string? op, AudioControl audio) =>
     return ok ? Results.Json(audio.Current()) : Results.BadRequest();
 });
 
+// GitHub CLI for the GitHub widget: what is missing, install it (winget), sign in («gh auth login» in a window)
+app.MapGet("/api/github/setup", (GitHubMonitor gh) => Results.Json(GitHubSetup.Status(gh)));
+app.MapPost("/api/github/install", (GitHubMonitor gh, ILogger<Program> log) =>
+{
+    if (ToolProcess.Find("gh") is null) GitHubSetup.StartInstall(log);
+    return Results.Json(GitHubSetup.Status(gh));
+});
+app.MapPost("/api/github/remove", (GitHubMonitor gh, ILogger<Program> log) =>
+{
+    if (ToolProcess.Find("gh") is not null) GitHubSetup.StartRemove(log);
+    return Results.Json(GitHubSetup.Status(gh));
+});
+app.MapPost("/api/github/signin", () => GitHubSetup.OpenSignIn() is { } error ? Results.Json(new { error }, statusCode: 400) : Results.Json(new { ok = true }));
+
 // Claude Code on this computer: the «Сеансы» / «Квоты ИИ» widgets show how to install it and sign in
 app.MapGet("/api/claude-code", (QuotaMonitor q) => Results.Json(ClaudeCode.Status(q)));
 app.MapPost("/api/claude-code/install", (QuotaMonitor q, ILogger<Program> log) =>
 {
     if (ClaudeCode.Find() is null) ClaudeCode.StartInstall(log);
+    return Results.Json(ClaudeCode.Status(q));
+});
+app.MapPost("/api/claude-code/update", (QuotaMonitor q, ILogger<Program> log) => { ClaudeCode.StartUpdate(log); return Results.Json(ClaudeCode.Status(q)); });
+// «🗑 Удалить с ПК»: the program goes; ?signout=1 also removes its sign-in
+app.MapPost("/api/claude-code/remove", (string? signout, QuotaMonitor q, ILogger<Program> log) =>
+{
+    if (ClaudeCode.Find() is not null) ClaudeCode.StartRemove(log, signout is "1" or "true");
     return Results.Json(ClaudeCode.Status(q));
 });
 app.MapPost("/api/claude-code/signin", () => ClaudeCode.OpenSignIn() is { } error ? Results.Json(new { error }, statusCode: 400) : Results.Json(new { ok = true }));
@@ -954,7 +978,7 @@ app.MapDelete("/api/settings/shortcut-icon", (string id, HttpRequest req, Config
     return Results.Ok(new { version = cfg.VersionText });
 });
 
-foreach (var what in legacyStopped) app.Logger.LogInformation("old PhoneBox: {What}", what);
+foreach (var what in legacyStopped) app.Logger.LogInformation("at start: {What}", what);
 app.Lifetime.ApplicationStarted.Register(() =>
     app.Logger.LogInformation("DeckBox agent {Version} ready on http://127.0.0.1:{Port} (config: {Path})", AppPaths.Version, Port, configPath));
 

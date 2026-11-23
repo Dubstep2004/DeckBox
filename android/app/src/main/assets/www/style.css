@@ -1286,3 +1286,27 @@ body.controls-top .ap-foot { order: -1; margin-bottom: 4px; }
 #overview.sorting #ovSort { background: var(--gold, #d4af37); color: #17130a; border-color: transparent; font-weight: 700; }
 .legacy-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 .legacy-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(3, 5, 9, .78); }
+.gh-unset .gh-sec, .gh-unset .gh-list { display: none; }
+.gh-err.gh-setup { margin-top: 6px; color: var(--text); font-size: 13px; }
+
+/* «Сеансы»: Claude's limits under the sessions (DeckBox PRO) */
+.s-limits { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.s-limits[hidden] { display: none; }
+.s-lim { flex: 1 1 120px; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 7px 10px; border-radius: 10px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); }
+.s-lim-n { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s-lim b { font-size: 13px; white-space: nowrap; }
+.s-lim-bar { height: 4px; border-radius: 9px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.s-lim-bar i { display: block; height: 100%; background: #d97757; border-radius: 9px; }
+.s-lim small { font-size: 10.5px; color: var(--dim, #7d776a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-lim.warn b { color: #fbbf24; } .s-lim.warn .s-lim-bar i { background: #fbbf24; }
+.s-lim.bad b { color: #f87171; } .s-lim.bad .s-lim-bar i { background: #ef4444; }
+.w-gear { margin-left: auto; flex: none; border: 0; background: transparent; color: var(--muted); font-size: 15px; padding: 0 2px; cursor: pointer; line-height: 1; }
+.gh-bell + .w-gear { margin-left: 6px; }
+.cc-tools:empty { display: none; }
+.cc-tools { margin: 4px 0 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .03); }
+.cc-ver { margin: 0 0 6px; font-weight: 600; font-size: 13px; }
+.cc-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.cc-confirm p { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); }
+.cc-check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; margin-bottom: 6px; }
+.cc-tools .cc-busy { margin: 0 0 4px; color: var(--gold, #d4af37); font-size: 12.5px; }
+.cc-tools .cc-err { margin: 0 0 6px; color: #f87171; font-size: 12.5px; }

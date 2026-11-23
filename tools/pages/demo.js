@@ -12,7 +12,12 @@
   let demoApplyAt = 0; // «Обновить» pressed: the computer «downloads» 50 MB at 2 MB/s
   // ?nocc=1: Claude Code is not on the computer (the «Как подключить Claude Code» steps; UI tests)
   const DEMO_NO_CC = new URLSearchParams(location.search).has('nocc');
-  const cc = { installed: !DEMO_NO_CC, signedIn: !DEMO_NO_CC, installing: false, error: null, canInstall: true };
+  // ?nogh=1: GitHub CLI is not on the computer (the «Как подключить GitHub» steps; UI tests)
+  const DEMO_NO_GH = new URLSearchParams(location.search).has('nogh');
+  const ghs = { installed: !DEMO_NO_GH, signedIn: !DEMO_NO_GH, installing: false, error: null, canInstall: true };
+  const cc = { installed: !DEMO_NO_CC, signedIn: !DEMO_NO_CC, installing: false, error: null, canInstall: true, version: DEMO_NO_CC ? null : '2.1.40', busy: null, since: null, done: null };
+  // a job of the computer (install, update, remove) that takes a moment in the demo
+  const demoJob = (o, busy, after, ms = 1500) => { Object.assign(o, { busy, since: Date.now(), installing: busy === 'install', done: null }); setTimeout(() => { Object.assign(o, { busy: null, since: null, installing: false }); after(); }, ms); };
   // ?game=1: a game runs (the «Игровой режим» widget and page)
   const DEMO_GAME = new URLSearchParams(location.search).has('game');
   // ?legacy=1: the phone on USB still has the old PhoneBox app (UI tests)
@@ -306,7 +311,7 @@
   function quotas() {
     const n = now();
     return { providers: [
-      { id: 'claude', name: 'Claude', plan: 'Max 5x', updatedAt: n - 120e3, extra: '', error: null, codex: null, source: 'local', limits: [
+      { id: 'claude', name: 'Claude', plan: 'Max 5x', updatedAt: n - 120e3, extra: L('', 'Доп. кредиты: осталось 75%'), error: null, codex: null, source: 'local', limits: [
         { label: L('5-hour session', 'Сессия 5 часов'), percent: 34, resetsAt: n + 2.6 * 3600e3, windowSec: 18000 },
         { label: L('Weekly', 'Неделя'), percent: 52, resetsAt: n + 3.2 * 86400e3, windowSec: 604800 },
         { label: L('Weekly · Fable', 'Неделя · Fable'), percent: 9, resetsAt: n + 3.2 * 86400e3, windowSec: 604800 }] },
@@ -609,7 +614,15 @@
     if (path === '/api/legacy/uninstall' && method === 'POST') { const removed = demoLegacy; demoLegacy = []; return json({ removed, left: [] }); }
     if (path === '/api/claude-code') return json(cc);
     if (path === '/api/claude-code/install' && method === 'POST') {
-      if (!cc.installed && !cc.installing) { cc.installing = true; setTimeout(() => { cc.installing = false; cc.installed = true; }, 1500); }
+      if (!cc.installed && !cc.busy) demoJob(cc, 'install', () => Object.assign(cc, { installed: true, version: '2.1.40', done: 'installed' }));
+      return json(cc);
+    }
+    if (path === '/api/claude-code/update' && method === 'POST') {
+      if (cc.installed && !cc.busy) demoJob(cc, 'update', () => Object.assign(cc, { version: '2.1.41', done: 'updated' }));
+      return json(cc);
+    }
+    if (path === '/api/claude-code/remove' && method === 'POST') {
+      if (cc.installed && !cc.busy) demoJob(cc, 'remove', () => Object.assign(cc, { installed: false, version: null, signedIn: q.get('signout') === '1' ? false : cc.signedIn, done: 'removed' }));
       return json(cc);
     }
     if (path === '/api/claude-code/signin' && method === 'POST') {
@@ -721,7 +734,21 @@
       if (c && (action === 'start' || action === 'restart')) Object.assign(c, { state: 'running', status: 'Up 1 second', cpu: 2, mem: '40MiB', health: null });
       return json({ ok: true });
     }
-    if (path === '/api/work') return json(DEMO_NO_CC ? { ...work(), sessions: [] } : work());
+    if (path === '/api/github/setup') return json(ghs);
+    if (path === '/api/github/install' && method === 'POST') {
+      if (!ghs.installed && !ghs.busy) demoJob(ghs, 'install', () => Object.assign(ghs, { installed: true, done: 'installed' }));
+      return json(ghs);
+    }
+    if (path === '/api/github/remove' && method === 'POST') {
+      if (ghs.installed && !ghs.busy) demoJob(ghs, 'remove', () => Object.assign(ghs, { installed: false, signedIn: false, done: 'removed' }));
+      return json(ghs);
+    }
+    if (path === '/api/github/signin' && method === 'POST') { if (!ghs.installed) return json({ error: 'GitHub CLI ещё не установлен' }, 400); setTimeout(() => { ghs.signedIn = true; }, 1500); return json({ ok: true }); }
+    if (path === '/api/work') {
+      const w = DEMO_NO_CC ? { ...work(), sessions: [] } : work();
+      if (DEMO_NO_GH && !ghs.signedIn) w.github = { user: null, notifications: 0, reviewRequests: [], myPrs: [], updatedAt: null, error: ghs.installed ? 'Нужно войти в GitHub на компьютере' : 'GitHub CLI не установлен на компьютере', setup: ghs.installed ? 'login' : 'install' };
+      return json(w);
+    }
     if (path === '/api/procs') return json(procs());
     if (path === '/api/procs/detail') return json(procDetail(q.get('name')));
     if (path.startsWith('/api/widget/')) return json({ output: String(3 + Math.floor(Math.random() * 3)), at: now() - 8000, ok: true, running: false, durationMs: 412 });

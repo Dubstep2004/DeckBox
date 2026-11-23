@@ -93,3 +93,70 @@ public class TimeWeatherSettingsTests
         finally { Directory.Delete(dir, true); }
     }
 }
+
+/// <summary>«claude» unknown in PowerShell after the install: DeckBox puts ~/.local/bin on the user's PATH.</summary>
+public class ClaudeCodePathTests
+{
+    [Fact]
+    public void AddsTheFolderOnceAndOnlyWhenClaudeIsThere()
+    {
+        var home = Path.Combine(Path.GetTempPath(), "deckbox-ccpath-" + Guid.NewGuid().ToString("N"));
+        var bin = Path.Combine(home, ".local", "bin");
+        Directory.CreateDirectory(bin);
+        try
+        {
+            string? path = @"C:\Windows;C:\Tools";
+            string? Read() => path;
+            void Write(string v) => path = v;
+            Assert.False(ClaudeCode.EnsureOnPath(home, Read, Write)); // no claude.exe yet: nothing to do
+            File.WriteAllText(Path.Combine(bin, "claude.exe"), "");
+            Assert.True(ClaudeCode.EnsureOnPath(home, Read, Write));
+            Assert.Equal(@"C:\Windows;C:\Tools;" + bin, path);
+            Assert.False(ClaudeCode.EnsureOnPath(home, Read, Write)); // already there
+            path = null;
+            Assert.True(ClaudeCode.EnsureOnPath(home, Read, Write));
+            Assert.Equal(bin, path);
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public void TheSignInWindowReloadsPath() =>
+        Assert.Contains("GetEnvironmentVariable('Path','User')", ClaudeCode.RefreshPath);
+}
+
+/// <summary>«🗑 Удалить с ПК»: the program and its versions go; the sign-in only when asked; projects never.</summary>
+public class ClaudeCodeRemoveTests
+{
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RemovesTheProgramAndKeepsTheRest(bool signOut)
+    {
+        var home = Path.Combine(Path.GetTempPath(), "deckbox-ccrm-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(home, ".local", "bin"));
+        Directory.CreateDirectory(Path.Combine(home, ".local", "share", "claude", "versions"));
+        Directory.CreateDirectory(Path.Combine(home, ".claude", "projects"));
+        File.WriteAllText(Path.Combine(home, ".local", "bin", "claude.exe"), "");
+        File.WriteAllText(Path.Combine(home, ".local", "bin", "other.exe"), "");
+        File.WriteAllText(Path.Combine(home, ".claude", ".credentials.json"), "{}");
+        try
+        {
+            ClaudeCode.Remove(home, signOut);
+            Assert.False(File.Exists(Path.Combine(home, ".local", "bin", "claude.exe")));
+            Assert.False(Directory.Exists(Path.Combine(home, ".local", "share", "claude")));
+            Assert.True(File.Exists(Path.Combine(home, ".local", "bin", "other.exe")));
+            Assert.True(Directory.Exists(Path.Combine(home, ".claude", "projects")));
+            Assert.Equal(!signOut, File.Exists(Path.Combine(home, ".claude", ".credentials.json")));
+        }
+        finally { Directory.Delete(home, true); }
+    }
+
+    [Fact]
+    public void ThePhoneMayUseTheNewButtonsOverWiFi()
+    {
+        Assert.True(Lan.AllowedOverLan("/api/claude-code/remove"));
+        Assert.True(Lan.AllowedOverLan("/api/claude-code/update"));
+        Assert.True(Lan.AllowedOverLan("/api/github/remove"));
+    }
+}

@@ -322,6 +322,8 @@ dd { margin: 0; word-break: break-all; }
   .grid2 { grid-template-columns: 1fr; }
   .deck { --cols: 3 !important; }
 }
+#aiTools .ai-row { padding: 8px 0; border-top: 1px solid var(--line); }
+#aiTools .ai-name { font-weight: 600; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -396,6 +398,13 @@ dd { margin: 0; word-break: break-all; }
     <section id="pro">
       <h2>⭐ DeckBox PRO</h2>
       <p class="lead">Мастер настройки, резервная копия, магазин шаблонов и новые возможности панели.</p>
+
+      <div class="card" id="aiTools">
+        <h3>🤖 Нейросети на компьютере</h3>
+        <p class="hint">Программы, из которых панель берёт сеансы, лимиты и GitHub. Здесь их можно поставить, обновить или удалить; то же есть на телефоне (⚙ в виджетах «Сеансы» и «GitHub»).</p>
+        <div class="ai-row" id="aiClaude"></div>
+        <div class="ai-row" id="aiGh"></div>
+      </div>
 
       <div class="card">
         <h3>Мастер первого запуска</h3>
@@ -3196,7 +3205,42 @@ $('pinSet').onclick = async () => {
 };
 $('pinOff').onclick = () => { cfg.lock = { ...(cfg.lock || {}), pinHash: '' }; paintPin(); changed(); };
 
+// «Нейросети на компьютере»: Claude Code and GitHub CLI — install, update, sign in, remove
+async function paintAiTools() {
+  const box = $('aiTools');
+  if (!box) return;
+  const get = async (u) => { try { return await (await fetch(u)).json(); } catch (_) { return null; } };
+  const [cc, gh] = await Promise.all([get('/api/claude-code'), get('/api/github/setup')]);
+  const mins = (s) => { const m = s?.since ? Math.floor((Date.now() - s.since) / 60000) : 0; return m < 1 ? 'идёт меньше минуты' : `идёт ${m} мин`; };
+  const btn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label; b.onclick = async () => { b.disabled = true; try { await fn(); } finally { setTimeout(paintAiTools, 600); } }; return b; };
+  const post = (u) => fetch(u, { method: 'POST' });
+  const row = (el, name, s, api, signLabel) => {
+    if (!el) return;
+    el.replaceChildren();
+    const title = document.createElement('div');
+    title.className = 'ai-name';
+    title.textContent = `${name}: ` + (!s ? 'нет связи с агентом' : s.busy ? { install: 'устанавливается', update: 'обновляется', remove: 'удаляется' }[s.busy] + ' · ' + mins(s)
+      : s.installed ? 'установлен' + (s.version ? ` · версия ${s.version}` : '') + (s.signedIn ? ' · вход выполнен' : ' · нужно войти') : 'не установлен');
+    el.append(title);
+    if (!s || s.busy) return;
+    if (s.error) { const e = document.createElement('div'); e.className = 'hint'; e.style.color = '#f87171'; e.textContent = s.error; el.append(e); }
+    const bar = document.createElement('div');
+    bar.className = 'row';
+    if (!s.installed) bar.append(btn('⬇ Установить', 'primary', () => post(api + '/install')));
+    else {
+      if (!s.signedIn) bar.append(btn(signLabel, 'primary', () => post(api.replace('/setup', '') + '/signin')));
+      if (api.includes('claude')) bar.append(btn('⬆ Обновить', '', () => post(api + '/update')));
+      bar.append(btn('🗑 Удалить', 'danger', async () => { if (confirm(`Удалить ${name} с компьютера?`)) await post(api.replace('/setup', '') + '/remove'); }));
+    }
+    el.append(bar);
+  };
+  row($('aiClaude'), 'Claude Code', cc, '/api/claude-code', '🔑 Войти в Claude');
+  row($('aiGh'), 'GitHub CLI', gh, '/api/github', '🔑 Войти в GitHub');
+  if ((cc?.busy || gh?.busy) && !paintAiTools.t) paintAiTools.t = setTimeout(() => { paintAiTools.t = 0; paintAiTools(); }, 2000);
+}
+
 function bindPro() {
+  paintAiTools();
   cfg.briefing ??= { enabled: true, minutes: 20, tasks: [] };
   cfg.game ??= { enabled: true, processes: [] };
   cfg.lock ??= { pinHash: '', afterMin: 5 };

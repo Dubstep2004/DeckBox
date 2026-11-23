@@ -148,14 +148,23 @@ export function fmtSize(bytes) {
   const mb = bytes / 1048576;
   return `${(mb < 10 ? mb.toFixed(1) : String(Math.round(mb))).replace('.', ',')} МБ`;
 }
-/** «2,1 МБ/с · ещё ~3 мин»: the speed and the time left of a download; '' until the speed is known. */
+/** «2,1 МБ/с» */
+export function fmtSpeed(bps) {
+  if (!(bps > 0)) return '';
+  return bps >= 1048576 ? `${(bps / 1048576).toFixed(1).replace('.', ',')} МБ/с` : `${Math.max(1, Math.round(bps / 1024))} КБ/с`;
+}
+/** «осталось ~3 мин» (always in minutes; «меньше минуты» at the end) */
+export function fmtLeft(sec) {
+  if (!(sec > 0) || !isFinite(sec)) return '';
+  if (sec < 60) return 'осталось меньше минуты';
+  const min = Math.ceil(sec / 60);
+  return min < 60 ? `осталось ~${min} мин` : `осталось ~${Math.floor(min / 60)} ч ${min % 60} мин`;
+}
+/** «2,1 МБ/с · осталось ~3 мин»: the speed and the time left of a download; '' until the speed is known. */
 export function speedText(bps, left) {
   if (!(bps > 0)) return '';
-  const speed = bps >= 1048576 ? `${(bps / 1048576).toFixed(1).replace('.', ',')} МБ/с` : `${Math.max(1, Math.round(bps / 1024))} КБ/с`;
-  if (!(left > 0)) return speed;
-  const sec = left / bps;
-  const eta = sec < 60 ? `ещё ~${Math.max(1, Math.ceil(sec / 5) * 5)} с` : sec < 3600 ? `ещё ~${Math.ceil(sec / 60)} мин` : `ещё ~${Math.floor(sec / 3600)} ч ${Math.ceil((sec % 3600) / 60)} мин`;
-  return `${speed} · ${eta}`;
+  const eta = left > 0 ? fmtLeft(left / bps) : '';
+  return eta ? `${fmtSpeed(bps)} · ${eta}` : fmtSpeed(bps);
 }
 // the speed of each part's download, measured here when the sender gives only bytes (the phone app)
 const meters = {};
@@ -292,7 +301,9 @@ export function setUpdateProgress(p) {
       const pct = p.pct != null ? p.pct : total && done != null ? Math.min(99, Math.floor((done * 100) / total)) : 0;
       const bps = p.bps > 0 ? p.bps : done != null ? measure(part, done) : 0;
       const extra = speedText(bps, total && done != null ? total - done : 0);
-      msg.textContent = `${part === 'pc' ? 'Компьютер скачивает' : 'Скачиваю'} новую версию… ${pct}%` + (extra ? ` · ${extra}` : '');
+      // «12 из 48 МБ · 2,1 МБ/с · осталось ~3 мин»
+      const amount = total && done != null ? `${fmtSize(done) || '0 КБ'} из ${fmtSize(total)}` : `${pct}%`;
+      msg.textContent = `${part === 'pc' ? 'Компьютер скачивает' : 'Скачиваю'} новую версию… ${amount}` + (extra ? ` · ${extra}` : '');
       mark(part, 0, { pct });
       break;
     }

@@ -6,7 +6,7 @@ namespace DeckBox.Agent;
 public sealed record GhPr(string Repo, int Number, string Title, string? Author, bool Draft, string? Review, string? Ci, long Updated);
 
 public sealed record GhSnapshot(string? User, int Notifications, IReadOnlyList<GhPr> ReviewRequests, IReadOnlyList<GhPr> MyPrs,
-    long? UpdatedAt, string? Error);
+    long? UpdatedAt, string? Error, string? Setup = null);
 
 /// <summary>Collects a pull request and notification summary through the GitHub CLI (gh) every 3 minutes.</summary>
 public sealed class GitHubMonitor(ILogger<GitHubMonitor> log) : BackgroundService
@@ -44,9 +44,11 @@ public sealed class GitHubMonitor(ILogger<GitHubMonitor> log) : BackgroundServic
             catch (Exception ex)
             {
                 log.LogDebug("github: {Msg}", ex.Message);
-                _snap = (_snap ?? new GhSnapshot(null, 0, [], [], null, null)) with { Error = ex.Message };
+                var (setup, message) = GitHubSetup.Explain(ex);
+                _snap = (_snap ?? new GhSnapshot(null, 0, [], [], null, null)) with { Error = message, Setup = setup };
             }
-            await Wake.Delay(TimeSpan.FromMinutes(3), ct);
+            // not connected yet: look again soon, so the widget fills in right after the install or the sign-in
+            await Wake.Delay(_snap?.Setup is null ? TimeSpan.FromMinutes(3) : TimeSpan.FromSeconds(15), ct);
         }
     }
 
@@ -93,7 +95,7 @@ public sealed class GitHubMonitor(ILogger<GitHubMonitor> log) : BackgroundServic
 
     internal static Task<string> Gh(string[] args, CancellationToken ct)
     {
-        var psi = new ProcessStartInfo("gh");
+        var psi = new ProcessStartInfo(ToolProcess.Find("gh") ?? "gh");
         foreach (var a in args) psi.ArgumentList.Add(a);
         return RunGh(psi, ct);
     }

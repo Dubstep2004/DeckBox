@@ -9,8 +9,24 @@ internal static class ToolProcess
     {
         var names = OperatingSystem.IsWindows() ? new[] { tool + ".exe", tool } : [tool];
         var dirs = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Concat(OperatingSystem.IsWindows() ? [] : new[] { "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin" });
+            .Concat(OperatingSystem.IsWindows() ? WindowsExtraDirs() : new[] { "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin" });
         return dirs.SelectMany(d => names.Select(n => Path.Combine(d.Trim('"', ' '), n))).FirstOrDefault(File.Exists);
+    }
+
+    /// <summary>
+    /// Windows: the PATH as it is saved now (a program installed after DeckBox started is not on DeckBox's own PATH yet)
+    /// and the usual install folders of winget, Scoop, GitHub CLI and Claude Code.
+    /// </summary>
+    private static IEnumerable<string> WindowsExtraDirs()
+    {
+        var saved = new[] { EnvironmentVariableTarget.User, EnvironmentVariableTarget.Machine }
+            .SelectMany(t => { try { return (Environment.GetEnvironmentVariable("Path", t) ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries); } catch (System.Security.SecurityException) { return []; } })
+            .Select(Environment.ExpandEnvironmentVariables);
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        return saved.Concat([Path.Combine(pf, "GitHub CLI"), Path.Combine(local, "Programs", "GitHub CLI"), Path.Combine(local, "Microsoft", "WinGet", "Links"),
+            Path.Combine(home, "scoop", "shims"), Path.Combine(home, ".local", "bin")]);
     }
 
     internal sealed record Result(int ExitCode, string Output, string Error);

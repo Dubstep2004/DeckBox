@@ -17,7 +17,7 @@ test('without Claude Code the sessions widget says how to connect it, and the bu
   await expect(note).toContainText('Claude Code не установлен на компьютере');
   await note.getByRole('button', { name: 'Как подключить ›' }).click();
   const dlg = page.locator('.cc-panel');
-  await expect(dlg).toContainText('Как подключить Claude Code');
+  await expect(dlg).toContainText('Claude Code на компьютере');
   await expect(dlg).toContainText('irm https://claude.ai/install.ps1 | iex');
   await expect(dlg.getByRole('button', { name: /Открыть окно входа/ })).toHaveCount(0); // nothing to sign in with yet
   await dlg.getByRole('button', { name: /Установить на ПК/ }).click();
@@ -44,4 +44,30 @@ test('the quota card for Claude without a sign-in offers the same steps', async 
   await expect(page.locator('.cc-panel')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('.cc-panel')).toHaveCount(0);
+});
+
+test('with Claude Code installed the ⚙ in «Сеансы» shows its version, updates it and removes it from the computer', async ({ page }) => {
+  await show(page, SESSIONS);
+  await page.locator('.w .w-gear').click();
+  const dlg = page.locator('.cc-panel');
+  await expect(dlg.locator('.cc-ver')).toContainText('версия 2.1.40');
+  await dlg.getByRole('button', { name: /Обновить Claude Code/ }).click();
+  await expect(dlg.locator('.cc-busy')).toContainText('идёт');
+  await expect(dlg.locator('.cc-ver')).toContainText('версия 2.1.41', { timeout: 8000 });
+  await dlg.getByRole('button', { name: /Удалить с ПК/ }).click();
+  await expect(dlg.locator('.cc-confirm')).toContainText('Проекты и настройки останутся');
+  await dlg.getByRole('button', { name: /Да, удалить/ }).click();
+  await expect(page.locator('#toast')).toContainText('Claude Code удалён с компьютера', { timeout: 8000 });
+  await expect(dlg.locator('.cc-step').first()).not.toHaveClass(/done/); // «Установить на компьютер» again
+});
+
+test('the PC settings list Claude Code and GitHub CLI with their buttons', async ({ page }) => {
+  await page.goto('/settings/#pro');
+  const box = page.locator('#aiTools');
+  await expect(box.locator('#aiClaude')).toContainText('Claude Code: установлен · версия 2.1.40');
+  await expect(box.locator('#aiClaude').getByRole('button', { name: /Обновить/ })).toBeVisible();
+  await expect(box.locator('#aiGh')).toContainText('GitHub CLI: установлен');
+  page.once('dialog', (d) => d.accept());
+  await box.locator('#aiGh').getByRole('button', { name: /Удалить/ }).click();
+  await expect(box.locator('#aiGh')).toContainText(/удаляется|не установлен/);
 });

@@ -1998,10 +1998,10 @@ export async function releaseHistory() {
   return [];
 }
 
-/** The newest release on GitHub, for a phone whose computer is off or far away (checked at most every 6 hours). */
+/** The newest release on GitHub: the app looks for its own update there (checked at most every 30 minutes). */
 async function githubLatest() {
   const c = store.get('gh-latest', null);
-  if (c && Date.now() - c.at < 6 * 3600_000) return c.r;
+  if (c && Date.now() - c.at < 30 * 60_000) return c.r;
   try {
     const res = await fetch(RELEASES + '/latest', { cache: 'no-store' });
     if (!res.ok) return c?.r || null;
@@ -2019,12 +2019,18 @@ async function githubLatest() {
 
 let updateShownFor = null;
 let updateViaAgent = false; // «Обновить» went to the agent: its state is the progress
-let ghUpdate = null; // an update found on GitHub while the computer is out of reach
+let ghUpdate = null; // a newer app found by the app itself on GitHub (DeckBox-x.y.z.apk)
 
-/** What there is to update now: the agent's view, or GitHub's while the computer cannot be reached. */
+/**
+ * What there is to update now: the computer's view when it offers the app (or the computer program); otherwise the
+ * app's own find on GitHub, so the phone updates itself even when the computer is off, old or did not notice.
+ */
 function pendingUpdate() {
-  if (D.state?.update) return D.state.update;
-  return online === false ? ghUpdate : null;
+  const u = online === false ? null : D.state?.update;
+  if (u?.app || !ghUpdate) return u || null;
+  if (!u) return ghUpdate;
+  // the computer offers only its own update: the phone's part comes from GitHub, the computer's from the computer
+  return { ...u, app: true, github: true, apk: ghUpdate.apk, sums: ghUpdate.sums, appSize: ghUpdate.appSize, latest: newerVersion(ghUpdate.latest, u.latest) ? ghUpdate.latest : u.latest };
 }
 
 /** Opens the card; on its own only once per version, not after «Позже» (12 h) or «Не напоминать». */
@@ -2038,8 +2044,13 @@ export function openUpdate(force = false) {
     parts: [u.app && (bridge?.installUpdate || !u.github) ? 'phone' : null, u.agent ? 'pc' : null].filter(Boolean),
     sizes: { phone: u.appSize, pc: u.agentSize },
     apply: async () => {
-      // the computer is out of reach: straight from the GitHub release
-      if (u.github) { bridge.installUpdateFrom(u.apk, u.sums); return; }
+      // the app found its update on GitHub itself: straight from the release (DeckBox-x.y.z.apk); the computer, if it
+      // has its own update, updates itself at the same time
+      if (u.github) {
+        if (u.agent && online !== false) { updateViaAgent = true; api('/update/apply', 'POST', 8000).catch(() => {}); }
+        bridge.installUpdateFrom(u.apk, u.sums);
+        return;
+      }
       // the phone app installs itself from the computer (USB or Wi-Fi); the agent is updated once the download is in
       if (u.app && bridge?.installUpdate) { bridge.installUpdate(); return; }
       updateViaAgent = true;
@@ -2130,15 +2141,21 @@ async function whatsNew(s) {
   if (!updateCardOpen()) showWhatsNew(info);
 }
 
-// the computer is out of reach: look on GitHub for a newer app (every 6 hours at most)
-setInterval(async () => {
-  if (PREVIEW || online !== false || !bridge?.installUpdateFrom) return;
+// the app looks for its own update on GitHub (DeckBox-x.y.z.apk): soon after the start, then every 30 minutes,
+// whether the computer is on or not
+async function checkOwnUpdate() {
+  if (PREVIEW || !bridge?.installUpdateFrom) return;
   const r = await githubLatest();
   const mine = appVersion();
   ghUpdate = r?.apk && r.sums && mine && newerVersion(r.appSince || r.version, mine)
     ? { latest: r.version, name: r.name, notes: r.notes, app: true, agent: false, github: true, apk: r.apk, sums: r.sums, appSize: r.apkSize } : null;
-  if (ghUpdate) { openUpdate(); if (badgeFor !== ghUpdate.latest) { badgeFor = ghUpdate.latest; try { bridge.updateBadge(ghUpdate.latest); } catch (_) {} } }
-}, 5 * 60_000);
+  if (ghUpdate && !D.state?.update?.app) {
+    openUpdate();
+    if (badgeFor !== ghUpdate.latest) { badgeFor = ghUpdate.latest; try { bridge.updateBadge(ghUpdate.latest); } catch (_) {} }
+  }
+}
+setTimeout(checkOwnUpdate, 20_000);
+setInterval(checkOwnUpdate, 30 * 60_000);
 
 export function applyState(s, replayGen = null) {
   lastStateAt = Date.now();

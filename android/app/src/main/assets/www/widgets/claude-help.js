@@ -1,7 +1,17 @@
 // How to connect Claude Code (DeckBox PRO): the «Сеансы» and «Квоты ИИ» widgets show it when Claude Code is not installed
 // or not signed in on the computer. Two buttons do the computer's part from the phone: install it with Anthropic's
 // official installer, and open a window with `claude` on the computer to sign in.
-import { api, h, haptic, toast } from '../main.js';
+import { D, api, h, haptic, toast } from '../main.js';
+import { fmtSpeed } from '../update-card.js';
+
+/** «скорость 2,1 МБ/с · идёт 2 мин» while the computer installs, updates or removes something. */
+export function jobLine(s, what) {
+  const min = s?.since ? Math.floor((Date.now() - s.since) / 60000) : 0;
+  const speed = s?.busy !== 'remove' ? fmtSpeed(D.state?.pc?.netDownBps) : '';
+  return [what, speed && 'скорость ' + speed, min < 1 ? 'идёт меньше минуты' : `идёт ${min} мин`].filter(Boolean).join(' · ');
+}
+const BUSY = { install: 'Устанавливаю… обычно 1–2 мин', update: 'Обновляю…', remove: 'Удаляю…' };
+const DONE = { installed: 'Claude Code установлен', updated: 'Claude Code обновлён', removed: 'Claude Code удалён с компьютера' };
 
 let state = null;
 let at = 0;
@@ -43,6 +53,7 @@ export function openClaudeHelp() {
   const close = h('button', 'session-close', '✕');
   close.setAttribute('aria-label', 'Закрыть');
   const steps = h('ol', 'cc-steps');
+  const tools = h('div', 'cc-tools');
   let timer = 0;
   const onKey = (e) => { if (e.key === 'Escape') dismiss(); };
   const dismiss = () => { clearInterval(timer); backdrop.remove(); document.removeEventListener('keydown', onKey); };
@@ -59,6 +70,17 @@ export function openClaudeHelp() {
     try { render(await api('/claude-code/install', 'POST', 8000)); toast('Устанавливаю Claude Code на компьютер…', 'ok'); }
     catch (_) { toast('Компьютер не ответил', 'err'); }
   };
+  const update = async () => {
+    try { render(await api('/claude-code/update', 'POST', 8000)); toast('Обновляю Claude Code на компьютере…', 'ok'); }
+    catch (_) { toast('Компьютер не ответил', 'err'); }
+  };
+  let confirmRemove = false;
+  let signOut = false;
+  const remove = async () => {
+    try { render(await api('/claude-code/remove' + (signOut ? '?signout=1' : ''), 'POST', 8000)); confirmRemove = false; }
+    catch (_) { toast('Компьютер не ответил', 'err'); }
+  };
+  let lastDone = null;
   const signIn = async () => {
     try {
       await api('/claude-code/signin', 'POST', 8000);
@@ -69,12 +91,29 @@ export function openClaudeHelp() {
   const render = (s) => {
     if (s) { state = s; at = Date.now(); }
     s = state;
+    if (s?.done && s.done !== lastDone && lastDone !== null) toast(DONE[s.done] || 'Готово', 'ok');
+    if (s) lastDone = s.done || '';
     const installed = !!s?.installed, signed = !!s?.signedIn;
+    // the program on the computer: its version, «Обновить», «Удалить с ПК» (with a confirmation)
+    if (installed || s?.busy === 'remove') {
+      const check = h('input');
+      check.type = 'checkbox'; check.checked = signOut;
+      check.addEventListener('change', () => { signOut = check.checked; });
+      tools.replaceChildren(
+        h('p', 'cc-ver', '✳ Claude Code на компьютере' + (s?.version ? ` · версия ${s.version}` : '')),
+        s?.busy ? h('p', 'cc-busy', jobLine(s, BUSY[s.busy])) : null,
+        s?.error && s?.busy == null && installed ? h('p', 'cc-err', s.error) : null,
+        s?.busy ? null : confirmRemove
+          ? h('div', 'cc-confirm', h('p', null, 'Удалить Claude Code с компьютера? Проекты и настройки останутся.'),
+            h('label', 'cc-check', check, ' и выйти из аккаунта Claude на этом ПК'),
+            h('div', 'cc-row', button('🗑 Да, удалить', remove), button('Отмена', async () => { confirmRemove = false; render(null); }, false)))
+          : h('div', 'cc-row', button('⬆ Обновить Claude Code', update, false), button('🗑 Удалить с ПК', async () => { confirmRemove = true; render(null); }, false)));
+    } else tools.replaceChildren();
     const step = (done, title, ...body) => h('li', 'cc-step' + (done ? ' done' : ''), h('b', null, (done ? '✓ ' : '') + title), ...body);
     steps.replaceChildren(
       step(installed, 'Установить на компьютер',
         installed ? h('p', null, 'Claude Code установлен.')
-          : s?.installing ? h('p', 'cc-busy', 'Устанавливаю… Обычно это 1–2 минуты.')
+          : s?.busy === 'install' || s?.installing ? h('p', 'cc-busy', jobLine(s, 'Устанавливаю…'))
             : h('div', null,
               h('p', null, 'Нажмите кнопку: компьютер сам скачает Claude Code с официального сайта.'),
               s?.error ? h('p', 'cc-err', s.error) : null,
@@ -97,9 +136,9 @@ export function openClaudeHelp() {
       h('li', null, 'Войдите в аккаунт, потом закройте окно.')));
 
   panel.append(h('div', 'session-panel-head', h('span', null, '✳ Claude Code'), close),
-    h('h2', null, 'Как подключить Claude Code'),
+    h('h2', null, 'Claude Code на компьютере'),
     h('p', 'cc-lead', 'ИИ-помощник для программирования от Anthropic. Нужна платная подписка Claude (Pro или Max).'),
-    steps, manual,
+    tools, steps, manual,
     h('p', 'session-note', 'Claude официально доступен не во всех странах (например, недоступен в России): установка или вход могут не пройти.'));
   backdrop.append(panel);
   document.body.append(backdrop);

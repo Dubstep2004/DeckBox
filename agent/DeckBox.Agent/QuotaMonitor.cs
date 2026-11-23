@@ -633,7 +633,7 @@ public sealed partial class QuotaMonitor(ConfigStore config, ILogger<QuotaMonito
     {
         if (root.TryGetProperty("extra_usage", out var x) && x.ValueKind == JsonValueKind.Object
             && x.TryGetProperty("is_enabled", out var en) && en.ValueKind == JsonValueKind.True)
-            return $"Доп. использование · {Num(x, "utilization") ?? 0:0}%";
+            return $"Доп. кредиты: осталось {Math.Max(0, 100 - (Num(x, "utilization") ?? 0)):0}%";
         return null;
     }
 

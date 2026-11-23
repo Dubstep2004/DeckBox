@@ -121,8 +121,11 @@ Section /o "Claude Code (ИИ-помощник, нужна подписка Clau
     DetailPrint "Claude Code не установился (нет интернета или Claude недоступен в вашей стране). Это можно сделать позже с панели."
     Return
   claude_ready:
+  ; «claude» must work in a new PowerShell window: the folder goes on the user's PATH if the installer left it out
+  nsExec::ExecToLog `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$$d = Join-Path $$env:USERPROFILE '.local\bin'; $$p = [Environment]::GetEnvironmentVariable('Path','User'); if (-not (($$p -split ';') -contains $$d)) { [Environment]::SetEnvironmentVariable('Path', (([string]$$p).TrimEnd(';') + ';' + $$d).TrimStart(';'), 'User') }"`
+  Pop $0
   DetailPrint "Claude Code установлен. Войдите в аккаунт: Пуск › DeckBox › Войти в Claude Code."
-  CreateShortCut "$SMPROGRAMS\DeckBox\Войти в Claude Code.lnk" "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" "-NoExit -NoProfile -Command $\"& '$PROFILE\.local\bin\claude.exe'$\"" "$INSTDIR\deckbox.ico"
+  CreateShortCut "$SMPROGRAMS\DeckBox\Войти в Claude Code.lnk" "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" "-NoExit -NoProfile -Command $\"$$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User'); & '$PROFILE\.local\bin\claude.exe'$\"" "$INSTDIR\deckbox.ico"
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN

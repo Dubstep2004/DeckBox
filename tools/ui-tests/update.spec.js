@@ -89,7 +89,7 @@ test('the card shows how much each part downloads, and the speed and time left w
   await expect(card.locator('.dbu-row').nth(1)).toContainText('48 МБ');
   await card.getByRole('button', { name: 'Обновить' }).click();
   await expect(card.locator('.dbu-msg')).toContainText('Компьютер скачивает новую версию', { timeout: 8000 });
-  await expect(card.locator('.dbu-msg')).toContainText('2,1 МБ/с · ещё ~');
+  await expect(card.locator('.dbu-msg')).toContainText('2,1 МБ/с · осталось ');
 });
 
 test('a release of the panel alone downloads only the phone app', async ({ page }) => {

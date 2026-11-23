@@ -1,7 +1,18 @@
 import { $, API, D, fmtDate, zoneNow, LEVEL_COLOR, LOCALE, mediaHtml, METRICS, PANEL_HEADERS, PREVIEW, Q_STYLE, S_ORDER, ago, api, averageColor, buzz, cfg, cfgVersion, chart, color, cssVar, currentProcessesSort, emit, fillIcon, fmtClock, fmtDur, fmtHM, fmtMem, fmtReset, fmtTime, fmtValue, gotoProcesses, gpuMem, gpusOf, h, haptic, hasProcessesPage, hist, hour12, keyButton, levelOf, media, metricText, online, openSheet, paceInfo, pad, prRow, pushView, quotaProviders, r1, registerProcessesSorter, renderStatus, ringSvg, setArtColor, setMediaState, setVolDragging, shortDur, shortGpu, store, t, tick, toast, volDragging, wxBlock, wxIcon } from '../main.js';
 import { W } from '../registry.js';
 import { invalidateDeckState } from './controls.js';
-import { claudeCodeKnown, claudeCodeReady, claudeCodeStatus, claudeHelpNote } from './claude-help.js';
+import { gitHubHelpNote, openGitHubHelp } from './github-help.js';
+import { claudeCodeKnown, claudeCodeReady, claudeCodeStatus, claudeHelpNote, openClaudeHelp } from './claude-help.js';
+
+/** A small ⚙ in a widget's header: the computer's side of it (install, update, remove). */
+function gearButton(title, open) {
+  const b = h('button', 'w-gear', '⚙');
+  b.type = 'button';
+  b.title = title;
+  b.setAttribute('aria-label', title);
+  b.addEventListener('click', (e) => { e.stopPropagation(); open(); });
+  return b;
+}
 
 // metric names (CPU, NETWORK…) follow the panel language through the catalog dictionary
 const metricLabel = (m) => (window.DeckBoxI18n?.tc ? window.DeckBoxI18n.tc(m.label) : m.label);
@@ -581,11 +592,30 @@ W.quotas = {
 W.codexbar = W.quotas;
 
 W.sessions = {
-  needs: ['work', 'tick'],
+  needs: ['work', 'tick', 'quotas'],
   create(box) {
     const sum = h('span', 'w-sum');
     const list = h('div', 's-list', h('div', 'empty', t('sess.waitingData')));
-    box.append(h('div', 'w-head', h('span', 's-label', t('w.sessions')), sum), list);
+    // Claude's limits under the sessions: 5 hours, week, extra credits — how much is left and when it resets
+    const limits = h('div', 's-limits');
+    box.append(h('div', 'w-head', h('span', 's-label', t('w.sessions')), sum, gearButton('Claude Code на компьютере', openClaudeHelp)), list, limits);
+    const renderLimits = () => {
+      const p = quotaProviders().find((x) => x.id === 'claude' && x.limits?.length);
+      limits.hidden = !p;
+      if (!p) return;
+      const name = (l) => /5-hour|5 час/i.test(l.label) ? '5 часов' : /^weekly ·|^неделя ·/i.test(l.label) ? 'Неделя · ' + l.label.split('·').pop().trim() : /weekly|неделя/i.test(l.label) ? 'Неделя' : l.label;
+      const chips = p.limits.slice(0, 3).map((l) => {
+        const left = Math.max(0, Math.round(100 - l.percent));
+        const c = h('div', 's-lim' + (left <= 5 ? ' bad' : left <= 20 ? ' warn' : ''),
+          h('span', 's-lim-n', name(l)), h('b', null, `осталось ${left}%`),
+          h('div', 's-lim-bar', h('i')), l.resetsAt ? h('small', null, 'сброс ' + fmtReset(l.resetsAt)) : null);
+        c.querySelector('i').style.width = left + '%';
+        return c;
+      });
+      const credits = /кредит|Доп\./i.test(p.extra || '') ? h('div', 's-lim credits', h('span', 's-lim-n', 'Кредиты'), h('b', null, p.extra.replace(/^Доп\. кредиты:\s*/, ''))) : null;
+      limits.replaceChildren(...chips, credits || '');
+    };
+    renderLimits();
     box.style.setProperty('--c', '#d97757');
     const tokens = (n) => n == null ? '—' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n);
     const statusText = (s) => s.status === 'busy' ? t('sess.working') : s.status === 'waiting' ? t('sess.waiting') : s.status === 'shell' ? t('sess.shell') : s.outcome === 'completed' ? t('sess.completed') : s.outcome === 'aborted' ? t('sess.aborted') : t('sess.idle');
@@ -625,15 +655,17 @@ W.sessions = {
       document.addEventListener('keydown', onKey);
     };
     return {
-      update() {
+      update(kind) {
+        if (kind === 'quotas' || kind === 'tick' && Date.now() % 60_000 < 1000 || limits.hidden !== false && kind !== 'tick') renderLimits();
+        if (kind === 'quotas') return;
         const sessions = D.work?.sessions;
         if (!sessions) return;
         const counts = { waiting: 0, busy: 0, shell: 0, idle: 0 };
         sessions.forEach((s) => (counts[s.status] = (counts[s.status] || 0) + 1));
         sum.textContent = [
-          counts.busy + counts.shell ? `${counts.busy + counts.shell} working` : '',
-          counts.waiting ? `${counts.waiting} waiting` : '',
-          counts.idle ? `${counts.idle} idle` : '',
+          counts.busy + counts.shell ? `работают: ${counts.busy + counts.shell}` : '',
+          counts.waiting ? `ждут: ${counts.waiting}` : '',
+          counts.idle ? `простаивают: ${counts.idle}` : '',
         ].filter(Boolean).join(' · ') || t('w.noOpenSessions');
         const sorted = [...sessions].sort((a, b) => (S_ORDER[a.status] ?? 9) - (S_ORDER[b.status] ?? 9) || b.since - a.since);
         const rows = sorted.length ? sorted.map((s) => {
@@ -664,7 +696,7 @@ W.github = {
     box.style.setProperty('--c', '#c9d1d9');
     const user = h('span', 'w-sum'), bell = h('span', 'gh-bell');
     const rc = h('b'), mc = h('b'), rev = h('div', 'gh-list'), mine = h('div', 'gh-list'), err = h('div', 'gh-err', 'Waiting for GitHub data…');
-    box.append(h('div', 'w-head', h('span', 's-label', 'GitHub'), user, bell),
+    box.append(h('div', 'w-head', h('span', 's-label', 'GitHub'), user, bell, gearButton('GitHub на компьютере', openGitHubHelp)),
       h('div', 'gh-sec', h('span', null, 'Review requests'), rc), rev,
       h('div', 'gh-sec', h('span', null, 'My pull requests'), mc), mine, err);
     return {
@@ -679,7 +711,16 @@ W.github = {
         const nRev = Math.min(g.reviewRequests.length || 1, Math.max(1, Math.floor(rows / 2)));
         rev.replaceChildren(...(g.reviewRequests.length ? g.reviewRequests.slice(0, nRev).map((p) => prRow(p, false)) : [h('div', 'gh-pr', t('w.noReviews'))]));
         mine.replaceChildren(...(g.myPrs.length ? g.myPrs.slice(0, Math.max(1, rows - nRev)).map((p) => prRow(p, true)) : [h('div', 'gh-pr', t('w.noPrs'))]));
-        err.textContent = g.error ? 'GitHub: ' + g.error : '';
+        // GitHub CLI missing or signed out: the steps to connect it instead of the raw error
+        box.classList.toggle('gh-unset', !!g.setup);
+        if (g.setup) {
+          if (err.dataset.setup !== g.setup) { err.dataset.setup = g.setup; err.replaceChildren(gitHubHelpNote(g.setup)); }
+          err.classList.add('gh-setup');
+        } else {
+          err.classList.remove('gh-setup');
+          delete err.dataset.setup;
+          err.textContent = g.error ? 'GitHub: ' + g.error : '';
+        }
       },
     };
   },
