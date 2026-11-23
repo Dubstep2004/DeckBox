@@ -419,7 +419,7 @@ body.offline .offline-msg { display: flex; }
 .q-label { font-size: 12px; font-weight: 600; margin-top: 5px; text-align: center; white-space: nowrap; }
 .q-left { font-size: 11px; font-weight: 650; color: #86efac; text-align: center; }
 .q-reset { font-size: 11px; color: var(--muted); text-align: center; white-space: nowrap; }
-.q-pace { font-size: 11px; margin-top: 2px; text-align: center; white-space: nowrap; color: var(--muted); }
+.q-pace { font-size: 11px; margin-top: 2px; text-align: center; color: var(--muted); max-width: 100%; line-height: 1.25; overflow-wrap: anywhere; }
 .q-pace.fast { color: #fbbf24; }
 .q-pace.over { color: #f87171; }
 .q-pace.calm { color: #86efac; }
@@ -1310,3 +1310,40 @@ body.controls-top .ap-foot { order: -1; margin-bottom: 4px; }
 .cc-check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; margin-bottom: 6px; }
 .cc-tools .cc-busy { margin: 0 0 4px; color: var(--gold, #d4af37); font-size: 12.5px; }
 .cc-tools .cc-err { margin: 0 0 6px; color: #f87171; font-size: 12.5px; }
+
+/* «Сеансы» in a small widget: the limits as one short line, so the sessions keep their room */
+@container (max-height: 260px) {
+  .s-limits { gap: 4px; margin-top: 4px; flex-wrap: nowrap; overflow: hidden; }
+  .s-lim { padding: 3px 7px; flex: 1 1 0; gap: 1px; }
+  .s-lim-n { font-size: 9.5px; } .s-lim b { font-size: 11.5px; } .s-lim small, .s-lim-bar { display: none; }
+  .s-lim.credits { display: none; }
+}
+
+/* «⚙ Настройки» on the phone (DeckBox PRO) */
+.ps-back { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9100; display: flex; align-items: center; justify-content: center; padding: 2vmin; background: rgba(3, 5, 9, .8); }
+.ps-panel { width: min(620px, 100%); max-height: 100%; display: flex; flex-direction: column; background: #121317; border: 1px solid rgba(var(--ambient), .4); border-radius: 18px; overflow: hidden; color: var(--text); }
+.ps-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.ps-head h2 { margin: 0; font-size: 18px; }
+.ps-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; padding: 6px 16px 10px; -webkit-user-select: text; user-select: text; }
+.ps-body section { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.ps-body h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--gold, #d4af37); }
+.ps-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
+.ps-label { font-size: 13px; color: var(--muted); }
+.ps-ctl { display: flex; gap: 6px; flex-wrap: wrap; }
+.ps-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.ps-seg button { border: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; padding: 7px 11px; min-height: 34px; }
+.ps-seg button.on { background: var(--gold, #d4af37); color: #17130a; font-weight: 700; }
+.ps-sel, .ps-input, .ps-tasks { font: inherit; font-size: 14px; color: var(--text); background: rgba(255, 255, 255, .05); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; }
+.ps-input { width: 100%; box-sizing: border-box; margin: 4px 0; }
+.ps-tasks { width: 100%; box-sizing: border-box; margin-top: 4px; resize: vertical; }
+.ps-results { display: flex; flex-direction: column; gap: 4px; }
+.ps-result { text-align: left; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); color: var(--text); font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 10px; }
+.ps-none { font-size: 12.5px; color: var(--muted); }
+.ps-themes { display: flex; gap: 8px; flex-wrap: wrap; }
+.ps-theme { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: 13px; padding: 7px 12px 7px 9px; border-radius: 999px; }
+.ps-theme i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.ps-theme.on { border-color: var(--gold-hi, #f2d675); box-shadow: 0 0 0 1px var(--gold-hi, #f2d675) inset; }
+.ps-note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.ps-foot { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); }
+#ovSettings { margin-left: 8px; white-space: nowrap; flex: none; }
+#overview.sorting #ovSettings { display: none; }

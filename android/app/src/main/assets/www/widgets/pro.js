@@ -47,14 +47,21 @@ css.textContent = `
 .ws-bar i{width:100%;max-width:46px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--gold-hi),var(--gold));min-height:3px}
 .ws-bar i.today{box-shadow:0 0 0 2px rgba(var(--ambient),.6)} .ws-bar small{font-size:11.5px;color:var(--muted)} .ws-bar em{font-size:11px;font-style:normal;color:#e9dfc4}
 .ws-apps{display:flex;flex-wrap:wrap;gap:6px} .ws-apps span{font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(var(--ambient),.1);border:1px solid rgba(var(--ambient),.22)}
-.bf{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;gap:14px;padding:4vh 4vw;background:radial-gradient(120% 90% at 85% 0%,rgba(var(--ambient),.2),transparent 60%),rgba(9,9,11,.97);
+.bf{position:fixed;top:0;right:0;bottom:0;left:0;z-index:80;display:flex;flex-direction:column;gap:14px;padding:4vh 4vw;background:radial-gradient(120% 90% at 85% 0%,rgba(var(--ambient),.2),transparent 60%),#09090b;
   animation:bfIn .5s ease}
 @keyframes bfIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .bf-hello{font-size:clamp(24px,7vh,52px);font-weight:800;color:var(--gold-hi)} .bf-date{color:#d9cfb6;font-size:clamp(14px,3vh,20px);margin-top:-8px}
-.bf-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;min-height:0}
-.bf-card{border-radius:16px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(var(--ambient),.2);overflow:hidden;display:flex;flex-direction:column;gap:6px}
+.bf-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));grid-auto-rows:minmax(0,1fr);gap:12px;min-height:0}
+.bf-card{border-radius:16px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(var(--ambient),.2);overflow-y:auto;min-height:0;touch-action:pan-y;scrollbar-width:none;display:flex;flex-direction:column;gap:6px}
+.bf-card::-webkit-scrollbar{display:none}
 .bf-card label{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
 .bf-card .big{font-size:clamp(22px,6vh,42px);font-weight:800} .bf-card .li{font-size:14px;color:#e8e0cc} .bf-card .li small{color:var(--muted);margin-right:6px}
+.bf-card .li{overflow-wrap:anywhere}
+/* a phone on its side: little height — one row of cards, smaller titles, so nothing is cut off */
+@media (max-height:480px){.bf{gap:8px;padding:3vh 3vw}.bf-hello{font-size:clamp(20px,8vh,34px)}.bf-date{margin-top:-6px;font-size:13px}
+.bf-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.bf-card{padding:8px 10px;gap:3px}.bf-card .big{font-size:clamp(20px,8vh,30px)}
+.bf-card .li{font-size:12.5px}.bf-card label{font-size:10.5px}.bf-go{padding:8px 28px;font-size:14px}}
+.bf-add{align-self:flex-start;margin-top:2px;padding:7px 12px;border-radius:10px;border:1px dashed rgba(var(--ambient),.5);background:transparent;color:var(--gold-hi);font:inherit;font-size:13px}
 .bf-go{align-self:center;padding:12px 36px;border-radius:999px;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#1a1405;font-weight:800;font-size:16px}
 .vc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;text-align:center}
 .vc-mic{width:min(42%,110px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:clamp(28px,7vh,48px);
@@ -291,6 +298,14 @@ W.weekstats = {
 };
 
 // ---------------------------------------------------------------- «Утренний брифинг»
+// no morning tasks yet: a button that opens «⚙ Настройки» right here on the phone
+function tasksHint() {
+  const b = h('button', 'bf-add', '+ Добавить задачи на утро');
+  b.type = 'button';
+  b.addEventListener('click', (e) => { e.stopPropagation(); document.querySelector('.bf')?.remove(); import('../panel-settings.js').then((m) => m.openPanelSettings()); });
+  return b;
+}
+
 function greeting(d = zoneNow()) {
   const x = d.getHours();
   return x < 5 ? 'Доброй ночи' : x < 12 ? 'Доброе утро' : x < 17 ? 'Добрый день' : 'Добрый вечер';
@@ -316,7 +331,7 @@ function briefingCards() {
   }
   const list = [...new Set([...tasks, ...open])].slice(0, 6);
   cards.push(h('div', 'bf-card', h('label', null, 'Задачи'),
-    ...(list.length ? list.map((x) => h('div', 'li', '☐ ' + x)) : [h('div', 'li', 'Задачи на утро: настройки › ⭐ PRO › Утренний брифинг')])));
+    ...(list.length ? list.map((x) => h('div', 'li', '☐ ' + x)) : [tasksHint()])));
   const fx = h('div', 'bf-card', h('label', null, 'Курс ЦБ РФ'));
   const fill = () => {
     const rows = ['USD', 'EUR', 'CNY'].map((c) => cbrRate(cbrData, c)).filter(Boolean);

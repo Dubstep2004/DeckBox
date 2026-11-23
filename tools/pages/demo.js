@@ -597,6 +597,20 @@
       else if (sc.toggle) toggles[id] = !toggles[id];
       return json({});
     }
+    if (path === '/api/settings/quick' && method === 'POST') {
+      let p;
+      try { p = JSON.parse(q.get('p') || ''); } catch (_) { return json({ error: 'bad json' }, 400); }
+      const c = await config();
+      c.display = { ...(c.display || {}) }; c.weather = { ...(c.weather || {}) }; c.briefing = { ...(c.briefing || {}) };
+      if (p.theme) c.display.theme = p.theme;
+      if (p.weather) { const w = p.weather; if (w.lat != null) Object.assign(c.weather, { city: w.city, lat: w.lat, lon: w.lon }); if (w.tempUnit) c.weather.tempUnit = w.tempUnit; if (w.windUnit) c.weather.windUnit = w.windUnit; }
+      if (p.time) { const t = p.time; if (t.hour12 != null) c.display.hour12 = String(t.hour12); if (t.showSeconds != null) c.display.showSeconds = t.showSeconds; if (t.dateFormat) c.display.dateFormat = t.dateFormat; if (t.timeZone != null) c.display.timeZone = t.timeZone; }
+      if (p.briefing) { if (p.briefing.enabled != null) c.briefing.enabled = p.briefing.enabled; if (p.briefing.tasks) c.briefing.tasks = p.briefing.tasks; }
+      store.set(CONFIG_KEY, c);
+      store.set('pb-demo-version', cfgVersion() + 1);
+      emit('refresh');
+      return json({ version: String(cfgVersion()) });
+    }
     if (path === '/api/pages/arrange' && method === 'POST') {
       const c = await config();
       const ids = (k) => (q.get(k) || '').split(',').filter(Boolean);

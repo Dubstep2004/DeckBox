@@ -141,3 +141,17 @@ test('voice commands match whole words: «плейлисты» opens the page, i
   expect(await said('пауза')).toBe('Пауза / воспроизведение');
   expect(await said('выключи звук')).toBe('Звук переключён');
 });
+
+test('the morning briefing fits a phone on its side: no card cut off', async ({ page }) => {
+  await page.setViewportSize({ width: 780, height: 360 });
+  await page.goto('/panel/');
+  await page.evaluate(() => import('/panel/widgets/pro.js').then((m) => m.showBriefing ? m.showBriefing(true) : null));
+  const bf = page.locator('.bf');
+  if (!(await bf.count())) test.skip(true, 'no briefing hook');
+  for (const card of await page.locator('.bf-card').all()) {
+    const fits = await card.evaluate((c) => c.scrollHeight <= c.clientHeight + 1 || getComputedStyle(c).overflowY === 'auto');
+    expect(fits).toBe(true);
+    const r = await card.boundingBox();
+    expect(r.y + r.height).toBeLessThanOrEqual(361);
+  }
+});

@@ -216,7 +216,11 @@ const DATE_FORMATS = { long: { weekday: 'long', day: 'numeric', month: 'long' },
   short: { weekday: 'short', day: 'numeric', month: 'short' }, numeric: { day: '2-digit', month: '2-digit', year: 'numeric' } };
 /** The clocks' date line in the chosen format (display.dateFormat); d is a zoneNow() date. */
 export const fmtDate = (d) => d.toLocaleDateString(LOCALE, DATE_FORMATS[cfg.display?.dateFormat] || DATE_FORMATS.long);
-export const fmtTime = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + pad(s % 60); };
+/** 3:07, or 2:11:16 past an hour (a long video was «131:16») */
+export const fmtTime = (ms) => {
+  const s = Math.max(0, Math.floor(ms / 1000)), hr = Math.floor(s / 3600);
+  return hr ? `${hr}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}` : Math.floor(s / 60) + ':' + pad(s % 60);
+};
 // units in the panel language (Russian: ГБ, МБ/с…); other languages keep the international symbols
 const UNIT_RU = { 'GB/s': 'ГБ/с', 'MB/s': 'МБ/с', 'KB/s': 'КБ/с', 'B/s': 'Б/с', GB: 'ГБ', MB: 'МБ', ms: 'мс', W: 'Вт' };
 export const unitL = (u) => (u && I18n?.getLang?.() === 'ru' && UNIT_RU[u]) || u;
@@ -1536,6 +1540,11 @@ export function openOverview() {
     sortBtn.hidden = PREVIEW || (cfg.pages || []).length < 2;
     sortBtn.textContent = '⇅ Порядок';
     sortBtn.onclick = (e) => { e.stopPropagation(); haptic(); startSorting(); };
+  }
+  const setBtn = $('ovSettings');
+  if (setBtn) {
+    setBtn.hidden = PREVIEW;
+    setBtn.onclick = (e) => { e.stopPropagation(); closeOverview(); import('./panel-settings.js').then((m) => m.openPanelSettings()); };
   }
   renderRulesBtn();
   // several paired computers: switch between them here (a USB cable always wins)

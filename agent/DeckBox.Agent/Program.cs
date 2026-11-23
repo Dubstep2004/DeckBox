@@ -459,6 +459,24 @@ app.MapPost("/api/legacy/uninstall", async (AdbReverse adb, ConfigStore cfg, Can
     return Results.Json(new { removed, left = adb.LegacyApp });
 });
 
+// «⚙ Настройки» on the phone: theme, weather, time and date, morning briefing
+// the settings come as ?p=<json>: the app forwards the panel's requests without a body
+app.MapPost("/api/settings/quick", (string? p, string? version, ConfigStore cfg) =>
+{
+    QuickSettings.Patch? patch;
+    if (string.IsNullOrEmpty(p) || p.Length > 16_000) return Results.BadRequest(new { error = "settings expected" });
+    try { patch = System.Text.Json.JsonSerializer.Deserialize<QuickSettings.Patch>(p, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)); }
+    catch (System.Text.Json.JsonException) { return Results.BadRequest(new { error = "bad json" }); }
+    if (patch is null) return Results.BadRequest(new { error = "empty" });
+    var r = QuickSettings.Apply(cfg, patch, long.TryParse(version, out var v) ? v : null);
+    return r.Status switch
+    {
+        200 => Results.Ok(new { version = r.Version }),
+        409 => Results.Json(new { error = r.Error }, statusCode: StatusCodes.Status409Conflict),
+        _ => Results.BadRequest(new { error = r.Error }),
+    };
+});
+
 // «Порядок страниц»: the phone's page overview reorders and hides pages
 app.MapPost("/api/pages/arrange", (string? order, string? hidden, string? version, ConfigStore cfg) =>
 {

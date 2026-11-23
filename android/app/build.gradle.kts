@@ -17,8 +17,8 @@ android {
         applicationId = "io.github.dubstep2004.deckbox"
         minSdk = 21 // Android 5.0; see CONTRIBUTING.md before changing it
         targetSdk = 35
-        versionCode = 57
-        versionName = "1.10.1"
+        versionCode = 58
+        versionName = "1.11.0"
     }
 
     signingConfigs {

@@ -821,7 +821,7 @@
       'time.yesterday': 'Вчера',
       'pace.limitReached': 'Лимит исчерпан',
       'pace.plentyLeft': 'Запас большой',
-      'pace.fullIn': 'При таком темпе: закончится через {dur}',
+      'pace.fullIn': 'Закончится через {dur}',
       'pace.ahead': 'Быстрее плана',
       'pace.onPace': 'По плану',
 

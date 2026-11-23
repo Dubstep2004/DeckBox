@@ -654,7 +654,11 @@ function integrationWidget(type, title, endpoint, create) {
     }, destroy() { alive = false; } };
   } };
 }
-const timeText = ms => { const s = Math.floor((ms || 0) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+// 3:07, or 2:11:16 for long videos (not 131:16)
+const timeText = ms => {
+  const s = Math.floor((ms || 0) / 1000), hr = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = String(s % 60).padStart(2, '0');
+  return hr ? `${hr}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+};
 integrationWidget('obs-mixer', 'OBS mixer', 'obs', (root, data, send) => {
   if (!data.inputs?.length) { empty(root, 'No OBS inputs found'); return; }
   for (const input of data.inputs) {
